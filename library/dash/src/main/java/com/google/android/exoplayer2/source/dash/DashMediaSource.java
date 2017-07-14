@@ -568,7 +568,11 @@ public final class DashMediaSource implements MediaSource {
     }
   }
 
-  private static final class PeriodSeekInfo {
+    public long getMpdDuration() {
+        return manifest.duration;
+    }
+
+    private static final class PeriodSeekInfo {
 
     public static PeriodSeekInfo createPeriodSeekInfo(
         com.google.android.exoplayer2.source.dash.manifest.Period period, long durationUs) {
