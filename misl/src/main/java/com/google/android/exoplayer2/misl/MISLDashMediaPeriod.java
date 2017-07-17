@@ -33,71 +33,71 @@ public class MISLDashMediaPeriod implements DashMediaPeriod {
 
     @Override
     public int getID() {
-        return 0;
+        return dashMediaPeriod.getID();
     }
 
     @Override
     public void updateManifest(DashManifest manifest, int periodIndex) {
-
+        dashMediaPeriod.updateManifest(manifest, periodIndex);
     }
 
     @Override
     public void release() {
-
+        dashMediaPeriod.release();
     }
 
     @Override
     public void prepare(Callback callback) {
-
+        dashMediaPeriod.prepare(callback);
     }
 
     @Override
     public void maybeThrowPrepareError() throws IOException {
-
+        dashMediaPeriod.maybeThrowPrepareError();
     }
 
     @Override
     public TrackGroupArray getTrackGroups() {
-        return null;
+        return dashMediaPeriod.getTrackGroups();
     }
 
     @Override
     public long selectTracks(TrackSelection[] selections, boolean[] mayRetainStreamFlags, SampleStream[] streams, boolean[] streamResetFlags, long positionUs) {
-        return 0;
+        return dashMediaPeriod.selectTracks(selections, mayRetainStreamFlags, streams, streamResetFlags, positionUs);
     }
 
     @Override
     public void discardBuffer(long positionUs) {
-
+        dashMediaPeriod.discardBuffer(positionUs);
     }
 
     @Override
     public boolean continueLoading(long positionUs) {
-        return false;
+        return dashMediaPeriod.continueLoading(positionUs);
     }
 
     @Override
     public long getNextLoadPositionUs() {
-        return 0;
+        return dashMediaPeriod.getNextLoadPositionUs();
     }
 
     @Override
     public long readDiscontinuity() {
-        return 0;
+        return dashMediaPeriod.readDiscontinuity();
     }
 
     @Override
     public long getBufferedPositionUs() {
-        return 0;
+        return dashMediaPeriod.getBufferedPositionUs();
     }
 
     @Override
     public long seekToUs(long positionUs) {
-        return 0;
+        return dashMediaPeriod.seekToUs(positionUs);
     }
 
     @Override
     public void onContinueLoadingRequested(ChunkSampleStream<DashChunkSource> sampleStream) {
-
+        dashMediaPeriod.onContinueLoadingRequested(sampleStream);
     }
 }
