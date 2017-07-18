@@ -11,7 +11,8 @@ import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 
 
-public class DefaultAlgorithmTrackSelection extends BaseTrackSelection implements AlgorithmTrackSelection {
+public class DefaultAlgorithmTrackSelection extends BaseTrackSelection
+        implements AlgorithmTrackSelection, AlgorithmInfoProvider {
 
     public static final class Factory implements TrackSelection.Factory {
 
@@ -42,6 +43,7 @@ public class DefaultAlgorithmTrackSelection extends BaseTrackSelection implement
     private MediaChunk lastChunk;
     private long lastArrivalTime;
     private long lastLoadDurationMs;
+    private long bufferedDurationUs;
     private int selectedIndex;
     private int reason;
 
@@ -82,6 +84,7 @@ public class DefaultAlgorithmTrackSelection extends BaseTrackSelection implement
     @Override
     public void updateSelectedTrack(long bufferedDurationUs) {
         logValues(bufferedDurationUs);
+        this.bufferedDurationUs = bufferedDurationUs;
 
         selectedIndex = algorithm.determineIdealIndex(bufferedDurationUs);
         reason = algorithm.getSelectionReason();
@@ -113,6 +116,101 @@ public class DefaultAlgorithmTrackSelection extends BaseTrackSelection implement
         this.lastLoadDurationMs = loadDurationMs;
     }
 
+    // AlgorithmInfoProvider implementation
+
+    /**
+     * The index of the last segment in the stream.
+     *
+     * @return The last segment's index.
+     */
+    @Override
+    public int lastSegmentNumber() {
+        return lastChunk.chunkIndex;
+    }
+
+    /**
+     * The value of {@link SystemClock#elapsedRealtime()} when the
+     * last segment finished downloading.
+     *
+     * @return The last downloaded segment's arrival time.
+     */
+    @Override
+    public long lastArrivalTime() {
+        return lastArrivalTime;
+    }
+
+    /**
+     * The length of time it took to load the last segment, in ms.
+     *
+     * @return The last segment's load duration in ms.
+     */
+    @Override
+    public long lastLoadDurationMs() {
+        return lastLoadDurationMs;
+    }
+
+    /**
+     * The length of time the player has stalled for since starting the
+     * video, in ms.
+     *
+     * @return The player's stall duration in ms.
+     */
+    @Override
+    public long stallDurationMs() {
+        return 0;
+    }
+
+    /**
+     * The representation rate of the last segment, in bits per second.
+     *
+     * @return The last segment's representation rate in bits per second.
+     */
+    @Override
+    public double lastRepresentationRate() {
+        return lastChunk.trackFormat.bitrate;
+    }
+
+    /**
+     * The delivery rate of the last segment, in bits per second.
+     *
+     * @return The last segment's delivery rate in bits per second.
+     */
+    @Override
+    public double lastDeliveryRate() {
+        return lastChunk.bytesLoaded() * 8E3 / lastLoadDurationMs;
+    }
+
+    /**
+     * The actual data rate of the last segment, in bits per second.
+     *
+     * @return The last segment's actual rate in bits per second.
+     */
+    @Override
+    public double lastActualRate() {
+        return lastChunk.bytesLoaded() * 8E6 / lastChunk.getDurationUs();
+    }
+
+    /**
+     * The size of the last segment, in bytes.
+     *
+     * @return The last segment's size in bytes.
+     */
+    @Override
+    public long lastByteSize() {
+        return lastChunk.bytesLoaded();
+    }
+
+    /**
+     * The amount of content currently in the buffer, in microseconds.
+     *
+     * @return The current buffer level in microseconds.
+     */
+    @Override
+    public long currentBufferLevelUs() {
+        return bufferedDurationUs;
+    }
+
+    // internal methods
 
     private void logValues(long bufferedDurationUs) {
         if (lastChunk == null) {
