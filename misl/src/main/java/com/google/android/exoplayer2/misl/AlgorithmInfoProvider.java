@@ -64,11 +64,4 @@ public interface AlgorithmInfoProvider {
      * @return The last segment's size in bytes.
      */
     long lastByteSize();
-
-    /**
-     * The amount of content currently in the buffer, in microseconds.
-     *
-     * @return The current buffer level in microseconds.
-     */
-    long currentBufferLevelUs();
 }

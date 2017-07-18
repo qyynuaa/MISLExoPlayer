@@ -200,16 +200,6 @@ public class DefaultAlgorithmTrackSelection extends BaseTrackSelection
         return lastChunk.bytesLoaded();
     }
 
-    /**
-     * The amount of content currently in the buffer, in microseconds.
-     *
-     * @return The current buffer level in microseconds.
-     */
-    @Override
-    public long currentBufferLevelUs() {
-        return bufferedDurationUs;
-    }
-
     // internal methods
 
     private void logValues(long bufferedDurationUs) {
