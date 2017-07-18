@@ -31,6 +31,7 @@ public class DefaultAlgorithmTrackSelection extends BaseTrackSelection implement
          */
         @Override
         public DefaultAlgorithmTrackSelection createTrackSelection(TrackGroup group, int... tracks) {
+            Log.d(TAG, "createTrackSelection called");
             AdaptationAlgorithm basicAlgorithm = new BasicAdaptationAlgorithm(group, tracks, bandwidthMeter);
             return new DefaultAlgorithmTrackSelection(basicAlgorithm, group, tracks);
         }
@@ -100,6 +101,7 @@ public class DefaultAlgorithmTrackSelection extends BaseTrackSelection implement
     @Override
     public void giveLastChunk(MediaChunk lastChunk) {
         this.lastChunk = lastChunk;
+        Log.d(TAG, "Last chunk given.");
     }
 
     /**
@@ -112,6 +114,7 @@ public class DefaultAlgorithmTrackSelection extends BaseTrackSelection implement
     public void giveLastChunkData(long elapsedRealtimeMs, long loadDurationMs) {
         this.lastArrivalTime = elapsedRealtimeMs;
         this.lastLoadDuration = loadDurationMs;
+        Log.d(TAG, "Last chunk data given.");
     }
 
 

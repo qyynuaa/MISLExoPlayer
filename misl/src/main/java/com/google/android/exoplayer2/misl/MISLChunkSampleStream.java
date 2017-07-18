@@ -1,6 +1,7 @@
 package com.google.android.exoplayer2.misl;
 
 import android.os.SystemClock;
+import android.util.Log;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.FormatHolder;
@@ -23,6 +24,8 @@ import java.io.IOException;
  */
 
 public class MISLChunkSampleStream<T extends ChunkSource> implements ChunkSampleStream<T> {
+
+    private final String TAG = "MISLChunkSampleStream";
 
     private ChunkSampleStream<T> chunkSampleStream;
     private AlgorithmTrackSelection algorithmTrackSelection;
@@ -194,6 +197,7 @@ public class MISLChunkSampleStream<T extends ChunkSource> implements ChunkSample
     @Override
     public void onLoadCompleted(Chunk loadable, long elapsedRealtimeMs, long loadDurationMs) {
         algorithmTrackSelection.giveLastChunkData(elapsedRealtimeMs, loadDurationMs);
+        Log.d(TAG, "Last chunk data given");
         chunkSampleStream.onLoadCompleted(loadable, elapsedRealtimeMs, loadDurationMs);
     }
 
