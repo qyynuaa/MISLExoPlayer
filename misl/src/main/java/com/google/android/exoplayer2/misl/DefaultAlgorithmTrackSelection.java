@@ -41,7 +41,7 @@ public class DefaultAlgorithmTrackSelection extends BaseTrackSelection implement
     private AdaptationAlgorithm algorithm;
     private MediaChunk lastChunk;
     private long lastArrivalTime;
-    private long lastLoadDuration;
+    private long lastLoadDurationMs;
     private int selectedIndex;
     private int reason;
 
@@ -81,10 +81,9 @@ public class DefaultAlgorithmTrackSelection extends BaseTrackSelection implement
      */
     @Override
     public void updateSelectedTrack(long bufferedDurationUs) {
-        logValues();
+        logValues(bufferedDurationUs);
 
         selectedIndex = algorithm.determineIdealIndex(bufferedDurationUs);
-        Log.d(TAG, "Algorithm gave index: " + selectedIndex);
         reason = algorithm.getSelectionReason();
     }
 
@@ -111,30 +110,32 @@ public class DefaultAlgorithmTrackSelection extends BaseTrackSelection implement
     @Override
     public void giveLastChunkData(long elapsedRealtimeMs, long loadDurationMs) {
         this.lastArrivalTime = elapsedRealtimeMs;
-        this.lastLoadDuration = loadDurationMs;
+        this.lastLoadDurationMs = loadDurationMs;
     }
 
 
-    private void logValues() {
+    private void logValues(long bufferedDurationUs) {
         if (lastChunk == null) {
             Log.d(TAG, "lastChunk is null.");
         } else {
-            Log.d(TAG, String.format("lastChunk.chunkIndex = %d", lastChunk.chunkIndex));
+            Log.d(TAG, String.format("Segment number = %d", lastChunk.chunkIndex));
 
-            Log.d(TAG, String.format("lastChunk duration = %d", lastChunk.getDurationUs()));
+            Log.d(TAG, String.format("Arrival time = %d", lastArrivalTime));
 
-            Log.d(TAG, String.format("lastChunk representation rate = %d", lastChunk.trackFormat.bitrate));
+            Log.d(TAG, String.format("Delivery time/Load duration = %d ms", lastLoadDurationMs));
 
-            long bits = lastChunk.bytesLoaded() * 8;
-            double actualRate = bits * 1E6 / lastChunk.getDurationUs();
-            Log.d(TAG, String.format("lastChunk actual rate = %g", actualRate));
+            Log.d(TAG, String.format("Representation rate = %d bps", lastChunk.trackFormat.bitrate));
 
-            long calculatedChunkIndex = (lastChunk.endTimeUs) / 4000000;
-            Log.d(TAG, String.format("Calculated chunk index is: %d", calculatedChunkIndex));
+            long bitsLoaded = lastChunk.bytesLoaded() * 8;
+            final double deliveryRate = bitsLoaded * 1E3 / lastLoadDurationMs;
+            Log.d(TAG, String.format("Delivery rate = %g bps", deliveryRate));
 
-            Log.d(TAG, String.format("Last chunk's arrival time was: %d", lastArrivalTime));
+            double actualRate = bitsLoaded * 1E6 / lastChunk.getDurationUs();
+            Log.d(TAG, String.format("Actual rate = %g bps", actualRate));
 
-            Log.d(TAG, String.format("Last chunk's load duration was: %d", lastLoadDuration));
+            Log.d(TAG, String.format("Byte size = %d", lastChunk.bytesLoaded()));
+
+            Log.d(TAG, String.format("Buffer level = %d µs", bufferedDurationUs));
         }
 
     }
