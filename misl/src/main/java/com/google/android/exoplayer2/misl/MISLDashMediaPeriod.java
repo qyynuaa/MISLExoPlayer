@@ -33,6 +33,7 @@ import java.util.List;
 /**
  * An altered {@link DefaultDashMediaPeriod} which provides extra
  * information to a TrackSelection to be used by adaptation algorithms.
+ * Requires that an {@link AlgorithmTrackSelection} be used.
  */
 
 public class MISLDashMediaPeriod implements DashMediaPeriod {
@@ -53,13 +54,11 @@ public class MISLDashMediaPeriod implements DashMediaPeriod {
     private DashManifest manifest;
     private int periodIndex;
     private List<AdaptationSet> adaptationSets;
-    private AlgorithmTrackSelection algorithmTrackSelection;
 
     public MISLDashMediaPeriod(int id, DashManifest manifest, int periodIndex,
                                DashChunkSource.Factory chunkSourceFactory, int minLoadableRetryCount,
                                AdaptiveMediaSourceEventListener.EventDispatcher eventDispatcher, long elapsedRealtimeOffset,
-                               LoaderErrorThrower manifestLoaderErrorThrower, Allocator allocator,
-                               AlgorithmTrackSelection algorithmTrackSelection) {
+                               LoaderErrorThrower manifestLoaderErrorThrower, Allocator allocator) {
         this.id = id;
         this.manifest = manifest;
         this.periodIndex = periodIndex;
@@ -69,7 +68,6 @@ public class MISLDashMediaPeriod implements DashMediaPeriod {
         this.elapsedRealtimeOffset = elapsedRealtimeOffset;
         this.manifestLoaderErrorThrower = manifestLoaderErrorThrower;
         this.allocator = allocator;
-        this.algorithmTrackSelection = algorithmTrackSelection;
         sampleStreams = newSampleStreamArray(0);
         sequenceableLoader = new CompositeSequenceableLoader(sampleStreams);
         adaptationSets = manifest.getPeriod(periodIndex).adaptationSets;
@@ -126,7 +124,7 @@ public class MISLDashMediaPeriod implements DashMediaPeriod {
         HashMap<Integer, ChunkSampleStream<DashChunkSource>> primarySampleStreams = new HashMap<>();
         // First pass for primary tracks.
         for (int i = 0; i < selections.length; i++) {
-            if (streams[i] instanceof DefaultChunkSampleStream) {
+            if (streams[i] instanceof MISLChunkSampleStream) {
                 @SuppressWarnings("unchecked")
                 ChunkSampleStream<DashChunkSource> stream = (ChunkSampleStream<DashChunkSource>) streams[i];
                 if (selections[i] == null || !mayRetainStreamFlags[i]) {
@@ -289,7 +287,7 @@ public class MISLDashMediaPeriod implements DashMediaPeriod {
                 elapsedRealtimeOffset, enableEventMessageTrack, enableCea608Track);
         ChunkSampleStream<DashChunkSource> stream = new MISLChunkSampleStream<>(adaptationSet.type,
                 embeddedTrackTypes, chunkSource, this, allocator, positionUs, minLoadableRetryCount,
-                eventDispatcher, algorithmTrackSelection);
+                eventDispatcher, (AlgorithmTrackSelection)selection);
         return stream;
     }
 
