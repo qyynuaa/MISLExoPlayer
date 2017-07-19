@@ -72,7 +72,6 @@ public class MISLDashChunkSource implements DashChunkSource {
     /** Delegates to the {@link DefaultDashChunkSource} */
     @Override
     public void updateManifest(DashManifest newManifest, int periodIndex) {
-        Log.d(TAG, "updateManifest called");
         dashChunkSource.updateManifest(newManifest, periodIndex);
     }
 
@@ -86,8 +85,6 @@ public class MISLDashChunkSource implements DashChunkSource {
      */
     @Override
     public void maybeThrowError() throws IOException {
-        Log.d(TAG, "maybeThrowError called");
-        // delegate to the DefaultDashChunkSource
         dashChunkSource.maybeThrowError();
     }
 
@@ -104,8 +101,6 @@ public class MISLDashChunkSource implements DashChunkSource {
      */
     @Override
     public int getPreferredQueueSize(long playbackPositionUs, List<? extends MediaChunk> queue) {
-        Log.d(TAG, "getPreferredQueueSize called");
-        // delegate to the DefaultDashChunkSource
         return dashChunkSource.getPreferredQueueSize(playbackPositionUs, queue);
     }
 
@@ -124,10 +119,7 @@ public class MISLDashChunkSource implements DashChunkSource {
      */
     @Override
     public void getNextChunk(MediaChunk previous, long playbackPositionUs, ChunkHolder out) {
-        Log.d(TAG, "getNextChunk called");
         algorithmTrackSelection.giveLastChunk(previous);
-
-        // delegate to the DefaultDashChunkSource
         dashChunkSource.getNextChunk(previous, playbackPositionUs, out);
     }
 
@@ -141,8 +133,6 @@ public class MISLDashChunkSource implements DashChunkSource {
      */
     @Override
     public void onChunkLoadCompleted(Chunk chunk) {
-        Log.d(TAG, "onChunkLoadCompleted called");
-        // delegate to the DefaultDashChunkSource
         dashChunkSource.onChunkLoadCompleted(chunk);
     }
 
@@ -159,8 +149,6 @@ public class MISLDashChunkSource implements DashChunkSource {
      */
     @Override
     public boolean onChunkLoadError(Chunk chunk, boolean cancelable, Exception e) {
-        Log.d(TAG, "onChunkLoadError called");
-        // delegate to the DefaultDashChunkSource
         return dashChunkSource.onChunkLoadError(chunk, cancelable, e);
     }
 }
