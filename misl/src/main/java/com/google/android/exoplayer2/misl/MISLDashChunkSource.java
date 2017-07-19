@@ -17,10 +17,8 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * A DashChunkSource which passes chunk information to its TrackSelection to assist in
- * adaptive track selection.
- *
- * <p>Requires the track selection be an {@link AlgorithmTrackSelection}.
+ * A DashChunkSource which passes chunk information to a {@link ChunkListener} to assist in
+ * adaptive track selection.}.
  */
 
 public class MISLDashChunkSource implements DashChunkSource {
@@ -31,14 +29,16 @@ public class MISLDashChunkSource implements DashChunkSource {
 
         private final DataSource.Factory dataSourceFactory;
         private final int maxSegmentsPerLoad;
+        private final ChunkListener chunkListener;
 
-        public Factory(DataSource.Factory dataSourceFactory) {
-            this(dataSourceFactory, DEFAULT_MAX_SEGMENTS_PER_LOAD);
+        public Factory(DataSource.Factory dataSourceFactory, ChunkListener chunkListener) {
+            this(dataSourceFactory, DEFAULT_MAX_SEGMENTS_PER_LOAD, chunkListener);
         }
 
-        public Factory(DataSource.Factory dataSourceFactory, int maxSegmentsPerLoad) {
+        public Factory(DataSource.Factory dataSourceFactory, int maxSegmentsPerLoad, ChunkListener chunkListener) {
             this.dataSourceFactory = dataSourceFactory;
             this.maxSegmentsPerLoad = maxSegmentsPerLoad;
+            this.chunkListener = chunkListener;
         }
 
         @Override
@@ -49,7 +49,7 @@ public class MISLDashChunkSource implements DashChunkSource {
             DataSource dataSource = dataSourceFactory.createDataSource();
             return new MISLDashChunkSource(manifestLoaderErrorThrower, manifest, periodIndex,
                     adaptationSetIndex, trackSelection, dataSource, elapsedRealtimeOffsetMs,
-                    maxSegmentsPerLoad, enableEventMessageTrack, enableCea608Track);
+                    maxSegmentsPerLoad, enableEventMessageTrack, enableCea608Track, chunkListener);
         }
 
     }
@@ -57,16 +57,16 @@ public class MISLDashChunkSource implements DashChunkSource {
     private final static String TAG = "MISLDashChunkSource";
 
     private DashChunkSource dashChunkSource;
-    private AlgorithmTrackSelection algorithmTrackSelection;
+    private ChunkListener chunkListener;
 
     public MISLDashChunkSource(LoaderErrorThrower manifestLoaderErrorThrower, DashManifest manifest,
                                int periodIndex, int adaptationSetIndex, TrackSelection trackSelection,
                                DataSource dataSource, long elapsedRealtimeOffsetMs, int maxSegmentsPerLoad,
-                               boolean enableEventMessageTrack, boolean enableCea608Track) {
+                               boolean enableEventMessageTrack, boolean enableCea608Track, ChunkListener chunkListener) {
         this.dashChunkSource = new DefaultDashChunkSource(manifestLoaderErrorThrower, manifest, periodIndex,
                 adaptationSetIndex, trackSelection, dataSource, elapsedRealtimeOffsetMs, maxSegmentsPerLoad,
                 enableEventMessageTrack, enableCea608Track);
-        this.algorithmTrackSelection = (AlgorithmTrackSelection)trackSelection;
+        this.chunkListener = chunkListener;
     }
 
     /** Delegates to the {@link DefaultDashChunkSource} */
@@ -119,7 +119,7 @@ public class MISLDashChunkSource implements DashChunkSource {
      */
     @Override
     public void getNextChunk(MediaChunk previous, long playbackPositionUs, ChunkHolder out) {
-        algorithmTrackSelection.giveLastChunk(previous);
+        chunkListener.giveLastChunk(previous);
         dashChunkSource.getNextChunk(previous, playbackPositionUs, out);
     }
 
