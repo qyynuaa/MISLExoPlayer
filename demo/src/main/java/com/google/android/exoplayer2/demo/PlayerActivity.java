@@ -95,7 +95,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public static final String URI_LIST_EXTRA = "uri_list";
   public static final String EXTENSION_LIST_EXTRA = "extension_list";
 
-  private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
+  private static final AlgorithmListener ALGORITHM_LISTENER = new DefaultAlgorithmListener();
   private static final CookieManager DEFAULT_COOKIE_MANAGER;
   static {
     DEFAULT_COOKIE_MANAGER = new CookieManager();
@@ -236,10 +236,12 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     Intent intent = getIntent();
     boolean needNewPlayer = player == null;
     if (needNewPlayer) {
-      TrackSelection.Factory adaptiveTrackSelectionFactory =
-          new DefaultAlgorithmTrackSelection.Factory(BANDWIDTH_METER);
-      trackSelector = new DefaultTrackSelector(adaptiveTrackSelectionFactory);
-      trackSelectionHelper = new TrackSelectionHelper(trackSelector, adaptiveTrackSelectionFactory);
+      AdaptationAlgorithm.Factory basicAlgorithmFactory =
+          new BasicAdaptationAlgorithm.Factory(ALGORITHM_LISTENER);
+      TrackSelection.Factory algorithmTrackSelectionFactory =
+          new DefaultAlgorithmTrackSelection.Factory(basicAlgorithmFactory);
+      trackSelector = new DefaultTrackSelector(algorithmTrackSelectionFactory);
+      trackSelectionHelper = new TrackSelectionHelper(trackSelector, algorithmTrackSelectionFactory);
       lastSeenTrackGroupArray = null;
       eventLogger = new EventLogger(trackSelector);
 
@@ -331,8 +333,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         return new SsMediaSource(uri, buildDataSourceFactory(false),
             new DefaultSsChunkSource.Factory(mediaDataSourceFactory), mainHandler, eventLogger);
       case C.TYPE_DASH:
-        return new MISLDashMediaSource(uri, buildDataSourceFactory(false),
-            new MISLDashChunkSource.Factory(mediaDataSourceFactory), mainHandler, eventLogger);
+        return new DefaultDashMediaSource(uri, buildDataSourceFactory(false),
+            new MISLDashChunkSource.Factory(mediaDataSourceFactory, ALGORITHM_LISTENER), mainHandler, eventLogger);
       case C.TYPE_HLS:
         return new HlsMediaSource(uri, mediaDataSourceFactory, mainHandler, eventLogger);
       case C.TYPE_OTHER:
@@ -389,25 +391,25 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   /**
    * Returns a new DataSource factory.
    *
-   * @param useBandwidthMeter Whether to set {@link #BANDWIDTH_METER} as a listener to the new
+   * @param useAlgorithmListener Whether to set {@link #ALGORITHM_LISTENER} as a listener to the new
    *     DataSource factory.
    * @return A new DataSource factory.
    */
-  private DataSource.Factory buildDataSourceFactory(boolean useBandwidthMeter) {
+  private DataSource.Factory buildDataSourceFactory(boolean useAlgorithmListener) {
     return ((DemoApplication) getApplication())
-        .buildDataSourceFactory(useBandwidthMeter ? BANDWIDTH_METER : null);
+        .buildDataSourceFactory(useAlgorithmListener ? ALGORITHM_LISTENER : null);
   }
 
   /**
    * Returns a new HttpDataSource factory.
    *
-   * @param useBandwidthMeter Whether to set {@link #BANDWIDTH_METER} as a listener to the new
+   * @param useAlgorithmListener Whether to set {@link #ALGORITHM_LISTENER} as a listener to the new
    *     DataSource factory.
    * @return A new HttpDataSource factory.
    */
-  private HttpDataSource.Factory buildHttpDataSourceFactory(boolean useBandwidthMeter) {
+  private HttpDataSource.Factory buildHttpDataSourceFactory(boolean useAlgorithmListener) {
     return ((DemoApplication) getApplication())
-        .buildHttpDataSourceFactory(useBandwidthMeter ? BANDWIDTH_METER : null);
+        .buildHttpDataSourceFactory(useAlgorithmListener ? ALGORITHM_LISTENER : null);
   }
 
   // ExoPlayer.EventListener implementation
