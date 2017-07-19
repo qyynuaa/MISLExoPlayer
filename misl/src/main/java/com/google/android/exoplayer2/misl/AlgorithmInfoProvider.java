@@ -9,10 +9,21 @@ import android.os.SystemClock;
 public interface AlgorithmInfoProvider {
     /**
      * The index of the last segment in the stream.
+     * Used to indicate data is unavailable.
+     */
+    int DATA_NOT_AVAILABLE = -1;
+
+    /**
+     * Indicates whether any data is available.
+     *
+     * <p>Only reports false if <em>no</em> data is available.
      *
      * @return The last segment's index.
+     * @return {@code true} if some data is available, {@code false}
+     * otherwise.
      */
     int lastSegmentNumber();
+    boolean dataIsAvailable();
 
     /**
      * The value of {@link SystemClock#elapsedRealtime()} when the
