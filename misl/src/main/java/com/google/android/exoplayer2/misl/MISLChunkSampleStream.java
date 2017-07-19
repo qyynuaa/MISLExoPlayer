@@ -50,8 +50,6 @@ public class MISLChunkSampleStream<T extends ChunkSource> extends DefaultChunkSa
      */
     @Override
     public void onLoadCompleted(Chunk loadable, long elapsedRealtimeMs, long loadDurationMs) {
-        algorithmTrackSelection.giveLastChunkData(elapsedRealtimeMs, loadDurationMs);
-        Log.d(TAG, "Last chunk data given");
         super.onLoadCompleted(loadable, elapsedRealtimeMs, loadDurationMs);
     }
 }
