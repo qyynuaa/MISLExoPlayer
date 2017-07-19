@@ -154,6 +154,7 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
 
         lastLoadDurationMs = nowMs - transferClockMs;
         lastArrivalTime = nowMs;
+        Log.d(TAG, "Transfer ended");
     }
 
     /**
