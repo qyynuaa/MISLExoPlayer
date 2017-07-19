@@ -50,6 +50,7 @@ public class BasicAdaptationAlgorithm extends AdaptationAlgorithm {
     public int determineIdealIndex(long bufferedDurationUs) {
         double bitrateEstimate = algorithmListener.lastDeliveryRate();
         Log.d(TAG, "Bitrate estimate = " + bitrateEstimate);
+        Log.d(TAG, String.format("Last chunk index is %d", algorithmListener.lastSegmentNumber()));
         int selectedIndex = getTracks().length - 1;
 
         if (bitrateEstimate == NO_ESTIMATE) {
