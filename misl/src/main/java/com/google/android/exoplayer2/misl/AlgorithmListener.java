@@ -8,9 +8,4 @@ import com.google.android.exoplayer2.upstream.TransferListener;
  * listening to the player, and receiving chunks.
  */
 public interface AlgorithmListener extends AlgorithmInfoProvider, ChunkListener,
-        TransferListener, ExoPlayer.EventListener {
-    /**
-     * Indicates data is unavailable.
-     */
-    int DATA_NOT_AVAILABLE = -1;
-}
+        TransferListener, ExoPlayer.EventListener {}
