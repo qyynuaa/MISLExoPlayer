@@ -14,6 +14,9 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.TransferListener;
 
+import static com.google.android.exoplayer2.ExoPlayer.STATE_BUFFERING;
+import static com.google.android.exoplayer2.ExoPlayer.STATE_READY;
+
 /**
  * Collects information and provides it to an {@link AdaptationAlgorithm}.
  */
@@ -25,6 +28,8 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
     private long transferClockMs = DATA_NOT_AVAILABLE;
     private long lastLoadDurationMs = DATA_NOT_AVAILABLE;
     private long lastArrivalTime = DATA_NOT_AVAILABLE;
+    private long stallDurationMs = DATA_NOT_AVAILABLE;
+    private long stallStartMs = DATA_NOT_AVAILABLE;
 
     /**
      * The index of the last segment in the stream.
@@ -204,22 +209,14 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-        Log.d(TAG, String.format("playWhenReady = %b", playWhenReady));
-        switch (playbackState) {
-            case ExoPlayer.STATE_IDLE:
-                Log.d(TAG, "playbackState = IDLE");
-                break;
-            case ExoPlayer.STATE_BUFFERING:
-                Log.d(TAG, "playbackState = BUFFERING");
-                break;
-            case ExoPlayer.STATE_READY:
-                Log.d(TAG, "playbackState = READY");
-                break;
-            case ExoPlayer.STATE_ENDED:
-                Log.d(TAG, "playbackState = ENDED");
-                break;
-            default:
-                Log.d(TAG, "playbackState unrecognised");
+        if (playbackState == STATE_BUFFERING && stallStartMs == DATA_NOT_AVAILABLE) {
+            stallStartMs = SystemClock.elapsedRealtime();
+            Log.d(TAG, "Stall started.");
+        } else if (playbackState == STATE_READY && stallStartMs != DATA_NOT_AVAILABLE) {
+            long nowMs = SystemClock.elapsedRealtime();
+            stallDurationMs = nowMs - stallStartMs;
+            stallStartMs = DATA_NOT_AVAILABLE;
+            Log.d(TAG, String.format("Stall of duration %d ms finished", stallDurationMs));
         }
     }
 
