@@ -19,8 +19,6 @@ import com.google.android.exoplayer2.upstream.TransferListener;
  */
 public class DefaultAlgorithmListener implements AlgorithmListener {
 
-    public final static int DATA_NOT_AVAILABLE = -1;
-
     private final static String TAG = "DefaultAL";
 
     private MediaChunk lastChunk;
