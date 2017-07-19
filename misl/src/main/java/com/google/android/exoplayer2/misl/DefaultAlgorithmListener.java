@@ -118,7 +118,9 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public void giveLastChunk(MediaChunk lastChunk) {
-        this.lastChunk = lastChunk;
+        if (lastChunk != null) {
+            this.lastChunk = lastChunk;
+        }
     }
 
     /**
