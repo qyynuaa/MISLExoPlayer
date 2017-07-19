@@ -1,19 +1,32 @@
 package com.google.android.exoplayer2.misl;
 
+import android.os.SystemClock;
+import android.util.Log;
+
 import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Renderer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.TransferListener;
 
 /**
  * Collects information and provides it to an {@link AdaptationAlgorithm}.
  */
 public class DefaultAlgorithmListener implements AlgorithmListener {
 
+    public final static int DATA_NOT_AVAILABLE = -1;
+
+    private final static String TAG = "DefaultAL";
+
     private MediaChunk lastChunk;
+    private long transferClockMs = DATA_NOT_AVAILABLE;
+    private long lastLoadDurationMs = DATA_NOT_AVAILABLE;
+    private long lastArrivalTime = DATA_NOT_AVAILABLE;
 
     /**
      * The index of the last segment in the stream.
@@ -22,7 +35,7 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public int lastSegmentNumber() {
-        return 0;
+        return lastChunk == null ? DATA_NOT_AVAILABLE : lastChunk.chunkIndex;
     }
 
     /**
@@ -33,7 +46,7 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public long lastArrivalTime() {
-        return 0;
+        return lastArrivalTime;
     }
 
     /**
@@ -43,7 +56,7 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public long lastLoadDurationMs() {
-        return 0;
+        return lastLoadDurationMs;
     }
 
     /**
@@ -64,7 +77,7 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public double lastRepresentationRate() {
-        return 0;
+        return lastChunk == null ? DATA_NOT_AVAILABLE : lastChunk.trackFormat.bitrate;
     }
 
     /**
@@ -74,7 +87,7 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public double lastDeliveryRate() {
-        return 0;
+        return lastChunk == null ? DATA_NOT_AVAILABLE : (lastChunk.bytesLoaded() * 8E3 / lastLoadDurationMs);
     }
 
     /**
@@ -84,7 +97,7 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public double lastActualRate() {
-        return 0;
+        return lastChunk == null ? DATA_NOT_AVAILABLE : (lastChunk.bytesLoaded() * 1E6 / lastChunk.getDurationUs());
     }
 
     /**
@@ -94,7 +107,7 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public long lastByteSize() {
-        return 0;
+        return lastChunk == null ? DATA_NOT_AVAILABLE : lastChunk.bytesLoaded();
     }
 
     /**
@@ -105,7 +118,7 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public void giveLastChunk(MediaChunk lastChunk) {
-
+        this.lastChunk = lastChunk;
     }
 
     /**
@@ -116,7 +129,7 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public void onTransferStart(Object source, DataSpec dataSpec) {
-
+        transferClockMs = SystemClock.elapsedRealtime();
     }
 
     /**
@@ -137,7 +150,10 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public void onTransferEnd(Object source) {
+        long nowMs = SystemClock.elapsedRealtime();
 
+        lastLoadDurationMs = nowMs - transferClockMs;
+        lastArrivalTime = nowMs;
     }
 
     /**
@@ -161,7 +177,7 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      *
      * @param trackGroups     The available tracks. Never null, but may be of length zero.
      * @param trackSelections The track selections for each {@link Renderer}. Never null and always
-     *                        of length {@link #getRendererCount()}, but may contain null elements.
+     *                        of length {@link ExoPlayer#getRendererCount()}, but may contain null elements.
      */
     @Override
     public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
@@ -179,21 +195,37 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
     }
 
     /**
-     * Called when the value returned from either {@link #getPlayWhenReady()} or
-     * {@link #getPlaybackState()} changes.
+     * Called when the value returned from either {@link ExoPlayer#getPlayWhenReady()} or
+     * {@link ExoPlayer#getPlaybackState()} changes.
      *
      * @param playWhenReady Whether playback will proceed when ready.
      * @param playbackState One of the {@code STATE} constants defined in the {@link ExoPlayer}
      */
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-
+        Log.d(TAG, String.format("playWhenReady = %b", playWhenReady));
+        switch (playbackState) {
+            case ExoPlayer.STATE_IDLE:
+                Log.d(TAG, "playbackState = IDLE");
+                break;
+            case ExoPlayer.STATE_BUFFERING:
+                Log.d(TAG, "playbackState = BUFFERING");
+                break;
+            case ExoPlayer.STATE_READY:
+                Log.d(TAG, "playbackState = READY");
+                break;
+            case ExoPlayer.STATE_ENDED:
+                Log.d(TAG, "playbackState = ENDED");
+                break;
+            default:
+                Log.d(TAG, "playbackState unrecognised");
+        }
     }
 
     /**
-     * Called when an error occurs. The playback state will transition to {@link #STATE_IDLE}
+     * Called when an error occurs. The playback state will transition to {@link ExoPlayer#STATE_IDLE}
      * immediately after this method is called. The player instance can still be used, and
-     * {@link #release()} must still be called on the player should it no longer be required.
+     * {@link ExoPlayer#release()} must still be called on the player should it no longer be required.
      *
      * @param error The error.
      */
