@@ -3,7 +3,6 @@ package com.google.android.exoplayer2.misl;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.BaseTrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.upstream.BandwidthMeter;
 
 
 public class DefaultAlgorithmTrackSelection extends BaseTrackSelection
@@ -11,10 +10,10 @@ public class DefaultAlgorithmTrackSelection extends BaseTrackSelection
 
     public static final class Factory implements TrackSelection.Factory {
 
-        private BandwidthMeter bandwidthMeter;
+        private AdaptationAlgorithm.Factory adaptationAlgorithmFactory;
 
-        public Factory(BandwidthMeter bandwidthMeter) {
-            this.bandwidthMeter = bandwidthMeter;
+        public Factory(AdaptationAlgorithm.Factory adaptationAlgorithmFactory) {
+            this.adaptationAlgorithmFactory = adaptationAlgorithmFactory;
         }
 
         /**
@@ -27,8 +26,7 @@ public class DefaultAlgorithmTrackSelection extends BaseTrackSelection
          */
         @Override
         public DefaultAlgorithmTrackSelection createTrackSelection(TrackGroup group, int... tracks) {
-            AdaptationAlgorithm basicAlgorithm = new BasicAdaptationAlgorithm(group, tracks, bandwidthMeter);
-            return new DefaultAlgorithmTrackSelection(basicAlgorithm, group, tracks);
+            return new DefaultAlgorithmTrackSelection(adaptationAlgorithmFactory, group, tracks);
         }
     }
 
@@ -38,9 +36,10 @@ public class DefaultAlgorithmTrackSelection extends BaseTrackSelection
     private int selectedIndex;
     private int reason;
 
-    public DefaultAlgorithmTrackSelection(AdaptationAlgorithm adaptationAlgorithm, TrackGroup group, int[] tracks) {
+    public DefaultAlgorithmTrackSelection(AdaptationAlgorithm.Factory adaptationAlgorithmFactory,
+                                          TrackGroup group, int[] tracks) {
         super(group, tracks);
-        this.algorithm = adaptationAlgorithm;
+        this.algorithm = adaptationAlgorithmFactory.createAlgorithm(this.group, this.tracks);
     }
 
     /**
