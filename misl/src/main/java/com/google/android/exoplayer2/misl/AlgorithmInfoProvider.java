@@ -8,7 +8,6 @@ import android.os.SystemClock;
 
 public interface AlgorithmInfoProvider {
     /**
-     * The index of the last segment in the stream.
      * Used to indicate data is unavailable.
      */
     int DATA_NOT_AVAILABLE = -1;
@@ -18,25 +17,39 @@ public interface AlgorithmInfoProvider {
      *
      * <p>Only reports false if <em>no</em> data is available.
      *
-     * @return The last segment's index.
      * @return {@code true} if some data is available, {@code false}
      * otherwise.
      */
-    int lastSegmentNumber();
     boolean dataIsAvailable();
 
     /**
-     * The value of {@link SystemClock#elapsedRealtime()} when the
-     * last segment finished downloading.
+     * The index of the most recently downloaded chunk.
      *
-     * @return The last downloaded segment's arrival time.
+     * @return The last chunk's index.
+     */
+    int lastChunkIndex();
+
+    /**
+     * The duration of the most recently downloaded chunk, in ms.
+     *
+     * @return The last chunk's duration in ms.
+     */
+    long lastChunkDurationMs();
+
+
+    /**
+     * The value of {@link SystemClock#elapsedRealtime()} when the
+     * most recently downloaded chunk finished downloading.
+     *
+     * @return The last chunk's arrival time.
      */
     long lastArrivalTime();
 
     /**
-     * The length of time it took to load the last segment, in ms.
+     * The length of time it took to load the most recently downloaded
+     * chunk, in ms.
      *
-     * @return The last segment's load duration in ms.
+     * @return The last chunk's load duration in ms.
      */
     long lastLoadDurationMs();
 
@@ -49,30 +62,33 @@ public interface AlgorithmInfoProvider {
     long stallDurationMs();
 
     /**
-     * The representation rate of the last segment, in bits per second.
+     * The representation rate of the most recently downloaded chunk,
+     * in bits per second.
      *
-     * @return The last segment's representation rate in bits per second.
+     * @return The last chunk's representation rate in bits per second.
      */
     double lastRepresentationRate();
 
     /**
-     * The delivery rate of the last segment, in bits per second.
+     * The delivery rate of the most recently downloaded chunk, in bits
+     * per second.
      *
-     * @return The last segment's delivery rate in bits per second.
+     * @return The last chunk's delivery rate in bits per second.
      */
     double lastDeliveryRate();
 
     /**
-     * The actual data rate of the last segment, in bits per second.
+     * The actual data rate of the most recently downloaded chunk, in
+     * bits per second.
      *
-     * @return The last segment's actual rate in bits per second.
+     * @return The last chunk's actual rate in bits per second.
      */
     double lastActualRate();
 
     /**
-     * The size of the last segment, in bytes.
+     * The size of the most recently downloaded chunk, in bytes.
      *
-     * @return The last segment's size in bytes.
+     * @return The last chunk's size in bytes.
      */
     long lastByteSize();
 }
