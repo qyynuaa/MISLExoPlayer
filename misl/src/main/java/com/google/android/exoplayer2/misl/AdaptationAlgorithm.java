@@ -6,6 +6,18 @@ import com.google.android.exoplayer2.source.TrackGroup;
  * An algorithm that determines which track an {@link AlgorithmTrackSelection} should select.
  */
 public abstract class AdaptationAlgorithm {
+
+    public interface Factory {
+        /**
+         * Creates a new algorithm.
+         *
+         * @param group The {@link TrackGroup}.
+         * @param tracks The indices of the selected tracks within the {@link TrackGroup}, in any order.
+         * @return The created algorithm.
+         */
+        AdaptationAlgorithm createAlgorithm(TrackGroup group, int... tracks);
+    }
+
     private final static String TAG = "AdaptationAlgorithm";
     private final TrackGroup group;
     private final int[] tracks;
