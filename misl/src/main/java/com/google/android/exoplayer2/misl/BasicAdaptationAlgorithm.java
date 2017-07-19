@@ -7,6 +7,7 @@ import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DataSource;
 
+import static com.google.android.exoplayer2.misl.AlgorithmListener.DATA_NOT_AVAILABLE;
 import static com.google.android.exoplayer2.upstream.BandwidthMeter.NO_ESTIMATE;
 
 /**
@@ -37,10 +38,12 @@ public class BasicAdaptationAlgorithm extends AdaptationAlgorithm {
     }
 
     private static final String TAG = "BasicAlgorithm";
+    public static final int INITIAL_AVERAGE_RATE = -1;
 
     private final AlgorithmListener algorithmListener;
 
     private int reason;
+    private double averageRate = INITIAL_AVERAGE_RATE;
 
     public BasicAdaptationAlgorithm(TrackGroup group, int[] tracks, AlgorithmListener algorithmListener) {
         super(group, tracks);
@@ -48,20 +51,25 @@ public class BasicAdaptationAlgorithm extends AdaptationAlgorithm {
     }
 
     public int determineIdealIndex(long bufferedDurationUs) {
-        double bitrateEstimate = algorithmListener.lastDeliveryRate();
-        Log.d(TAG, "Bitrate estimate = " + bitrateEstimate);
-        Log.d(TAG, String.format("Last chunk index is %d", algorithmListener.lastSegmentNumber()));
+        double deliveryRate = algorithmListener.lastDeliveryRate();
         int selectedIndex = getTracks().length - 1;
 
-        if (bitrateEstimate == NO_ESTIMATE) {
+        if (deliveryRate != DATA_NOT_AVAILABLE) {
+            updateAverage(deliveryRate);
+        }
+
+        if (averageRate == INITIAL_AVERAGE_RATE) {
             Log.d(TAG, "No bitrate estimate available; choosing lowest-bandwidth stream.");
             setReason(C.SELECTION_REASON_INITIAL);
             return selectedIndex;
         } else {
+            Log.d(TAG, String.format("New bitrate sample = %e", deliveryRate));
+            Log.d(TAG, String.format("Bitrate estimate = %e", averageRate));
+            Log.d(TAG, String.format("Last chunk index is %d", algorithmListener.lastSegmentNumber()));
             for (int i = 0; i < getTracks().length; i++) {
                 int thisBitrate = getGroup().getFormat(getTracks()[i]).bitrate;
 
-                if (thisBitrate < bitrateEstimate || i == getTracks().length - 1) {
+                if (thisBitrate < averageRate || i == getTracks().length - 1) {
                     Log.d(TAG, "Selecting bitrate: " + thisBitrate);
                     selectedIndex = i;
                     break;
@@ -83,5 +91,13 @@ public class BasicAdaptationAlgorithm extends AdaptationAlgorithm {
 
     private void setReason(int newReason) {
         reason = newReason;
+    }
+
+    private void updateAverage(double newSegmentRate) {
+        if (averageRate == INITIAL_AVERAGE_RATE) {
+            averageRate = newSegmentRate;
+        } else {
+            averageRate = 0.8 * averageRate + 0.2 * newSegmentRate;
+        }
     }
 }
