@@ -1,7 +1,5 @@
 package com.google.android.exoplayer2.misl;
 
-import android.os.SystemClock;
-
 /**
  * Provides necessary information to {@link AdaptationAlgorithm}s.
  */
@@ -30,28 +28,28 @@ public interface AlgorithmInfoProvider {
     int lastChunkIndex();
 
     /**
-     * The duration of the most recently downloaded chunk, in ms.
+     * The duration of a downloaded chunk, in ms.
      *
-     * @return The last chunk's duration in ms.
+     * @param chunkIndex The index of the chunk.
+     * @return The duration of the chunk in ms.
      */
-    long lastChunkDurationMs();
-
-
-    /**
-     * The value of {@link SystemClock#elapsedRealtime()} when the
-     * most recently downloaded chunk finished downloading.
-     *
-     * @return The last chunk's arrival time.
-     */
-    long lastArrivalTime();
+    long chunkDurationMs(int chunkIndex);
 
     /**
-     * The length of time it took to load the most recently downloaded
-     * chunk, in ms.
+     * The arrival time of a downloaded chunk, in ms.
      *
-     * @return The last chunk's load duration in ms.
+     * @param chunkIndex The index of the chunk.
+     * @return The arrival time of the chunk in ms.
      */
-    long lastLoadDurationMs();
+    long arrivalTimeMs(int chunkIndex);
+
+    /**
+     * The load duration of a downloaded chunk, in ms.
+     *
+     * @param chunkIndex The index of the chunk.
+     * @return The load duration of the chunk in ms.
+     */
+    long loadDurationMs(int chunkIndex);
 
     /**
      * The length of time the player has stalled for since starting the
@@ -62,33 +60,34 @@ public interface AlgorithmInfoProvider {
     long stallDurationMs();
 
     /**
-     * The representation rate of the most recently downloaded chunk,
-     * in bits per second.
+     * The representation rate of a downloaded chunk, in bits per second.
      *
-     * @return The last chunk's representation rate in bits per second.
+     * @param chunkIndex The index of the chunk.
+     * @return The representation rate of the chunk in bits per second.
      */
-    double lastRepresentationRate();
+    double representationRate(int chunkIndex);
 
     /**
-     * The delivery rate of the most recently downloaded chunk, in bits
-     * per second.
+     * The delivery rate of a downloaded chunk, in bits per second.
      *
-     * @return The last chunk's delivery rate in bits per second.
+     * @param chunkIndex The index of the chunk.
+     * @return The delivery rate of the chunk in bits per second.
      */
-    double lastDeliveryRate();
+    double deliveryRate(int chunkIndex);
 
     /**
-     * The actual data rate of the most recently downloaded chunk, in
-     * bits per second.
+     * The actual data rate of a downloaded chunk, in bits per second.
      *
-     * @return The last chunk's actual rate in bits per second.
+     * @param chunkIndex The index of the chunk.
+     * @return The actual data rate of the chunk in bits per second.
      */
-    double lastActualRate();
+    double actualDataRate(int chunkIndex);
 
     /**
-     * The size of the most recently downloaded chunk, in bytes.
+     * The size of a downloaded chunk, in bits.
      *
-     * @return The last chunk's size in bytes.
+     * @param chunkIndex The index of the chunk.
+     * @return The size of the chunk in bits.
      */
-    long lastByteSize();
+    double size(int chunkIndex);
 }
