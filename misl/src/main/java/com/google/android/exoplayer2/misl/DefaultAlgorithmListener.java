@@ -32,6 +32,19 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
     private long stallStartMs = DATA_NOT_AVAILABLE;
 
     /**
+     * Indicates whether data is available.
+     *
+     * @return true if data is available, false otherwise
+     */
+    @Override
+    public boolean dataIsAvailable() {
+        return lastChunk != null
+                || lastLoadDurationMs != DATA_NOT_AVAILABLE
+                || lastArrivalTime != DATA_NOT_AVAILABLE
+                || stallDurationMs != DATA_NOT_AVAILABLE;
+    }
+
+    /**
      * The index of the last segment in the stream.
      *
      * @return The last segment's index.
@@ -39,6 +52,16 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
     @Override
     public int lastSegmentNumber() {
         return lastChunk == null ? DATA_NOT_AVAILABLE : lastChunk.chunkIndex;
+    }
+
+    /**
+     * The duration of the last segment, in ms.
+     *
+     * @return The duration of the last segment in ms.
+     */
+    @Override
+    public long lastSegmentDurationMs() {
+        return (lastChunk.endTimeUs - lastChunk.startTimeUs) / 1000;
     }
 
     /**
