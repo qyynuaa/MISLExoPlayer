@@ -12,7 +12,8 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSpec;
-import com.google.android.exoplayer2.upstream.TransferListener;
+
+import java.util.ArrayList;
 
 import static com.google.android.exoplayer2.ExoPlayer.STATE_BUFFERING;
 import static com.google.android.exoplayer2.ExoPlayer.STATE_READY;
@@ -22,67 +23,96 @@ import static com.google.android.exoplayer2.ExoPlayer.STATE_READY;
  */
 public class DefaultAlgorithmListener implements AlgorithmListener {
 
+    private class AlgorithmData {
+        public final MediaChunk chunk;
+        public final long loadDurationMs;
+        public final long arrivalTimeMs;
+
+        private AlgorithmData(MediaChunk chunk, long loadDurationMs, long arrivalTimeMs) {
+            this.chunk = chunk;
+            this.loadDurationMs = loadDurationMs;
+            this.arrivalTimeMs = arrivalTimeMs;
+        }
+    }
+
     private final static String TAG = "DefaultAL";
 
+    private ArrayList<AlgorithmData> chunkData = new ArrayList<>();
+
     private MediaChunk lastChunk;
-    private long transferClockMs = DATA_NOT_AVAILABLE;
-    private long lastLoadDurationMs = DATA_NOT_AVAILABLE;
-    private long lastArrivalTime = DATA_NOT_AVAILABLE;
+    private long lastLoadDurationMs;
+    private long lastArrivalTimeMs;
+
+    private MISLLoadControl loadControl;
+
     private long stallDurationMs = DATA_NOT_AVAILABLE;
+    private long transferClockMs = DATA_NOT_AVAILABLE;
     private long stallStartMs = DATA_NOT_AVAILABLE;
 
-    /**
-     * Indicates whether data is available.
-     *
-     * @return true if data is available, false otherwise
-     */
-    @Override
-    public boolean dataIsAvailable() {
-        return lastChunk != null
-                || lastLoadDurationMs != DATA_NOT_AVAILABLE
-                || lastArrivalTime != DATA_NOT_AVAILABLE
-                || stallDurationMs != DATA_NOT_AVAILABLE;
+    public void setLoadControl(MISLLoadControl loadControl) {
+        this.loadControl = loadControl;
     }
 
     /**
-     * The index of the last segment in the stream.
+     * Indicates whether chunk data is available.
      *
-     * @return The last segment's index.
+     * @return true if chunk data is available, false otherwise
      */
     @Override
-    public int lastSegmentNumber() {
-        return lastChunk == null ? DATA_NOT_AVAILABLE : lastChunk.chunkIndex;
+    public boolean chunkDataIsAvailable() {
+        return chunkData != null;
     }
 
     /**
-     * The duration of the last segment, in ms.
+     * The index of the most recently downloaded chunk.
      *
-     * @return The duration of the last segment in ms.
+     * @return The last chunk's index.
      */
     @Override
-    public long lastSegmentDurationMs() {
-        return (lastChunk.endTimeUs - lastChunk.startTimeUs) / 1000;
+    public int lastChunkIndex() {
+        if (chunkData == null) {
+            return DATA_NOT_AVAILABLE;
+        } else {
+            return chunkData.size() - 1;
+        }
     }
 
     /**
-     * The value of {@link SystemClock#elapsedRealtime()} when the
-     * last segment finished downloading.
+     * The duration of a downloaded chunk, in ms.
      *
-     * @return The last downloaded segment's arrival time.
+     * @param chunkIndex The index of the chunk.
+     * @return The duration of the chunk in ms.
      */
     @Override
-    public long lastArrivalTime() {
-        return lastArrivalTime;
+    public long chunkDurationMs(int chunkIndex) {
+        MediaChunk chunk = chunkData.get(chunkIndex).chunk;
+        if (chunk == null) {
+            return DATA_NOT_AVAILABLE;
+        } else {
+            return (chunk.endTimeUs - chunk.startTimeUs);
+        }
     }
 
     /**
-     * The length of time it took to load the last segment, in ms.
+     * The arrival time of a downloaded chunk, in ms.
      *
-     * @return The last segment's load duration in ms.
+     * @param chunkIndex The index of the chunk.
+     * @return The arrival time of the chunk in ms.
      */
     @Override
-    public long lastLoadDurationMs() {
-        return lastLoadDurationMs;
+    public long arrivalTimeMs(int chunkIndex) {
+        return chunkData.get(chunkIndex).arrivalTimeMs;
+    }
+
+    /**
+     * The load duration of a downloaded chunk, in ms.
+     *
+     * @param chunkIndex The index of the chunk.
+     * @return The load duration of the chunk in ms.
+     */
+    @Override
+    public long loadDurationMs(int chunkIndex) {
+        return chunkData.get(chunkIndex).loadDurationMs;
     }
 
     /**
@@ -93,59 +123,108 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public long stallDurationMs() {
-        return 0;
+        return stallDurationMs;
     }
 
     /**
-     * The representation rate of the last segment, in bits per second.
+     * The representation rate of a downloaded chunk, in bits per second.
      *
-     * @return The last segment's representation rate in bits per second.
+     * @param chunkIndex The index of the chunk.
+     * @return The representation rate of the chunk in bits per second.
      */
     @Override
-    public double lastRepresentationRate() {
-        return lastChunk == null ? DATA_NOT_AVAILABLE : lastChunk.trackFormat.bitrate;
+    public double representationRate(int chunkIndex) {
+        MediaChunk chunk = chunkData.get(chunkIndex).chunk;
+        if (chunk == null) {
+            return DATA_NOT_AVAILABLE;
+        } else {
+            return chunkData.get(chunkIndex).chunk.trackFormat.bitrate;
+        }
     }
 
     /**
-     * The delivery rate of the last segment, in bits per second.
+     * The delivery rate of a downloaded chunk, in bits per second.
      *
-     * @return The last segment's delivery rate in bits per second.
+     * @param chunkIndex The index of the chunk.
+     * @return The delivery rate of the chunk in bits per second.
      */
     @Override
-    public double lastDeliveryRate() {
-        return lastChunk == null ? DATA_NOT_AVAILABLE : (lastChunk.bytesLoaded() * 8E3 / lastLoadDurationMs);
+    public double deliveryRate(int chunkIndex) {
+        AlgorithmData data = chunkData.get(chunkIndex);
+        MediaChunk chunk = data.chunk;
+        if (chunk == null) {
+            return DATA_NOT_AVAILABLE;
+        } else {
+            long size = data.chunk.bytesLoaded() * 8;
+            long loadDurationMs = data.loadDurationMs;
+            return size * 1E3 / loadDurationMs;
+        }
     }
 
     /**
-     * The actual data rate of the last segment, in bits per second.
+     * The actual data rate of a downloaded chunk, in bits per second.
      *
-     * @return The last segment's actual rate in bits per second.
+     * @param chunkIndex The index of the chunk.
+     * @return The actual data rate of the chunk in bits per second.
      */
     @Override
-    public double lastActualRate() {
-        return lastChunk == null ? DATA_NOT_AVAILABLE : (lastChunk.bytesLoaded() * 1E6 / lastChunk.getDurationUs());
+    public double actualDataRate(int chunkIndex) {
+        MediaChunk chunk = chunkData.get(chunkIndex).chunk;
+        if (chunk == null) {
+            return DATA_NOT_AVAILABLE;
+        } else {
+            long chunkDurationUs = chunk.endTimeUs - chunk.startTimeUs;
+            long size = chunk.bytesLoaded() * 8;
+
+            return size * 1E6 / chunkDurationUs;
+        }
     }
 
     /**
-     * The size of the last segment, in bytes.
+     * The size of a downloaded chunk, in bits.
      *
-     * @return The last segment's size in bytes.
+     * @param chunkIndex The index of the chunk.
+     * @return The size of the chunk in bits.
      */
     @Override
-    public long lastByteSize() {
-        return lastChunk == null ? DATA_NOT_AVAILABLE : lastChunk.bytesLoaded();
+    public double size(int chunkIndex) {
+        MediaChunk chunk = chunkData.get(chunkIndex).chunk;
+        if (chunk == null) {
+            return DATA_NOT_AVAILABLE;
+        } else {
+            return chunk.bytesLoaded() * 8;
+        }
     }
 
     /**
-     * Gives the listener the last chunk that was downloaded, to be passed to the
-     * adaptation algorithm.
+     * The maximum duration of media that the player will attempt to
+     * buffer, in ms.
+     *
+     * @return The player's maximum buffer length in ms.
+     */
+    @Override
+    public double maxBufferMs() {
+        if (loadControl != null) {
+            return loadControl.getMaxBufferMs();
+        } else {
+            return DATA_NOT_AVAILABLE;
+        }
+    }
+
+    /**
+     * Gives the listener the last chunk that was downloaded.
      *
      * @param lastChunk The last chunk that was downloaded.
      */
     @Override
     public void giveLastChunk(MediaChunk lastChunk) {
-        if (lastChunk != null) {
+        if (lastLoadDurationMs == DATA_NOT_AVAILABLE
+                || lastArrivalTimeMs == DATA_NOT_AVAILABLE) {
             this.lastChunk = lastChunk;
+        } else {
+            this.chunkData.add(new AlgorithmData(lastChunk, lastLoadDurationMs, lastArrivalTimeMs));
+            lastLoadDurationMs = DATA_NOT_AVAILABLE;
+            lastArrivalTimeMs = DATA_NOT_AVAILABLE;
         }
     }
 
@@ -178,11 +257,18 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public void onTransferEnd(Object source) {
+        Log.d(TAG, "Transfer ended");
         long nowMs = SystemClock.elapsedRealtime();
 
-        lastLoadDurationMs = nowMs - transferClockMs;
-        lastArrivalTime = nowMs;
-        Log.d(TAG, "Transfer ended");
+        long loadDurationMs = nowMs - transferClockMs;
+
+        if (lastChunk == null) {
+            lastLoadDurationMs = loadDurationMs;
+            lastArrivalTimeMs = nowMs;
+        } else {
+            chunkData.add(new AlgorithmData(lastChunk, loadDurationMs, nowMs));
+            lastChunk = null;
+        }
     }
 
     /**
