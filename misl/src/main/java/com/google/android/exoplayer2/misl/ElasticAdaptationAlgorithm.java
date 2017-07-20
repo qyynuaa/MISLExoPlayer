@@ -98,6 +98,7 @@ public class ElasticAdaptationAlgorithm extends AdaptationAlgorithm {
             // choose lowest-bitrate stream
             return getGroup().length - 1;
         } else {
+            final int numberOfChunks = lastChunkIndex + 1;
             final double downloadTimeS = infoProvider.loadDurationMs(lastChunkIndex) / 1E3;
             final double lastChunkDurationS = infoProvider.chunkDurationMs(lastChunkIndex) / 1E3;
 
@@ -105,12 +106,12 @@ public class ElasticAdaptationAlgorithm extends AdaptationAlgorithm {
 
             final double queueLengthS = bufferedDurationUs / 1E6;
 
-            int workingAverageWindow = min(lastChunkIndex, averageWindow);
+            int workingAverageWindow = min(numberOfChunks, averageWindow);
             Log.d(TAG, String.format("averageWindow = %d", workingAverageWindow));
 
             double[] rateSamples = new double[workingAverageWindow];
 
-            for (int i = 0; i <= workingAverageWindow; i++) {
+            for (int i = 0; i < workingAverageWindow; i++) {
                 rateSamples[i] = infoProvider.deliveryRate(lastChunkIndex - i);
             }
 
