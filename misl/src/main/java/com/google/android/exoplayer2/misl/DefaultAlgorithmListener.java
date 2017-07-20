@@ -218,7 +218,9 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
      */
     @Override
     public void giveLastChunk(MediaChunk lastChunk) {
-        if (lastLoadDurationMs == DATA_NOT_AVAILABLE
+        if (lastChunk == null) {
+            return;
+        } else if (lastLoadDurationMs == DATA_NOT_AVAILABLE
                 || lastArrivalTimeMs == DATA_NOT_AVAILABLE) {
             this.lastChunk = lastChunk;
         } else {
