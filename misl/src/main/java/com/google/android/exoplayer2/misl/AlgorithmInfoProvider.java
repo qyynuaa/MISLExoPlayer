@@ -11,14 +11,14 @@ public interface AlgorithmInfoProvider {
     int DATA_NOT_AVAILABLE = -1;
 
     /**
-     * Indicates whether any data is available.
+     * Indicates whether any chunk data is available.
      *
-     * <p>Only reports false if <em>no</em> data is available.
+     * <p>Only reports false if <em>no</em> chunk data is available.
      *
-     * @return {@code true} if some data is available, {@code false}
+     * @return {@code true} if some chunk data is available, {@code false}
      * otherwise.
      */
-    boolean dataIsAvailable();
+    boolean chunkDataIsAvailable();
 
     /**
      * The index of the most recently downloaded chunk.
