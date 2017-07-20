@@ -93,11 +93,11 @@ public class ElasticAdaptationAlgorithm extends AdaptationAlgorithm {
      */
     @Override
     public int determineIdealIndex(long bufferedDurationUs) {
-        if (!infoProvider.dataIsAvailable()) {
+        final int lastChunkIndex = infoProvider.lastChunkIndex();
+        if (lastChunkIndex == DATA_NOT_AVAILABLE) {
             // choose lowest-bitrate stream
             return getGroup().length - 1;
         } else {
-            final int lastChunkIndex = infoProvider.lastChunkIndex();
             final double downloadTimeS = infoProvider.loadDurationMs(lastChunkIndex) / 1E3;
             final double lastChunkDurationS = infoProvider.chunkDurationMs(lastChunkIndex) / 1E3;
 
