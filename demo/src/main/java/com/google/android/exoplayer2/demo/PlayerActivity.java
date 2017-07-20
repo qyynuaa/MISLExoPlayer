@@ -273,8 +273,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
       DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this,
           drmSessionManager, extensionRendererMode);
 
-      LoadControl loadControl = new MISLLoadControl();
+      MISLLoadControl loadControl = new MISLLoadControl();
       player = ExoPlayerFactory.newSimpleInstance(renderersFactory, trackSelector, loadControl);
+      ALGORITHM_LISTENER.setLoadControl(loadControl);
       player.addListener(this);
       player.addListener(eventLogger);
       player.addListener(ALGORITHM_LISTENER);
