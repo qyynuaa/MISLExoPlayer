@@ -35,6 +35,7 @@ import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
@@ -237,7 +238,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     boolean needNewPlayer = player == null;
     if (needNewPlayer) {
       AdaptationAlgorithm.Factory basicAlgorithmFactory =
-          new BasicAdaptationAlgorithm.Factory(ALGORITHM_LISTENER);
+          new ElasticAdaptationAlgorithm.Factory(ALGORITHM_LISTENER);
       TrackSelection.Factory algorithmTrackSelectionFactory =
           new DefaultAlgorithmTrackSelection.Factory(basicAlgorithmFactory);
       trackSelector = new DefaultTrackSelector(algorithmTrackSelectionFactory);
@@ -272,7 +273,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
       DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this,
           drmSessionManager, extensionRendererMode);
 
-      player = ExoPlayerFactory.newSimpleInstance(renderersFactory, trackSelector);
+      LoadControl loadControl = new MISLLoadControl();
+      player = ExoPlayerFactory.newSimpleInstance(renderersFactory, trackSelector, loadControl);
       player.addListener(this);
       player.addListener(eventLogger);
       player.addListener(ALGORITHM_LISTENER);
