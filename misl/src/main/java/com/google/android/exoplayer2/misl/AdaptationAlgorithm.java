@@ -46,6 +46,22 @@ public abstract class AdaptationAlgorithm {
     }
 
     /**
+     * Finds the highest data rate less than or equal to a target rate.
+     *
+     * @param targetRate The target rate to compare to.
+     * @return The index of the TrackGroup track with the highest data
+     *     rate that is less than or equal to targetRate.
+     */
+    public int findRateIndex(long targetRate) {
+        for (int i = 0; i < tracks.length; i++) {
+            if (group.getFormat(tracks[i]).bitrate <= targetRate) {
+                return tracks[i];
+            }
+        }
+        return tracks[tracks.length - 1];
+    }
+
+    /**
      * Calculates the index of the TrackGroup track that should be used.
      * @param bufferedDurationUs The duration of media currently buffered in microseconds.
      * @return The index of the TrackGroup track that should be used.
