@@ -90,4 +90,12 @@ public interface AlgorithmInfoProvider {
      * @return The size of the chunk in bits.
      */
     double size(int chunkIndex);
+
+    /**
+     * The maximum duration of media that the player will attempt to
+     * buffer, in ms.
+     *
+     * @return The player's maximum buffer length in ms.
+     */
+    double maxBufferMs();
 }
