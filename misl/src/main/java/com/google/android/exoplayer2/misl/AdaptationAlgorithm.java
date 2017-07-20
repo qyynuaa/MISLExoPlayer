@@ -80,6 +80,14 @@ public abstract class AdaptationAlgorithm {
          */
         public interface AverageType {
             /**
+             * This function transforms the input values before passing them
+             * to the accumulation function.
+             * @param inputValue The value to be transformed.
+             * @return The value to be input to {@link #accumulationFunction}.
+             */
+            double transformationFunction(double inputValue);
+
+            /**
              * This function is applied to each input value in turn,
              * collecting a cumulative result.
              *
@@ -87,7 +95,7 @@ public abstract class AdaptationAlgorithm {
              * @param newElement The next value to process.
              * @return The pre-total average value.
              */
-            public double accumulationFunction(double cumulativeValue, double newElement);
+            double accumulationFunction(double cumulativeValue, double newElement);
 
             /**
              * This function is applied to the pre-total average value, to give the final value.
@@ -97,7 +105,7 @@ public abstract class AdaptationAlgorithm {
              * @param numberOfElements The number of input values.
              * @return The average of the input values.
              */
-            public double totalFunction(double preTotal, double numberOfElements);
+            double totalFunction(double preTotal, double numberOfElements);
         }
 
         /**
@@ -105,6 +113,11 @@ public abstract class AdaptationAlgorithm {
          */
         public enum Pythagorean implements AverageType {
             ARITHMETIC {
+                @Override
+                public double transformationFunction(double inputValue) {
+                    return inputValue;
+                }
+
                 @Override
                 public double accumulationFunction(double cumulativeValue, double newElement) {
                     return cumulativeValue + newElement;
@@ -117,8 +130,13 @@ public abstract class AdaptationAlgorithm {
             },
             HARMONIC {
                 @Override
+                public double transformationFunction(double inputValue) {
+                    return 1 / inputValue;
+                }
+
+                @Override
                 public double accumulationFunction(double cumulativeValue, double newElement) {
-                    return cumulativeValue + 1 / newElement;
+                    return cumulativeValue + newElement;
                 }
 
                 @Override
@@ -127,6 +145,10 @@ public abstract class AdaptationAlgorithm {
                 }
             },
             GEOMETRIC {
+                @Override
+                public double transformationFunction(double inputValue) {
+                    return inputValue;
+                }
                 @Override
                 public double accumulationFunction(double cumulativeValue, double newElement) {
                     return cumulativeValue * newElement;
@@ -162,10 +184,11 @@ public abstract class AdaptationAlgorithm {
             if (values.length == 0) {
                 return 0;
             } else {
-                double cumulativeValue = values[0];
+                double cumulativeValue = type.transformationFunction(values[0]);
                 if (values.length > 1) {
                     for (int i = 1; i < values.length; i++) {
-                        cumulativeValue = type.accumulationFunction(cumulativeValue, values[i]);
+                        double inputValue = values[i];
+                        cumulativeValue = type.accumulationFunction(cumulativeValue, type.transformationFunction(inputValue));
                     }
                 }
                 return type.totalFunction(cumulativeValue, values.length);
