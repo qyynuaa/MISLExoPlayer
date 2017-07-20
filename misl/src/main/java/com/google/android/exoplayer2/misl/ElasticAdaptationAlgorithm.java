@@ -1,12 +1,18 @@
 package com.google.android.exoplayer2.misl;
 
+import android.util.Log;
+
 import com.google.android.exoplayer2.source.TrackGroup;
+
+import static java.lang.Math.min;
 
 /**
  * The MISL Elastic adaptation algorithm.
  */
 
 public class ElasticAdaptationAlgorithm extends AdaptationAlgorithm {
+
+    private static final String TAG = "Elastic";
 
     private static final int DEFAULT_AVERAGE_WINDOW = 5;
     private static final double DEFAULT_K_P = 0.01;
@@ -16,6 +22,7 @@ public class ElasticAdaptationAlgorithm extends AdaptationAlgorithm {
     private int averageWindow;
     private double k_p;
     private double k_i;
+    private double staticAlgParameter;
 
     /**
      * Creates a new algorithm.
@@ -55,7 +62,45 @@ public class ElasticAdaptationAlgorithm extends AdaptationAlgorithm {
      */
     @Override
     public int determineIdealIndex(long bufferedDurationUs) {
-        return 0;
+        if (!infoProvider.dataIsAvailable()) {
+            // choose lowest-bitrate stream
+            return getGroup().length - 1;
+        } else {
+            final int lastChunkIndex = infoProvider.lastChunkIndex();
+            final double downloadTimeS = infoProvider.loadDurationMs(lastChunkIndex) / 1E3;
+            final double lastChunkDurationS = infoProvider.chunkDurationMs(lastChunkIndex) / 1E3;
+
+            final double elasticTargetQueueS = infoProvider.maxBufferMs() / 1E6 * lastChunkDurationS;
+
+            final double queueLengthS = bufferedDurationUs / 1E6;
+
+            int workingAverageWindow = min(lastChunkIndex, averageWindow);
+            Log.d(TAG, String.format("averageWindow = %d", workingAverageWindow));
+
+            double[] rateSamples = new double[workingAverageWindow];
+
+            for (int i = 0; i <= workingAverageWindow; i++) {
+                rateSamples[i] = infoProvider.deliveryRate(lastChunkIndex - i);
+            }
+
+            double averageRateEstimate = new Average(Average.Pythagorean.HARMONIC, rateSamples).value();
+
+            Log.d(TAG, String.format("averageRateEstimate = %f", averageRateEstimate));
+
+            staticAlgParameter += downloadTimeS * (queueLengthS - elasticTargetQueueS);
+
+            Log.d(TAG, String.format("staticAlgParameter = %f", staticAlgParameter));
+
+            double targetRate = averageRateEstimate / (1 - k_p * queueLengthS - k_i * staticAlgParameter);
+
+            if (targetRate <= 0) {
+                targetRate = 0;
+            }
+
+            Log.d(TAG, String.format("targetRate = %f", targetRate));
+
+            return findRateIndex((long)targetRate);
+        }
     }
 
     @Override
