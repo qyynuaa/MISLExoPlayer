@@ -51,7 +51,8 @@ public class BasicAdaptationAlgorithm extends AdaptationAlgorithm {
     }
 
     public int determineIdealIndex(long bufferedDurationUs) {
-        double deliveryRate = algorithmListener.lastDeliveryRate();
+        int lastChunkIndex = algorithmListener.lastChunkIndex();
+        double deliveryRate = algorithmListener.deliveryRate(lastChunkIndex);
         int selectedIndex = getTracks().length - 1;
 
         if (deliveryRate != DATA_NOT_AVAILABLE) {
@@ -65,7 +66,7 @@ public class BasicAdaptationAlgorithm extends AdaptationAlgorithm {
         } else {
             Log.d(TAG, String.format("New bitrate sample = %e", deliveryRate));
             Log.d(TAG, String.format("Bitrate estimate = %e", averageRate));
-            Log.d(TAG, String.format("Last chunk index is %d", algorithmListener.lastSegmentNumber()));
+            Log.d(TAG, String.format("Last chunk index (internal) is %d", lastChunkIndex));
             for (int i = 0; i < getTracks().length; i++) {
                 int thisBitrate = getGroup().getFormat(getTracks()[i]).bitrate;
 
