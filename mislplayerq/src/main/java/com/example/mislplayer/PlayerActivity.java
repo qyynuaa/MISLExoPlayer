@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.transition.Transition;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -37,6 +38,7 @@ import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
+import com.google.android.exoplayer2.upstream.TransferListener;
 import com.google.android.exoplayer2.util.Util;
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,12 +67,12 @@ import com.opencsv.CSVReader;
         private String videoInfo;
         private int segmentNumber = 0;
         public static DashMediaSource videoSource;
-        public static DashMediaSourceListener dMSL;
+        public static TransitionalAlgorithmListener dMSL = new TransitionalAlgorithmListener();
         public Thread t;
         public static ArrayList<FutureSegmentInfos> futureSegmentInfos;
         public static ArrayList<Integer> reprLevel;
         public static int beginningIndex;
-        public static DefaultDashChunkSource2.Factory df;
+        public static MISLDashChunkSource.Factory df;
         public static String ALGORITHM_TYPE;
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -102,19 +104,16 @@ import com.opencsv.CSVReader;
             // Uri uri = Uri.parse("http://yt-dash-mse-test.commondatastorage.googleapis.com/media/oops-20120802-manifest.mpd");
 
             //Provides instances of DataSource from which streams of data can be read.
-            DataSource.Factory dataSourceFactory = buildDataSourceFactory2(BANDWIDTH_METER);
+            DataSource.Factory dataSourceFactory = buildDataSourceFactory2(dMSL);
 
             //Provides instances of TrackSelection, this will decide which segments we will download later
             TrackSelection.Factory videoTrackSelectionFactory = chooseAlgorithm(ALGORITHM_TYPE);
 
-            // Listens to media segments request, downloads ...
-            dMSL = new DashMediaSourceListener();
-
             //Provides instances of DashChunkSource
-            df = new DefaultDashChunkSource2.Factory(dataSourceFactory);
+            df = new MISLDashChunkSource.Factory(dataSourceFactory, dMSL);
 
             // Our video source media, we give it an URL, and all the stuff before
-            videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, mainHandler, dMSL);
+            videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, null, null);
 
             //Used to play media indefinitely (loop)
             LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
@@ -265,12 +264,12 @@ import com.opencsv.CSVReader;
             return -1;
         }
 
-        private DataSource.Factory buildDataSourceFactory2(DefaultBandwidthMeter2 bandwidthMeter) {
-            return new DefaultDataSourceFactory(this, bandwidthMeter, buildHttpDataSourceFactory2(bandwidthMeter));
+        private DataSource.Factory buildDataSourceFactory2(TransferListener<? super DataSource> transferListener) {
+            return new DefaultDataSourceFactory(this, transferListener, buildHttpDataSourceFactory2(transferListener));
         }
 
-        private HttpDataSource.Factory buildHttpDataSourceFactory2(DefaultBandwidthMeter2 bandwidthMeter) {
-            return new DefaultHttpDataSourceFactory("MyPlayer", bandwidthMeter);
+        private HttpDataSource.Factory buildHttpDataSourceFactory2(TransferListener<? super DataSource> transferListener) {
+            return new DefaultHttpDataSourceFactory("MyPlayer", transferListener);
         }
 
         private void getInfosVideo() {

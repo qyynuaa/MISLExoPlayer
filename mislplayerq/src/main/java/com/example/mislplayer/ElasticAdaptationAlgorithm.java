@@ -4,7 +4,7 @@ import android.util.Log;
 
 import com.google.android.exoplayer2.source.TrackGroup;
 
-import static com.google.android.exoplayer2.misl.AlgorithmInfoProvider.DATA_NOT_AVAILABLE;
+import static com.example.mislplayer.AlgorithmInfoProvider.DATA_NOT_AVAILABLE;
 import static java.lang.Math.min;
 
 /**

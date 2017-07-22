@@ -3,7 +3,9 @@ package com.example.mislplayer.MISL_Algorithm;
 import android.util.Log;
 
 import com.example.mislplayer.DefaultDashChunkSource2;
+import com.example.mislplayer.MISLDashChunkSource;
 import com.example.mislplayer.PlayerActivity;
+import com.example.mislplayer.TransitionalAlgorithmListener;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.source.TrackGroup;
@@ -102,7 +104,7 @@ public class DASHTrackSelection extends BaseTrackSelection {
     public static final int DEFAULT_MAX_DURATION_FOR_QUALITY_DECREASE_MS = 25000;
     public static final int DEFAULT_MIN_DURATION_TO_RETAIN_AFTER_DISCARD_MS = 25000;
     public static final float DEFAULT_BANDWIDTH_FRACTION = 0.75f;
-    public DefaultDashChunkSource2.Factory df= PlayerActivity.df;
+    public MISLDashChunkSource.Factory df= PlayerActivity.df;
     private final BandwidthMeter bandwidthMeter;
     private final int maxInitialBitrate;
     private final long minDurationForQualityIncreaseUs;

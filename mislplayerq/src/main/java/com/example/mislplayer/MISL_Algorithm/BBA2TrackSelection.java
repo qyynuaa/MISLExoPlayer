@@ -5,7 +5,9 @@ import com.example.mislplayer.DashMediaSourceListener;
 import com.example.mislplayer.DefaultDashChunkSource2;
 import com.example.mislplayer.FutureSegmentInfos;
 import com.example.mislplayer.LogSegment;
+import com.example.mislplayer.MISLDashChunkSource;
 import com.example.mislplayer.PlayerActivity;
+import com.example.mislplayer.TransitionalAlgorithmListener;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.Format;
@@ -21,9 +23,9 @@ import com.google.android.exoplayer2.upstream.BandwidthMeter;
 public class BBA2TrackSelection extends BaseTrackSelection {
     private int inc=0;
     public static int m_staticAlgPar = 0;
-    public DefaultDashChunkSource2.Factory df= PlayerActivity.df;
     public DefaultLoadControl loadControl=PlayerActivity.loadControl;
-    public DashMediaSourceListener dMSL=PlayerActivity.dMSL;
+    public MISLDashChunkSource.Factory df= PlayerActivity.df;
+    public TransitionalAlgorithmListener dMSL=PlayerActivity.dMSL;
     public static final class Factory implements TrackSelection.Factory {
 
         private final BandwidthMeter bandwidthMeter;
