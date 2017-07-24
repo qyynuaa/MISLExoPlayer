@@ -101,9 +101,6 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         if(PlayerActivity.ALGORITHM_TYPE.equals("OSCAR-H")) {
             parameterObject = new OscarParameters(0.999, 0.000, 0.5, 10, 10, 2, 0, 1, 4);
         }
-        else if(PlayerActivity.ALGORITHM_TYPE.equals("ARBITER")){
-            parameterObject = new ArbiterParameters(10,0.4,0.3,0.5,1.5,5);
-        }
 
         logSegment = new LogSegment(segmentNumber, arrivalTimeMs,
                 loadDurationMs, stallDurationMs, representationLevelKbps,

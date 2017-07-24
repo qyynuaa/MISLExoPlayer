@@ -199,7 +199,7 @@ import com.opencsv.CSVReader;
                     return new OscarHTrackSelection.Factory(BANDWIDTH_METER);
                 case "ARBITER":
                     Log.d("NOTE","ARBITER has been chosen.");
-                    return new ArbiterTrackSelection.Factory(BANDWIDTH_METER);
+                    return new ArbiterTrackSelection.Factory();
                 case "BBA2":
                     Log.d("NOTE","BBA2 has been chosen.");
                     return new BBA2TrackSelection.Factory(BANDWIDTH_METER);
