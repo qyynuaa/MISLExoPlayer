@@ -68,7 +68,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
         if (loadDurationMs > 0) {
             /** The delivery rate of the chunk, in kbps. */
-            deliveryRateKbps = byteSize / loadDurationMs;
+            deliveryRateKbps = byteSize * 8 / loadDurationMs;
         }
 
         /** The amount of time the player has spent stalling, in ms. */
