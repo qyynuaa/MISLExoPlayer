@@ -147,7 +147,7 @@ public class ElasticTrackSelection extends BaseTrackSelection {
             // skipping rate adaptation – log details and return
             return -1;
         } else {
-            final double elasticTargetQueueS = PlayerActivity.loadControl.getMaxBufferUs() / 1E6 * lastSegmentDurationS;
+            final double elasticTargetQueueS = PlayerActivity.loadControl.getMaxBufferUs() / 1E6;
 
             final double queueLengthS = bufferedDurationUs / 1E6;
 
