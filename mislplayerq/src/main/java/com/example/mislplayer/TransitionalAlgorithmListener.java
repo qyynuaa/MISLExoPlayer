@@ -96,16 +96,10 @@ public class TransitionalAlgorithmListener implements ChunkListener,
             Log.d(TAG, String.format("Delivery rate = %d kbps", deliveryRateKbps));
         }
 
-        DashParameters parameterObject = null;
-
-        if(PlayerActivity.ALGORITHM_TYPE.equals("OSCAR-H")) {
-            parameterObject = new OscarParameters(0.999, 0.000, 0.5, 10, 10, 2, 0, 1, 4);
-        }
-
         logSegment = new LogSegment(segmentNumber, arrivalTimeMs,
                 loadDurationMs, stallDurationMs, representationLevelKbps,
                 deliveryRateKbps, actualRatebps, byteSize, bufferLevelMs,
-                segmentDurationMs, parameterObject);
+                segmentDurationMs, null);
 
         allSegLog.add(logSegment);
         this.lastChunk = lastChunk;
