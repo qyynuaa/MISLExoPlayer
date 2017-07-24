@@ -14,6 +14,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
+import com.example.mislplayer.MISL_Algorithm.AdaptationAlgorithmType;
 import com.example.mislplayer.MISL_Algorithm.ArbiterTrackSelection;
 import com.example.mislplayer.MISL_Algorithm.BBA2TrackSelection;
 import com.example.mislplayer.MISL_Algorithm.OscarHTrackSelection;
@@ -113,7 +114,32 @@ public class MainActivity extends Activity  {
     public void sendMessage(String algorithmType)
     {
         Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
-        intent.putExtra("ALGORITHM TYPE",algorithmType);
+        AdaptationAlgorithmType type;
+
+        switch (algorithmType) {
+            case "basic_exoplayer":
+                type = AdaptationAlgorithmType.BASIC_EXOPLAYER;
+                break;
+            case "basic_adaptive":
+                type = AdaptationAlgorithmType.BASIC_ADAPTIVE;
+                break;
+            case "bba2":
+                type = AdaptationAlgorithmType.BBA2;
+                break;
+            case "oscar_h":
+                type = AdaptationAlgorithmType.OSCAR_H;
+                break;
+            case "arbiter":
+                type = AdaptationAlgorithmType.ARBITER;
+                break;
+            case "elastic":
+                type = AdaptationAlgorithmType.ELASTIC;
+                break;
+            default:
+                throw new IllegalArgumentException(
+                        "Unrecognised adaptation algorithm");
+        }
+        intent.putExtra("com.example.misl.AlgorithmType", type);
         startActivity(intent);
     }
 

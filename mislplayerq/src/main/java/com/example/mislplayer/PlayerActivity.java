@@ -7,10 +7,11 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.transition.Transition;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+
+import com.example.mislplayer.MISL_Algorithm.AdaptationAlgorithmType;
 import com.example.mislplayer.MISL_Algorithm.ArbiterTrackSelection;
 import com.example.mislplayer.MISL_Algorithm.BBA2TrackSelection;
 import com.example.mislplayer.MISL_Algorithm.DASHTrackSelection;
@@ -34,7 +35,6 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.ui.PlaybackControlView;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
@@ -45,12 +45,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.concurrent.Future;
 
 import com.opencsv.CSVReader;
 
 
-    public class PlayerActivity extends Activity implements View.OnClickListener,ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
+    public class PlayerActivity extends Activity
+            implements View.OnClickListener, ExoPlayer.EventListener,
+            PlaybackControlView.VisibilityListener {
 
 
         private Context userAgent = this;
@@ -74,7 +75,7 @@ import com.opencsv.CSVReader;
         public static ArrayList<Integer> reprLevel;
         public static int beginningIndex;
         public static MISLDashChunkSource.Factory df;
-        public static String ALGORITHM_TYPE;
+        private AdaptationAlgorithmType algorithmType;
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -84,7 +85,7 @@ import com.opencsv.CSVReader;
 
             // To choose the right factory for TrackSelection (chooseAlgorithm)
             // AND  useful later for downloaded segments, to know which parameters to store given a specific algorithm,
-            ALGORITHM_TYPE=i.getStringExtra("ALGORITHM TYPE");
+            algorithmType = (AdaptationAlgorithmType) i.getSerializableExtra("com.example.misl.AlgorithmType");
 
             mainHandler = new Handler();
             setContentView(R.layout.activity_main);
@@ -108,7 +109,7 @@ import com.opencsv.CSVReader;
             DataSource.Factory dataSourceFactory = buildDataSourceFactory2(dMSL);
 
             //Provides instances of TrackSelection, this will decide which segments we will download later
-            TrackSelection.Factory videoTrackSelectionFactory = chooseAlgorithm(ALGORITHM_TYPE);
+            TrackSelection.Factory videoTrackSelectionFactory = chooseAlgorithm(algorithmType);
 
             //Will be responsible of choosing right TrackSelections
             trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
@@ -186,29 +187,31 @@ import com.opencsv.CSVReader;
         }
 
         //Choose our algorithm given the button selected in the previous Activity
-        public TrackSelection.Factory chooseAlgorithm (String name){
-            switch (name){
-                case "BASIC_EXOPLAYER":
+        public TrackSelection.Factory chooseAlgorithm (
+                AdaptationAlgorithmType algorithmType) {
+            switch (algorithmType){
+                case BASIC_EXOPLAYER:
                     Log.d("NOTE","BASIC_EXOPLAYER has been chosen.");
                     return new AdaptiveTrackSelection.Factory(BANDWIDTH_METER);
-                case "BASIC_ADAPTIVE":
+                case BASIC_ADAPTIVE:
                     Log.d("NOTE","BASIC_ADAPTIVE has been chosen.");
                     return new DASHTrackSelection.Factory(BANDWIDTH_METER);
-                case "OSCAR-H":
+                case OSCAR_H:
                     Log.d("NOTE","OSCAR-H has been chosen.");
                     return new OscarHTrackSelection.Factory();
-                case "ARBITER":
+                case ARBITER:
                     Log.d("NOTE","ARBITER has been chosen.");
                     return new ArbiterTrackSelection.Factory();
-                case "BBA2":
+                case BBA2:
                     Log.d("NOTE","BBA2 has been chosen.");
                     return new BBA2TrackSelection.Factory();
-                case "ELASTIC":
+                case ELASTIC:
                     Log.d("NOTE", "ELASTIC has been chosen.");
                     return new ElasticTrackSelection.Factory();
+                default:
+                    throw new IllegalArgumentException(
+                            "Unrecognised algorithm");
             }
-            Log.d("ERROR","ALGORITHM NOT FOUND");
-            return new AdaptiveTrackSelection.Factory(BANDWIDTH_METER);
         }
 
         // Here we use our CSV file to obtain all future segment sizes of our media content. Will be used in our algorithms

@@ -116,18 +116,8 @@ public class DashMediaSourceListener implements AdaptiveMediaSourceEventListener
                 ExoPlayerListener.setStallDuration(0);
             }
 
-            if(PlayerActivity.ALGORITHM_TYPE.equals("OSCAR-H")) {
-                Log.d("OSCAR","oscar parameters");
-                OscarParameters oscP = new OscarParameters(0.999, 0.000, 0.5, 10, 10, 2, 0, 1, 4);
-                logSegment = new LogSegment(segmentNumber, arrivalTime, deliveryTime, stallDuration, repLevel, deliveryRate, actualRate, byteSize, bufferLevel, segmentDuration, oscP);
-            }
-            else if(PlayerActivity.ALGORITHM_TYPE.equals("ARBITER")){
-                ArbiterParameters arbiterParameters = new ArbiterParameters(10,0.4,0.3,0.5,1.5,5);
-                logSegment = new LogSegment(segmentNumber, arrivalTime, deliveryTime, stallDuration, repLevel, deliveryRate, actualRate, byteSize, bufferLevel, segmentDuration, arbiterParameters);
-            }
-            else if(PlayerActivity.ALGORITHM_TYPE.equals("BASIC_EXOPLAYER") || PlayerActivity.ALGORITHM_TYPE.equals("BBA2") || PlayerActivity.ALGORITHM_TYPE.equals("BASIC_ADAPTIVE")){
-                logSegment = new LogSegment(segmentNumber, arrivalTime, deliveryTime, stallDuration, repLevel, deliveryRate, actualRate, byteSize, bufferLevel, segmentDuration, null);
-            }
+            logSegment = new LogSegment(segmentNumber, arrivalTime, deliveryTime, stallDuration, repLevel, deliveryRate, actualRate, byteSize, bufferLevel, segmentDuration, null);
+
             allSegLog.add(i, logSegment);
             Log.d("LSN1",logSegment.getSegNumber()+"");
             i++;
