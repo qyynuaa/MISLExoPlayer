@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.example.mislplayer.DashMediaSourceListener;
 import com.example.mislplayer.PlayerActivity;
+import com.example.mislplayer.TransitionalAlgorithmListener;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.BaseTrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -18,12 +19,23 @@ public class ElasticTrackSelection extends BaseTrackSelection {
 
     public static final class Factory implements TrackSelection.Factory {
 
+        private static final int DEFAULT_ELASTIC_AVERAGE_WINDOW = 5;
+        private static final double DEFAULT_K_P = 0.01;
+        private static final double DEFAULT_K_I = 0.001;
+
         private final int elasticAverageWindow;
         private final double k_p;
         private final double k_i;
 
         /**
-         * Sets parameters for an ElasticTrackSelection, which can be created later.
+         * Creates an ElasticTrackSelection factory using default values.
+         */
+        public Factory() {
+            this(DEFAULT_ELASTIC_AVERAGE_WINDOW, DEFAULT_K_P, DEFAULT_K_I);
+        }
+
+        /**
+         * Creates an ElasticTrackSelection factory by specifying the algorithm parameters.
          *
          * @param elasticAverageWindow The number of previous rate samples to consider.
          * @param k_p
@@ -118,18 +130,18 @@ public class ElasticTrackSelection extends BaseTrackSelection {
                 group->download_segment_index + 1 - number of downloaded segments
         */
 
-        if (DashMediaSourceListener.logSegment == null) {
+        if (TransitionalAlgorithmListener.logSegment == null) {
             // select lowest rate
             return length - 1;
         }
 
 
-        final int segmentIndex = DashMediaSourceListener.logSegment.getSegNumber();
+        final int segmentIndex = TransitionalAlgorithmListener.logSegment.getSegNumber();
 
-        final double totalSizeBytes = DashMediaSourceListener.logSegment.getByteSize();
-        final double bytesPerSecond = DashMediaSourceListener.logSegment.getDeliveryRate();
-        final double downloadTimeS = DashMediaSourceListener.logSegment.getDeliveryTime() / 1E3;
-        final double lastSegmentDurationS = DashMediaSourceListener.logSegment.getSegmentDuration() / 1E3;
+        final double totalSizeBytes = TransitionalAlgorithmListener.logSegment.getByteSize();
+        final double bytesPerSecond = TransitionalAlgorithmListener.logSegment.getDeliveryRate();
+        final double downloadTimeS = TransitionalAlgorithmListener.logSegment.getDeliveryTime() / 1E3;
+        final double lastSegmentDurationS = TransitionalAlgorithmListener.logSegment.getSegmentDuration() / 1E3;
 
         if (totalSizeBytes == 0 || bytesPerSecond == 0 || lastSegmentDurationS == 0) {
             // skipping rate adaptation – log details and return
@@ -140,24 +152,21 @@ public class ElasticTrackSelection extends BaseTrackSelection {
             final double queueLengthS = bufferedDurationUs / 1E6;
 
             int averageWindow = min(segmentIndex, elasticAverageWindow);
-            Log.d(TAG, String.format("averageWindow = %d", averageWindow));
 
             double[] rateSamples = new double[averageWindow];
 
             for (int i = 1; i <= averageWindow; i++) {
-                Log.d(TAG, String.format("Index = %d", i));
-
                 // rateSamples is in bits/second
                 rateSamples[i - 1] = PlayerActivity.dMSL.getSegInfos().get(segmentIndex - i).getDeliveryRate() * 1E3;
             }
 
             double averageRateEstimate = getAverageRate(rateSamples);
 
-            Log.d(TAG, String.format("averageRateEstimate = %f", averageRateEstimate));
+            Log.d(TAG, String.format("averageRateEstimate = %f bps", averageRateEstimate));
 
             staticAlgParameter += downloadTimeS * (queueLengthS - elasticTargetQueueS);
 
-            Log.d(TAG, String.format("staticAlgParameter = %f", staticAlgParameter));
+            Log.d(TAG, String.format("staticAlgParameter = %f s", staticAlgParameter));
 
             double targetRate = averageRateEstimate / (1 - k_p * queueLengthS - k_i * staticAlgParameter);
 
@@ -165,7 +174,7 @@ public class ElasticTrackSelection extends BaseTrackSelection {
                 targetRate = 0;
             }
 
-            Log.d(TAG, String.format("targetRate = %f", targetRate));
+            Log.d(TAG, String.format("targetRate = %f bps", targetRate));
 
             return findRateIndex(targetRate);
         }
