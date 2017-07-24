@@ -43,6 +43,10 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      */
     @Override
     public void giveLastChunk(MediaChunk lastChunk) {
+        if (lastChunk == null) {
+            return;
+        }
+
         int segmentNumber = lastChunk.chunkIndex;
 
         /** The duration of the segment in ms. */
