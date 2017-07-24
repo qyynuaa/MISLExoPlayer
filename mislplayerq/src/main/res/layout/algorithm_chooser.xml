@@ -89,6 +89,14 @@
                 android:text="BBA2"
                 android:textColor="@android:color/white" />
 
+            <RadioButton
+                android:id="@+id/elastic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.38"
+                android:text="ELASTIC"
+                android:textColor="@android:color/white" />
+
             <Button
                 android:id="@+id/validate"
                 android:layout_width="match_parent"

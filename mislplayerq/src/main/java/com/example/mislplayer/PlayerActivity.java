@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.example.mislplayer.MISL_Algorithm.ArbiterTrackSelection;
 import com.example.mislplayer.MISL_Algorithm.BBA2TrackSelection;
 import com.example.mislplayer.MISL_Algorithm.DASHTrackSelection;
+import com.example.mislplayer.MISL_Algorithm.ElasticTrackSelection;
 import com.example.mislplayer.MISL_Algorithm.OscarHTrackSelection;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
@@ -202,6 +203,9 @@ import com.opencsv.CSVReader;
                 case "BBA2":
                     Log.d("NOTE","BBA2 has been chosen.");
                     return new BBA2TrackSelection.Factory(BANDWIDTH_METER);
+                case "ELASTIC":
+                    Log.d("NOTE", "ELASTIC has been chosen.");
+                    return new ElasticTrackSelection.Factory();
             }
             Log.d("ERROR","ALGORITHM NOT FOUND");
             return new AdaptiveTrackSelection.Factory(BANDWIDTH_METER);
