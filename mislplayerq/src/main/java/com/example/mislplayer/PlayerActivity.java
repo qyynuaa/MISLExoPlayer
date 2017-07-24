@@ -202,7 +202,7 @@ import com.opencsv.CSVReader;
                     return new ArbiterTrackSelection.Factory();
                 case "BBA2":
                     Log.d("NOTE","BBA2 has been chosen.");
-                    return new BBA2TrackSelection.Factory(BANDWIDTH_METER);
+                    return new BBA2TrackSelection.Factory();
                 case "ELASTIC":
                     Log.d("NOTE", "ELASTIC has been chosen.");
                     return new ElasticTrackSelection.Factory();

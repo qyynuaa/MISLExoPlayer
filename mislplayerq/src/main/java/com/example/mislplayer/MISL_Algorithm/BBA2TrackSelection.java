@@ -1,8 +1,6 @@
 package com.example.mislplayer.MISL_Algorithm;
 
 import android.util.Log;
-import com.example.mislplayer.DashMediaSourceListener;
-import com.example.mislplayer.DefaultDashChunkSource2;
 import com.example.mislplayer.FutureSegmentInfos;
 import com.example.mislplayer.LogSegment;
 import com.example.mislplayer.MISLDashChunkSource;
@@ -14,134 +12,38 @@ import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.BaseTrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.upstream.BandwidthMeter;
 
 /**
- * Created by Quentin L on 05/07/2017.
+ * Uses the BBA2 adaptation algorithm to select tracks.
  */
-
 public class BBA2TrackSelection extends BaseTrackSelection {
-    private int inc=0;
-    public static int m_staticAlgPar = 0;
-    public DefaultLoadControl loadControl=PlayerActivity.loadControl;
-    public MISLDashChunkSource.Factory df= PlayerActivity.df;
-    public TransitionalAlgorithmListener dMSL=PlayerActivity.dMSL;
+
+    /**
+     * Creates BBA2TrackSelection instances.
+     */
     public static final class Factory implements TrackSelection.Factory {
-
-        private final BandwidthMeter bandwidthMeter;
-        private final int maxInitialBitrate;
-        private final int minDurationForQualityIncreaseMs;
-        private final int maxDurationForQualityDecreaseMs;
-        private final int minDurationToRetainAfterDiscardMs;
-        private final float bandwidthFraction;
-        /**
-         * @param bandwidthMeter Provides an estimate of the currently available bandwidth.
-         */
-        public Factory(BandwidthMeter bandwidthMeter) {
-            this (bandwidthMeter, DEFAULT_MAX_INITIAL_BITRATE,
-                    DEFAULT_MIN_DURATION_FOR_QUALITY_INCREASE_MS,
-                    DEFAULT_MAX_DURATION_FOR_QUALITY_DECREASE_MS,
-                    DEFAULT_MIN_DURATION_TO_RETAIN_AFTER_DISCARD_MS, DEFAULT_BANDWIDTH_FRACTION);
-        }
-
-        /**
-         * @param bandwidthMeter Provides an estimate of the currently available bandwidth.
-         * @param maxInitialBitrate The maximum bitrate in bits per second that should be assumed
-         *     when a bandwidth estimate is unavailable.
-         * @param minDurationForQualityIncreaseMs The minimum duration of buffered data required for
-         *     the selected track to switch to one of higher quality.
-         * @param maxDurationForQualityDecreaseMs The maximum duration of buffered data required for
-         *     the selected track to switch to one of lower quality.
-         * @param minDurationToRetainAfterDiscardMs When switching to a track of significantly higher
-         *     quality, the selection may indicate that media already buffered at the lower quality can
-         *     be discarded to speed up the switch. This is the minimum duration of media that must be
-         *     retained at the lower quality.
-         * @param bandwidthFraction The fraction of the available bandwidth that the selection should
-         *     consider available for use. Setting to a value less than 1 is recommended to account
-         *     for inaccuracies in the bandwidth estimator.
-         */
-        public Factory(BandwidthMeter bandwidthMeter, int maxInitialBitrate,
-                       int minDurationForQualityIncreaseMs, int maxDurationForQualityDecreaseMs,
-                       int minDurationToRetainAfterDiscardMs, float bandwidthFraction) {
-            this.bandwidthMeter = bandwidthMeter;
-            this.maxInitialBitrate = maxInitialBitrate;
-            this.minDurationForQualityIncreaseMs = minDurationForQualityIncreaseMs;
-            this.maxDurationForQualityDecreaseMs = maxDurationForQualityDecreaseMs;
-            this.minDurationToRetainAfterDiscardMs = minDurationToRetainAfterDiscardMs;
-            this.bandwidthFraction = bandwidthFraction;
-        }
-
         @Override
         public BBA2TrackSelection createTrackSelection(TrackGroup group, int... tracks) {
-            return new BBA2TrackSelection(group, tracks, bandwidthMeter, maxInitialBitrate,
-                    minDurationForQualityIncreaseMs, maxDurationForQualityDecreaseMs,
-                    minDurationToRetainAfterDiscardMs, bandwidthFraction);
+            return new BBA2TrackSelection(group, tracks);
         }
-
     }
 
-    public static final int DEFAULT_MAX_INITIAL_BITRATE = 800000;
-    public static final int DEFAULT_MIN_DURATION_FOR_QUALITY_INCREASE_MS = 10000;
-    public static final int DEFAULT_MAX_DURATION_FOR_QUALITY_DECREASE_MS = 25000;
-    public static final int DEFAULT_MIN_DURATION_TO_RETAIN_AFTER_DISCARD_MS = 25000;
-    public static final float DEFAULT_BANDWIDTH_FRACTION = 0.75f;
+    private int inc = 0;
+    private int m_staticAlgPar = 0;
+    private DefaultLoadControl loadControl = PlayerActivity.loadControl;
+    private MISLDashChunkSource.Factory df = PlayerActivity.df;
 
     private static final String TAG = "BBA2";
 
-    private final BandwidthMeter bandwidthMeter;
-    private final int maxInitialBitrate;
-    private final long minDurationForQualityIncreaseUs;
-    private final long maxDurationForQualityDecreaseUs;
-    private final long minDurationToRetainAfterDiscardUs;
-    private final float bandwidthFraction;
-    private double networkRate;
     private int selectedIndex;
     private int reason;
 
     /**
-     * @param group The {@link TrackGroup}.
-     * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
-     *     empty. May be in any order.
-     * @param bandwidthMeter Provides an estimate of the currently available bandwidth.
+     * Creates a BBA2TrackSelection.
      */
-    public BBA2TrackSelection(TrackGroup group, int[] tracks,
-                                 BandwidthMeter bandwidthMeter) {
-        this (group, tracks, bandwidthMeter, DEFAULT_MAX_INITIAL_BITRATE,
-                DEFAULT_MIN_DURATION_FOR_QUALITY_INCREASE_MS,
-                DEFAULT_MAX_DURATION_FOR_QUALITY_DECREASE_MS,
-                DEFAULT_MIN_DURATION_TO_RETAIN_AFTER_DISCARD_MS, DEFAULT_BANDWIDTH_FRACTION);
-    }
-
-    /**
-     * @param group The {@link TrackGroup}.
-     * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
-     *     empty. May be in any order.
-     * @param bandwidthMeter Provides an estimate of the currently available bandwidth.
-     * @param maxInitialBitrate The maximum bitrate in bits per second that should be assumed when a
-     *     bandwidth estimate is unavailable.
-     * @param minDurationForQualityIncreaseMs The minimum duration of buffered data required for the
-     *     selected track to switch to one of higher quality.
-     * @param maxDurationForQualityDecreaseMs The maximum duration of buffered data required for the
-     *     selected track to switch to one of lower quality.
-     * @param minDurationToRetainAfterDiscardMs When switching to a track of significantly higher
-     *     quality, the selection may indicate that media already buffered at the lower quality can
-     *     be discarded to speed up the switch. This is the minimum duration of media that must be
-     *     retained at the lower quality.
-     * @param bandwidthFraction The fraction of the available bandwidth that the selection should
-     *     consider available for use. Setting to a value less than 1 is recommended to account
-     *     for inaccuracies in the bandwidth estimator.
-     */
-    public BBA2TrackSelection(TrackGroup group, int[] tracks, BandwidthMeter bandwidthMeter,
-                                 int maxInitialBitrate, long minDurationForQualityIncreaseMs,
-                                 long maxDurationForQualityDecreaseMs, long minDurationToRetainAfterDiscardMs,
-                                 float bandwidthFraction) {
+    public BBA2TrackSelection(TrackGroup group, int[] tracks) {
         super(group, tracks);
-        this.bandwidthMeter = bandwidthMeter;
-        this.maxInitialBitrate = maxInitialBitrate;
-        this.minDurationForQualityIncreaseUs = minDurationForQualityIncreaseMs * 1000L;
-        this.maxDurationForQualityDecreaseUs = maxDurationForQualityDecreaseMs * 1000L;
-        this.minDurationToRetainAfterDiscardUs = minDurationToRetainAfterDiscardMs * 1000L;
-        this.bandwidthFraction = bandwidthFraction;
+
         selectedIndex = idealQuality();
         reason = C.SELECTION_REASON_INITIAL;
     }
