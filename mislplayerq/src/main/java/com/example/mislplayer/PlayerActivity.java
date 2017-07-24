@@ -296,8 +296,8 @@ import com.opencsv.CSVReader;
         String bufferedPosition = "Buffer Level : " + player.getBufferedPosition() + "\n";
        // debugView.setText(videoInfo + buffer + trackgroups + period + videoID + videoBitrate + audioBitrate + bandwidth + bytesAllocated + bufferedPosition);
         */
-            if(DashMediaSourceListener.logSegment!=null) {
-                String test = "SEG NUMBER : " + DashMediaSourceListener.logSegment.getSegNumber();
+            if(TransitionalAlgorithmListener.logSegment!=null) {
+                String test = "SEG NUMBER : " + TransitionalAlgorithmListener.logSegment.getSegNumber();
                 debugView.setText(test);
             }
         }
