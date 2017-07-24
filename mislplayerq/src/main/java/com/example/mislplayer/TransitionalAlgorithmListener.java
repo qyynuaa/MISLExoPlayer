@@ -19,6 +19,9 @@ import com.google.android.exoplayer2.upstream.TransferListener;
 
 import java.util.ArrayList;
 
+import static com.google.android.exoplayer2.ExoPlayer.STATE_BUFFERING;
+import static com.google.android.exoplayer2.ExoPlayer.STATE_READY;
+
 /**
  * A transitional listener, to be used while migrating code.
  */
@@ -36,6 +39,10 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
     private int numberOfStreams = 0;
     private long byteClock;
+
+    private long stallClockMs;
+    private int lastPlaybackState;
+    private long stallDurationMs;
 
     public static LogSegment logSegment;
 
@@ -88,9 +95,6 @@ public class TransitionalAlgorithmListener implements ChunkListener,
             Log.d(TAG, String.format("Load duration = %d ms", loadDurationMs));
             Log.d(TAG, String.format("Delivery rate = %d kbps", deliveryRateKbps));
         }
-
-        /** The amount of time the player has spent stalling, in ms. */
-        long stallDurationMs = 0;
 
         DashParameters parameterObject = null;
 
@@ -200,7 +204,13 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      */
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-
+        if (playbackState == STATE_BUFFERING) {
+            stallClockMs = SystemClock.elapsedRealtime();
+        } else if (playbackState == STATE_READY && lastPlaybackState == STATE_BUFFERING) {
+            long nowMs = SystemClock.elapsedRealtime();
+            stallDurationMs += nowMs - stallClockMs;
+        }
+        lastPlaybackState = playbackState;
     }
 
     /**
