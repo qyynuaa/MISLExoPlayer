@@ -1,6 +1,7 @@
 package com.example.mislplayer;
 
 import android.os.SystemClock;
+import android.util.Log;
 
 import com.example.mislplayer.Algorithm_Parameters.ArbiterParameters;
 import com.example.mislplayer.Algorithm_Parameters.DashParameters;
@@ -25,9 +26,13 @@ import java.util.ArrayList;
 public class TransitionalAlgorithmListener implements ChunkListener,
         TransferListener, ExoPlayer.EventListener {
 
+    private static final String TAG = "TransitionalAL";
+
     private long arrivalTimeMs;
     private long loadDurationMs;
     private long transferClockMs;
+
+    private int numberOfStreams = 0;
 
     public static LogSegment logSegment;
 
@@ -44,13 +49,17 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     @Override
     public void giveLastChunk(MediaChunk lastChunk) {
         if (lastChunk == null) {
+            Log.d(TAG, "null chunk received");
             return;
         }
+        Log.d(TAG, "non-null chunk received:");
 
         int segmentNumber = lastChunk.chunkIndex;
+        Log.d(TAG, String.format("Chunk index = %d", segmentNumber));
 
         /** The duration of the segment in ms. */
         long segmentDurationMs = (lastChunk.endTimeUs - lastChunk.startTimeUs) / 1000;
+        Log.d(TAG, String.format("Chunk duration = %d ms", segmentDurationMs));
 
         /** The representation level of the segment's track in kbps. */
         int representationLevelKbps = lastChunk.trackFormat.bitrate / 1000;
@@ -60,6 +69,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
         /** The size of the segment in bytes. */
         long byteSize = lastChunk.bytesLoaded();
+        Log.d(TAG, String.format("Chunk size = %d bytes", byteSize));
 
         /** The buffer level of the player in ms. */
         long bufferLevelMs = PlayerActivity.player.getBufferedPosition() - PlayerActivity.player.getCurrentPosition();
@@ -69,6 +79,8 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         if (loadDurationMs > 0) {
             /** The delivery rate of the chunk, in kbps. */
             deliveryRateKbps = byteSize * 8 / loadDurationMs;
+            Log.d(TAG, String.format("Load duration = %d ms", loadDurationMs));
+            Log.d(TAG, String.format("Delivery rate = %d kbps", deliveryRateKbps));
         }
 
         /** The amount of time the player has spent stalling, in ms. */
@@ -100,6 +112,10 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     @Override
     public void onTransferStart(Object source, DataSpec dataSpec) {
         transferClockMs = SystemClock.elapsedRealtime();
+        Log.d(TAG, String.format("Transfer clock started at %d", transferClockMs));
+
+        numberOfStreams++;
+        Log.d(TAG, String.format("There are %d streams", numberOfStreams));
     }
 
     /**
@@ -122,6 +138,9 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     public void onTransferEnd(Object source) {
         arrivalTimeMs = SystemClock.elapsedRealtime();
         loadDurationMs = arrivalTimeMs - transferClockMs;
+        Log.d(TAG, String.format("Transfer finished at %d", arrivalTimeMs));
+        
+        numberOfStreams--;
     }
 
     /**
