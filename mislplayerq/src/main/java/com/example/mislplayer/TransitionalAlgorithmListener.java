@@ -28,6 +28,8 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
     private static final String TAG = "TransitionalAL";
 
+    private MediaChunk lastChunk;
+
     private long arrivalTimeMs;
     private long loadDurationMs;
     private long transferClockMs;
@@ -51,6 +53,9 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     public void giveLastChunk(MediaChunk lastChunk) {
         if (lastChunk == null) {
             Log.d(TAG, "null chunk received");
+            return;
+        } else if (lastChunk == this.lastChunk) {
+            Log.d(TAG, "duplicate chunk received");
             return;
         }
         Log.d(TAG, "non-null chunk received:");
@@ -102,6 +107,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
                 segmentDurationMs, parameterObject);
 
         allSegLog.add(logSegment);
+        this.lastChunk = lastChunk;
     }
 
     /**
