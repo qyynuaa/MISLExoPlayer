@@ -33,6 +33,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     private long transferClockMs;
 
     private int numberOfStreams = 0;
+    private long byteClock;
 
     public static LogSegment logSegment;
 
@@ -116,6 +117,8 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
         numberOfStreams++;
         Log.d(TAG, String.format("There are %d streams", numberOfStreams));
+        
+        byteClock = 0;
     }
 
     /**
@@ -126,7 +129,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      */
     @Override
     public void onBytesTransferred(Object source, int bytesTransferred) {
-
+        byteClock += bytesTransferred;
     }
 
     /**
@@ -139,6 +142,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         arrivalTimeMs = SystemClock.elapsedRealtime();
         loadDurationMs = arrivalTimeMs - transferClockMs;
         Log.d(TAG, String.format("Transfer finished at %d", arrivalTimeMs));
+        Log.d(TAG, String.format("Data transferred = %d bytes", byteClock));
         
         numberOfStreams--;
     }

@@ -381,6 +381,9 @@ import java.util.Locale;
                                 int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs,
                                 long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded) {
         // Do nothing.
+        Log.d(TAG, String.format("Chunk downloaded in %d ms", loadDurationMs));
+        Log.d(TAG, String.format("Delivery rate = %d kbps", bytesLoaded * 8 / loadDurationMs));
+        Log.d(TAG, String.format("Data loaded = %d bytes", bytesLoaded));
     }
 
     @Override

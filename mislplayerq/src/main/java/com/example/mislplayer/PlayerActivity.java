@@ -109,19 +109,23 @@ import com.opencsv.CSVReader;
             //Provides instances of TrackSelection, this will decide which segments we will download later
             TrackSelection.Factory videoTrackSelectionFactory = chooseAlgorithm(ALGORITHM_TYPE);
 
+            //Will be responsible of choosing right TrackSelections
+            trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
+
+            eventLogger = new EventLogger(trackSelector);
+
+            mainHandler = new Handler();
+
             //Provides instances of DashChunkSource
             df = new MISLDashChunkSource.Factory(dataSourceFactory, dMSL);
 
             // Our video source media, we give it an URL, and all the stuff before
-            videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, null, null);
+            videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, mainHandler, eventLogger);
 
             //Used to play media indefinitely (loop)
             LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
 
             Context context = this;
-
-            //Will be responsible of choosing right TrackSelections
-            trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
             //If you want to modify buffer parameters use this
            // DefaultAllocator allocator = new DefaultAllocator(true, 10000);
