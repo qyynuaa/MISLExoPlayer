@@ -189,9 +189,9 @@ public class BBA2TrackSelection extends BaseTrackSelection {
     }
 
     public int idealQuality (){ //(double networkRate, TrackGroup group)
-        if(DashMediaSourceListener.logSegment!=null) {
+        if(TransitionalAlgorithmListener.logSegment!=null) {
             Log.d("BBA2","launched !");
-            return dash_do_rate_adaptation_bba2(DashMediaSourceListener.logSegment);
+            return dash_do_rate_adaptation_bba2(TransitionalAlgorithmListener.logSegment);
         }
         Log.d("NULLLOG","null log");
         return 0;
