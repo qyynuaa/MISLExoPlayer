@@ -105,6 +105,9 @@ public class DASHTrackSelection extends BaseTrackSelection {
     public static final int DEFAULT_MIN_DURATION_TO_RETAIN_AFTER_DISCARD_MS = 25000;
     public static final float DEFAULT_BANDWIDTH_FRACTION = 0.75f;
     public MISLDashChunkSource.Factory df= PlayerActivity.df;
+
+    private static final String TAG = "DASHTrackSelection";
+
     private final BandwidthMeter bandwidthMeter;
     private final int maxInitialBitrate;
     private final long minDurationForQualityIncreaseUs;
@@ -171,7 +174,7 @@ public class DASHTrackSelection extends BaseTrackSelection {
         if(selectedIndex!=currentSelectedIndex){
             reason = C.SELECTION_REASON_ADAPTIVE;
         }
-        Log.d("UPDATE","updateselectedtrack");
+        Log.d(TAG, "updateselectedtrack");
     }
 
     @Override

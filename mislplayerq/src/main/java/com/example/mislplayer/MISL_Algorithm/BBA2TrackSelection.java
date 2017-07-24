@@ -86,6 +86,8 @@ public class BBA2TrackSelection extends BaseTrackSelection {
     public static final int DEFAULT_MIN_DURATION_TO_RETAIN_AFTER_DISCARD_MS = 25000;
     public static final float DEFAULT_BANDWIDTH_FRACTION = 0.75f;
 
+    private static final String TAG = "BBA2";
+
     private final BandwidthMeter bandwidthMeter;
     private final int maxInitialBitrate;
     private final long minDurationForQualityIncreaseUs;
@@ -190,10 +192,10 @@ public class BBA2TrackSelection extends BaseTrackSelection {
 
     public int idealQuality (){ //(double networkRate, TrackGroup group)
         if(TransitionalAlgorithmListener.logSegment!=null) {
-            Log.d("BBA2","launched !");
+            Log.d(TAG,"launched !");
             return dash_do_rate_adaptation_bba2(TransitionalAlgorithmListener.logSegment);
         }
-        Log.d("NULLLOG","null log");
+        Log.d(TAG,"null log");
         return 0;
     }
 
@@ -209,79 +211,79 @@ public class BBA2TrackSelection extends BaseTrackSelection {
 
         if (total_size != 0 && bytes_per_sec != 0 && dash.getSegmentDuration() != 0) {
         } else {
-            Log.d("ERROR", "[DASH] Downloaded segment  " + total_size + " bytes at " + bytes_per_sec + " bytes per seconds - skipping rate adaptation\n");
+            Log.d(TAG, "[DASH] Downloaded segment  " + total_size + " bytes at " + bytes_per_sec + " bytes per seconds - skipping rate adaptation\n");
             return -1;
         }
         // save the information about segment statistics (kbps)
-        Log.d("[DASH]","Segment index: "+dash.getSegNumber());
+        Log.d(TAG,"Segment index: "+dash.getSegNumber());
 
 
         // take the last rate and find its index
         int lastRate = dash.getRepLevel();
         int lastRateIndex = PlayerActivity.getRepIndex(lastRate);
-        Log.d("[DASH BBA2]","last rate index: "+lastRateIndex);
+        Log.d(TAG,"last rate index: "+lastRateIndex);
         int retVal;
         // set to the lowest rate
         int qRateIndex= PlayerActivity.getRepIndex(df.getLowestBitrate());
         int resevoir = bba1UpdateResevoir(lastRate, lastRateIndex,dash);
-        Log.d("[DASH BBA2]","m_staticAlgPar: "+m_staticAlgPar);
+        Log.d(TAG,"m_staticAlgPar: "+m_staticAlgPar);
         long SFT = (8*total_size)/dash.getDeliveryRate();
-        Log.d("[DASH BBA2]","SFT2: "+(8*total_size)/dash.getDeliveryRate());
-        Log.d("[DASH BBA2]","SFT: "+SFT);
+        Log.d(TAG,"SFT2: "+(8*total_size)/dash.getDeliveryRate());
+        Log.d(TAG,"SFT: "+SFT);
         if (SFT > dash.getSegmentDuration())
             m_staticAlgPar = 1; // switch to BBA1 if buffer is decreasing
-        Log.d("[DASH BBA2]","Before if ");
+        Log.d(TAG,"Before if ");
         if (dash.getBufferLevel() < resevoir)               //CHECK BUFFER LEVEL
         {
-            Log.d("[DASH BBA2]", "buffer_level(="+dash.getBufferLevel()+")< resevoir(="+resevoir+")");
-            Log.d("[DASH BBA2]", "m_staticAlgPar"+m_staticAlgPar);
+            Log.d(TAG, "buffer_level(="+dash.getBufferLevel()+")< resevoir(="+resevoir+")");
+            Log.d(TAG, "m_staticAlgPar"+m_staticAlgPar);
             if (m_staticAlgPar!=0) {
-                Log.d("[DASH BBA2]","m_staticAlgPar is not a zero, returning lowest rate");
+                Log.d(TAG, "m_staticAlgPar is not a zero, returning lowest rate");
                 retVal = PlayerActivity.getRepIndex(df.getLowestBitrate());
             }
             else
             {
-                Log.d("[BBA2]","Check SFT against 1/8 of segment duration "+SFT);
+                Log.d(TAG, "Check SFT against 1/8 of segment duration "+SFT);
                 // start up phase
                 if (SFT < 0.125 * dash.getSegmentDuration()) {
                     // buffer level increasing fast
-                    Log.d("[DASH BBA2]","buffer level increasing fast:"+SFT);
+                    Log.d(TAG, "buffer level increasing fast:"+SFT);
                     retVal = lastRateIndex - 1 >= 0 ? lastRateIndex - 1 : 0;
-                    Log.d("[DASH BBA2]","increasing fast retval: "+retVal);
+                    Log.d(TAG, "increasing fast retval: "+retVal);
                 }
                 else {
                     retVal = lastRateIndex; //<<<<<<<??????
-                    Log.d("[DASH BBA2]", "retval (same as last rate): "+retVal);
+                    Log.d(TAG, "retval (same as last rate): "+retVal);
                 }}
 
         } else {
-            Log.d("[DASH BBA2]","Greater than reservoir, checking m_staticAlgPar");
+            Log.d(TAG,"Greater than reservoir, checking m_staticAlgPar");
             if (m_staticAlgPar!=0)
             {
                 // execute BBA1
-                Log.d("[DASH BBA2]","m_staticAlgPar is not zero, calling bba1VRAA"+SFT);
+                Log.d(TAG, "m_staticAlgPar is not zero, calling bba1VRAA"+SFT);
                 retVal = bba1VRAA(lastRateIndex,resevoir,dash);
-                Log.d("[DASH BBA2]","After bba1vraa : retVal:"+retVal);
+                Log.d(TAG, "After bba1vraa : retVal:"+retVal);
             }
             else { // beyond resevoir
-                Log.d("[DASH BBA2]","beyond reservoir, calling bba1 and bba2");
+                Log.d(TAG, "beyond reservoir, calling bba1 and bba2");
                 int bba1RateIndex = bba1VRAA(lastRateIndex,resevoir,dash);
-                Log.d("[DASH BBA2]","bba1RateIndex:"+bba1RateIndex);
+                Log.d(TAG, "bba1RateIndex:"+bba1RateIndex);
                 if (SFT <= 0.5 * dash.getSegmentDuration()) {
                     // buffer level increasing fast
                     qRateIndex = lastRateIndex - 1 >= 0?lastRateIndex - 1 : 0;}
                 retVal = bba1RateIndex < qRateIndex? bba1RateIndex:qRateIndex;
 
-                Log.d("[DASH BBA2]","qRateIndex: "+qRateIndex);
-                Log.d("[DASH BBA2]", "retVal: "+retVal);
+                Log.d(TAG, "qRateIndex: "+qRateIndex);
+                Log.d(TAG,  "retVal: "+retVal);
                 if (bba1RateIndex < qRateIndex) {
-                    Log.d("[DASH BBA2]","Switching to BBA1 completely");
+                    Log.d(TAG, "Switching to BBA1 completely");
                     m_staticAlgPar = 1;
                 }
 
             }
         }
-        Log.d("[BBA2]","selected quality :"+retVal);
+        Log.d(TAG, "selected quality :"+retVal);
         return retVal;
         //dash->wait_bef_send_req = getRequestDelay(dash,group);
         //Log.d("[DASH BBA2]"" dash->wait_bef_send_req:%d\n",dash->wait_bef_send_req));
@@ -297,9 +299,9 @@ public class BBA2TrackSelection extends BaseTrackSelection {
 
         int ii = 0;
         int resvWin = (int)(2*(((loadControl.getMaxBufferUs()/1000) / dash.getSegmentDuration())) < (df.getMpdDuration()/dash.getSegNumber()) -(dash.getSegNumber())? 2*(((loadControl.getMaxBufferUs()/1000) / dash.getSegmentDuration())): (df.getMpdDuration()/dash.getSegNumber()) -(dash.getSegNumber()));
-        Log.d("[DASH BBA2]","Last rate: "+lastRate);
+        Log.d(TAG, "Last rate: "+lastRate);
         long avgSegSize = (lastRate * dash.getSegmentDuration()) / 8; //bytes
-        Log.d("[DASH BBA2]","avgSize: "+avgSegSize+" resvWin: "+resvWin);
+        Log.d(TAG, "avgSize: "+avgSegSize+" resvWin: "+resvWin);
         int largeChunks = 0;
         int smallChunks = 0;
         for (ii=0; ii<resvWin ;ii++)
@@ -310,15 +312,15 @@ public class BBA2TrackSelection extends BaseTrackSelection {
                 smallChunks += FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, dash.getSegNumber() + ii, lastRateIndex);
 
         }
-        Log.d("[DASH BBA2]","smallChunks: "+smallChunks+"largeChunks: "+largeChunks);
-        Log.d("[DASH BBA2]","diff: "+(largeChunks-smallChunks));
+        Log.d(TAG, "smallChunks: "+smallChunks+"largeChunks: "+largeChunks);
+        Log.d(TAG, "diff: "+(largeChunks-smallChunks));
         double resevoir =  8 * ((largeChunks-smallChunks))/(lastRate);
-        Log.d("[DASH BBA2]","resevoir: "+resevoir);
+        Log.d(TAG, "resevoir: "+resevoir);
         if (resevoir < (2 * dash.getSegmentDuration()))
             resevoir = 2 * dash.getSegmentDuration();
         else if (resevoir > (0.6 * (loadControl.getMaxBufferUs()/1000/ dash.getSegmentDuration()) * dash.getSegmentDuration()))
             resevoir = (0.6 * (loadControl.getMaxBufferUs()/1000/ dash.getSegmentDuration()) * dash.getSegmentDuration());
-        Log.d("[DASH BBA2]","resevoir: "+(int)resevoir);
+        Log.d(TAG, "resevoir: "+(int)resevoir);
         return (int)resevoir;
     }
 
@@ -326,10 +328,10 @@ public class BBA2TrackSelection extends BaseTrackSelection {
 
         int rateUindex = lastRateIndex==0? lastRateIndex:lastRateIndex - 1;
         int rateLindex = lastRateIndex==df.trackSelection2.length()? lastRateIndex:lastRateIndex + 1;
-        Log.d("[DASH BBA2]","rateUindex: "+rateUindex+" rateLindex: "+rateLindex);
+        Log.d(TAG, "rateUindex: "+rateUindex+" rateLindex: "+rateLindex);
         int optRateIndex = 0;
         if (dash.getBufferLevel() < resevoir) {
-            Log.d("[DASH BBA2]","Calling gf_list_count bufferLevel < reservoir");
+            Log.d(TAG, "Calling gf_list_count bufferLevel < reservoir");
             optRateIndex = df.trackSelection2.length(); }
         else if (dash.getBufferLevel() > 0.9 *(loadControl.getMaxBufferUs()/1000/dash.getSegmentDuration()) * dash.getSegmentDuration())
             optRateIndex = 0;
@@ -339,10 +341,10 @@ public class BBA2TrackSelection extends BaseTrackSelection {
             int low = df.getLowestBitrate();
             int high = df.getHighestBitrate();
             double slope = (high-low)/(0.9 * ((loadControl.getMaxBufferUs()/1000) / dash.getSegmentDuration()) * dash.getSegmentDuration() - resevoir);
-            Log.d("[DASH BBA2]","slope: "+slope);
-            Log.d("[DASH BBA2]","argument to findRate: "+(low + slope * (dash.getBufferLevel()-resevoir))/1000.0);
+            Log.d(TAG, "slope: "+slope);
+            Log.d(TAG, "argument to findRate: "+(low + slope * (dash.getBufferLevel()-resevoir))/1000.0);
             optRateIndex = df.getNearestBitrateIndex((low+ slope * (dash.getBufferLevel()-resevoir))/1000.0);
-            Log.d("[DASH BBA2]","optRateIndex: "+optRateIndex+" (BBA2)");
+            Log.d(TAG, "optRateIndex: "+optRateIndex+" (BBA2)");
         }
 
         if (optRateIndex == df.trackSelection2.length() || optRateIndex == 0)
