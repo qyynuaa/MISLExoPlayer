@@ -19,10 +19,6 @@ public class ElasticTrackSelection extends BaseTrackSelection {
 
     public static final class Factory implements TrackSelection.Factory {
 
-        private static final int DEFAULT_ELASTIC_AVERAGE_WINDOW = 5;
-        private static final double DEFAULT_K_P = 0.01;
-        private static final double DEFAULT_K_I = 0.001;
-
         private final int elasticAverageWindow;
         private final double k_p;
         private final double k_i;
@@ -53,6 +49,10 @@ public class ElasticTrackSelection extends BaseTrackSelection {
         }
 
     }
+
+    private static final int DEFAULT_ELASTIC_AVERAGE_WINDOW = 5;
+    private static final double DEFAULT_K_P = 0.01;
+    private static final double DEFAULT_K_I = 0.001;
 
     private static final String TAG = "ElasticTrackSelection";
 
