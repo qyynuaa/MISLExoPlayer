@@ -22,105 +22,170 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
         super(group, tracks);
     }
 
-    public double getVar(int mode, int window, double avgRate, double[] rates,
-                         double expAvgRatio) {
-        double retVal = 0;
-        double totDeviation = 0;
-        int i;
-        switch (mode) {
-            case 1:  // moving average : MOVING_AVG_ID
-            {
-                for (i = 0; i < window; i++) {
-                    totDeviation += Math.pow(avgRate - rates[i], 2);
-                }
-                if (window > 1) {
-                    retVal = totDeviation / (window - 1);
-                } else {
-                    Log.d(TAG, "Call rate variance estimator with uniary window");
-                }
-                break;
-            }
-            case 2: // harmonic average id : HARMONIC_AVG_ID
-            {
-                double rateRcp[] = new double[window];
-                double reducedAvg[] = new double[window];
-                double rateRcpSum = 0;
-                double reducedAvged = 0;
-                for (i = 0; i < window; i++) {
-                    rateRcp[i] += 1 / rates[i];
-                    rateRcpSum += rateRcp[i];
-                }
-                for (i = 0; i < window; i++) {
-                    reducedAvg[i] = (window - 1) / (rateRcpSum - rateRcp[i]);
-                    reducedAvged += reducedAvg[i];
-                }
-                reducedAvged = reducedAvged / window;
-                for (i = 0; i < window; i++) {
-                    totDeviation += Math.pow(reducedAvged - reducedAvg[i], 2);
-                }
-                retVal = (1 - 1 / window) * totDeviation;
-                break;
-            }
-            case 3: // EXP_AVG_ID
-            {
+    /**
+     * A pythagorean arithmetic average.
+     */
+    public class ArithmeticAverage {
 
-                double weights[] = new double[window];
-                for (i = 0; i < window; i++) {
-                    if (i == window - 1)
-                        weights[i] = Math.pow(1 - expAvgRatio, i);
-                    else
-                        weights[i] = (expAvgRatio) * Math.pow(1 - expAvgRatio, i);
-                    totDeviation += weights[i] * Math.pow(avgRate - rates[i], 2);
-                }
-                retVal = window * totDeviation / (window - 1);
-                break;
-            }
-            default: {
-                Log.d(TAG, "Invalid averaging mode for variance estimator");
-                break;
+        private int window;
+        private double[] rates;
 
-            }
+        public ArithmeticAverage(int window, double[] rates) {
+            this.window = window;
+            this.rates = rates;
         }
-        return retVal;
+
+        public double value() {
+            double subTotal = 0;
+            for (int i = 0; i < window; i++) {
+                subTotal += rates[i];
+            }
+            return subTotal / window;
+        }
     }
 
-    double getAvgRate(int mode, int window, double[] rates,
-                      double expAvgRatio) {
-        double retVal = 0;
-        int i;
-        switch (mode) {
-            case 1:  // moving average
-            {
-                for (i = 0; i < window; i++) {
-                    retVal += rates[i];
-                }
-                retVal = retVal / window;
-                break;
-            }
-            case 2: {
-                for (i = 0; i < window; i++) {
-                    retVal += 1 / rates[i];
-                }
-                retVal = window / retVal;
-                break;
-            }
-            case 3: {
-                double weights[] = new double[window];
-                for (i = 0; i < window; i++) {
-                    if (i == window - 1)
-                        weights[i] = Math.pow(1 - expAvgRatio, i);
-                    else
-                        weights[i] = (expAvgRatio) * Math.pow(1 - expAvgRatio, i);
-                    retVal += weights[i] * rates[i];
-                }
-                break;
-            }
-            default: {
-                Log.d(TAG, "Invalid averaging mode for rate estimator");
+    public class ArithmeticVariance {
 
-                break;
-            }
+        private int window;
+        private double averageRate;
+        private double[] rates;
+
+        public ArithmeticVariance(int window, double averageRate, double[] rates) {
+            this.window = window;
+            this.averageRate = averageRate;
+            this.rates = rates;
         }
-        return retVal;
+
+        public double value() {
+            double totalDeviation = 0;
+            double result = 0;
+
+            for (int i = 0; i < window; i++) {
+                totalDeviation += Math.pow(averageRate - rates[i], 2);
+            }
+            if (window > 1) {
+                result = totalDeviation / (window - 1);
+            } else {
+                Log.d(TAG, "Call rate variance estimator with uniary window");
+            }
+
+            return result;
+        }
+    }
+
+    /**
+     * A pythagorean harmonic average.
+     */
+    public class HarmonicAverage {
+
+        private int window;
+        private double[] rates;
+
+        public HarmonicAverage(int window, double[] rates) {
+            this.window = window;
+            this.rates = rates;
+        }
+
+        public double value() {
+            double subTotal = 0;
+            for (int i = 0; i < window; i++) {
+                subTotal += 1 / rates[i];
+            }
+            return window / subTotal;
+        }
+    }
+
+    public class HarmonicVariance {
+
+        private int window;
+        private double[] rates;
+
+        public HarmonicVariance(int window, double[] rates) {
+            this.window = window;
+            this.rates = rates;
+        }
+
+        public double value() {
+            double rateRcp[] = new double[window];
+            double reducedAvg[] = new double[window];
+            double rateRcpSum = 0;
+            double reducedAvged = 0;
+            double totalDeviation = 0;
+
+            for (int i = 0; i < window; i++) {
+                rateRcp[i] += 1 / rates[i];
+                rateRcpSum += rateRcp[i];
+            }
+            for (int i = 0; i < window; i++) {
+                reducedAvg[i] = (window - 1) / (rateRcpSum - rateRcp[i]);
+                reducedAvged += reducedAvg[i];
+            }
+            reducedAvged = reducedAvged / window;
+            for (int i = 0; i < window; i++) {
+                totalDeviation += Math.pow(reducedAvged - reducedAvg[i], 2);
+            }
+            return (1 - 1 / window) * totalDeviation;
+        }
+    }
+
+    /**
+     * An exponential average.
+     */
+    public class ExponentialAverage {
+
+        private int window;
+        private double[] rates;
+        private double ratio;
+
+        public ExponentialAverage(int window, double[] rates, double ratio) {
+            this.window = window;
+            this.rates = rates;
+            this.ratio = ratio;
+        }
+
+        public double value() {
+            double weights[] = new double[window];
+            double subTotal = 0;
+
+            for (int i = 0; i < window; i++) {
+                if (i == window - 1) {
+                    weights[i] = Math.pow(1 - ratio, i);
+                }
+                else {
+                    weights[i] = (ratio) * Math.pow(1 - ratio, i);
+                }
+                subTotal += weights[i] * rates[i];
+            }
+            return subTotal;
+        }
+    }
+
+    public class ExponentialVariance {
+
+        private int window;
+        private double averageRate;
+        private double[] rates;
+        private double ratio;
+
+        public ExponentialVariance(int window, double averageRate, double[] rates, double ratio) {
+            this.window = window;
+            this.averageRate = averageRate;
+            this.rates = rates;
+            this.ratio = ratio;
+        }
+
+        public double value() {
+            double weights[] = new double[window];
+            double totalDeviation = 0;
+
+            for (int i = 0; i < window; i++) {
+                if (i == window - 1)
+                    weights[i] = Math.pow(1 - ratio, i);
+                else
+                    weights[i] = (ratio) * Math.pow(1 - ratio, i);
+                totalDeviation += weights[i] * Math.pow(averageRate - rates[i], 2);
+            }
+            return window * totalDeviation / (window - 1);
+        }
     }
 }
