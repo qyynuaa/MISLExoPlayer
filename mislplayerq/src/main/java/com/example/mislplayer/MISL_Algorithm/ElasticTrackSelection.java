@@ -17,8 +17,12 @@ import static java.lang.Math.min;
 
 public class ElasticTrackSelection extends BaseTrackSelection {
 
+    /**
+     * Creates ElasticTrackSelection instances.
+     */
     public static final class Factory implements TrackSelection.Factory {
 
+        private final TransitionalAlgorithmListener algorithmListener;
         private final int elasticAverageWindow;
         private final double k_p;
         private final double k_i;
@@ -26,26 +30,40 @@ public class ElasticTrackSelection extends BaseTrackSelection {
         /**
          * Creates an ElasticTrackSelection factory using default values.
          */
-        public Factory() {
-            this(DEFAULT_ELASTIC_AVERAGE_WINDOW, DEFAULT_K_P, DEFAULT_K_I);
+        public Factory(TransitionalAlgorithmListener algorithmListener) {
+            this(algorithmListener, DEFAULT_ELASTIC_AVERAGE_WINDOW,
+                    DEFAULT_K_P, DEFAULT_K_I);
         }
 
         /**
          * Creates an ElasticTrackSelection factory by specifying the algorithm parameters.
          *
+         * @param algorithmListener
          * @param elasticAverageWindow The number of previous rate samples to consider.
          * @param k_p
          * @param k_i
          */
-        public Factory(final int elasticAverageWindow, final double k_p, final double k_i) {
+        public Factory(TransitionalAlgorithmListener algorithmListener,
+                       final int elasticAverageWindow, final double k_p,
+                       final double k_i) {
+            this.algorithmListener = algorithmListener;
             this.elasticAverageWindow = elasticAverageWindow;
             this.k_p = k_p;
             this.k_i = k_i;
         }
 
+        /**
+         * Creates a new ElasticTrackSelection.
+         *
+         * @param group The {@link TrackGroup}. Must not be null.
+         * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
+         *     null or empty. May be in any order.
+         * @return A new ElasticTrackSelection.
+         */
         @Override
         public ElasticTrackSelection createTrackSelection(TrackGroup group, int... tracks) {
-            return new ElasticTrackSelection(group, tracks, elasticAverageWindow, k_p, k_i);
+            return new ElasticTrackSelection(group, tracks, algorithmListener,
+                    elasticAverageWindow, k_p, k_i);
         }
 
     }
@@ -56,6 +74,8 @@ public class ElasticTrackSelection extends BaseTrackSelection {
 
     private static final String TAG = "ElasticTrackSelection";
 
+    private TransitionalAlgorithmListener algorithmListener;
+
     private final int elasticAverageWindow;
     private final double k_p;
     private final double k_i;
@@ -65,8 +85,25 @@ public class ElasticTrackSelection extends BaseTrackSelection {
     private int selectedIndex;
 
 
-    public ElasticTrackSelection(TrackGroup group, int[] tracks, int elasticAverageWindow, double k_p, double k_i) {
+    /**
+     * Creates a new ElasticTrackSelection.
+     *
+     * @param group The {@link TrackGroup}. Must not be null.
+     * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
+     *     null or empty. May be in any order.
+     * @param algorithmListener Provides necessary information to the
+     *                          algorithm.
+     * @param elasticAverageWindow
+     * @param k_p
+     * @param k_i
+     */
+    public ElasticTrackSelection(TrackGroup group, int[] tracks,
+                                 TransitionalAlgorithmListener
+                                         algorithmListener,
+                                 int elasticAverageWindow, double k_p,
+                                 double k_i) {
         super(group, tracks);
+        this.algorithmListener = algorithmListener;
         this.elasticAverageWindow = elasticAverageWindow;
         this.k_p = k_p;
         this.k_i = k_i;
@@ -130,18 +167,18 @@ public class ElasticTrackSelection extends BaseTrackSelection {
                 group->download_segment_index + 1 - number of downloaded segments
         */
 
-        if (TransitionalAlgorithmListener.logSegment == null) {
+        if (algorithmListener.logSegment == null) {
             // select lowest rate
             return length - 1;
         }
 
 
-        final int segmentIndex = TransitionalAlgorithmListener.logSegment.getSegNumber();
+        final int segmentIndex = algorithmListener.logSegment.getSegNumber();
 
-        final double totalSizeBytes = TransitionalAlgorithmListener.logSegment.getByteSize();
-        final double bytesPerSecond = TransitionalAlgorithmListener.logSegment.getDeliveryRate();
-        final double downloadTimeS = TransitionalAlgorithmListener.logSegment.getDeliveryTime() / 1E3;
-        final double lastSegmentDurationS = TransitionalAlgorithmListener.logSegment.getSegmentDuration() / 1E3;
+        final double totalSizeBytes = algorithmListener.logSegment.getByteSize();
+        final double bytesPerSecond = algorithmListener.logSegment.getDeliveryRate();
+        final double downloadTimeS = algorithmListener.logSegment.getDeliveryTime() / 1E3;
+        final double lastSegmentDurationS = algorithmListener.logSegment.getSegmentDuration() / 1E3;
 
         if (totalSizeBytes == 0 || bytesPerSecond == 0 || lastSegmentDurationS == 0) {
             // skipping rate adaptation – log details and return
@@ -157,7 +194,7 @@ public class ElasticTrackSelection extends BaseTrackSelection {
 
             for (int i = 1; i <= averageWindow; i++) {
                 // rateSamples is in bits/second
-                rateSamples[i - 1] = PlayerActivity.dMSL.getSegInfos().get(segmentIndex - i).getDeliveryRate() * 1E3;
+                rateSamples[i - 1] = algorithmListener.getSegInfos().get(segmentIndex - i).getDeliveryRate() * 1E3;
             }
 
             double averageRateEstimate = getAverageRate(rateSamples);

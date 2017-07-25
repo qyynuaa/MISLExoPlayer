@@ -44,7 +44,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     private int lastPlaybackState;
     private long stallDurationMs;
 
-    public static LogSegment logSegment;
+    public LogSegment logSegment;
 
     private ArrayList<LogSegment> allSegLog = new ArrayList<>();
 
