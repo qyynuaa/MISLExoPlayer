@@ -65,7 +65,7 @@ import com.opencsv.CSVReader;
         private String videoInfo;
         private int segmentNumber = 0;
         public static DashMediaSource videoSource;
-        private final TransitionalAlgorithmListener ALGORITHM_LISTENER = new TransitionalAlgorithmListener();
+        private final TransitionalAlgorithmListener algorithmListener = new TransitionalAlgorithmListener();
         public Thread t;
         public static ArrayList<FutureSegmentInfos> futureSegmentInfos;
         public static ArrayList<Integer> reprLevel;
@@ -102,7 +102,7 @@ import com.opencsv.CSVReader;
             // Uri uri = Uri.parse("http://yt-dash-mse-test.commondatastorage.googleapis.com/media/oops-20120802-manifest.mpd");
 
             //Provides instances of DataSource from which streams of data can be read.
-            DataSource.Factory dataSourceFactory = buildDataSourceFactory2(ALGORITHM_LISTENER);
+            DataSource.Factory dataSourceFactory = buildDataSourceFactory2(algorithmListener);
 
             //Provides instances of TrackSelection, this will decide which segments we will download later
             TrackSelection.Factory videoTrackSelectionFactory = chooseAlgorithm(ALGORITHM_TYPE);
@@ -115,7 +115,7 @@ import com.opencsv.CSVReader;
             mainHandler = new Handler();
 
             //Provides instances of DashChunkSource
-            df = new MISLDashChunkSource.Factory(dataSourceFactory, ALGORITHM_LISTENER);
+            df = new MISLDashChunkSource.Factory(dataSourceFactory, algorithmListener);
 
             // Our video source media, we give it an URL, and all the stuff before
             videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, mainHandler, eventLogger);
@@ -193,16 +193,16 @@ import com.opencsv.CSVReader;
                     return new DASHTrackSelection.Factory(BANDWIDTH_METER);
                 case "OSCAR-H":
                     Log.d("NOTE","OSCAR-H has been chosen.");
-                    return new OscarHTrackSelection.Factory(ALGORITHM_LISTENER);
+                    return new OscarHTrackSelection.Factory(algorithmListener);
                 case "ARBITER":
                     Log.d("NOTE","ARBITER has been chosen.");
-                    return new ArbiterTrackSelection.Factory(ALGORITHM_LISTENER);
+                    return new ArbiterTrackSelection.Factory(algorithmListener);
                 case "BBA2":
                     Log.d("NOTE","BBA2 has been chosen.");
-                    return new BBA2TrackSelection.Factory();
+                    return new BBA2TrackSelection.Factory(algorithmListener);
                 case "ELASTIC":
                     Log.d("NOTE", "ELASTIC has been chosen.");
-                    return new ElasticTrackSelection.Factory(ALGORITHM_LISTENER);
+                    return new ElasticTrackSelection.Factory(algorithmListener);
             }
             Log.d("ERROR","ALGORITHM NOT FOUND");
             return new AdaptiveTrackSelection.Factory(BANDWIDTH_METER);
@@ -297,8 +297,8 @@ import com.opencsv.CSVReader;
         String bufferedPosition = "Buffer Level : " + player.getBufferedPosition() + "\n";
        // debugView.setText(videoInfo + buffer + trackgroups + period + videoID + videoBitrate + audioBitrate + bandwidth + bytesAllocated + bufferedPosition);
         */
-            if(TransitionalAlgorithmListener.logSegment!=null) {
-                String test = "SEG NUMBER : " + TransitionalAlgorithmListener.logSegment.getSegNumber();
+            if(algorithmListener.logSegment!=null) {
+                String test = "SEG NUMBER : " + algorithmListener.logSegment.getSegNumber();
                 debugView.setText(test);
             }
         }
@@ -353,7 +353,7 @@ import com.opencsv.CSVReader;
             if (Util.SDK_INT > 23) {
                 releasePlayer();
             }
-            LogSegment.writeLogSegInFile(ALGORITHM_LISTENER.getSegInfos(), BANDWIDTH_METER.getSampleBytesCollected());
+            LogSegment.writeLogSegInFile(algorithmListener.getSegInfos(), BANDWIDTH_METER.getSampleBytesCollected());
         }
 
         private HttpDataSource.Factory buildHttpDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {

@@ -22,11 +22,26 @@ public class BBA2TrackSelection extends BaseTrackSelection {
      * Creates BBA2TrackSelection instances.
      */
     public static final class Factory implements TrackSelection.Factory {
+
+        private TransitionalAlgorithmListener algorithmListener;
+
+        /**
+         * Creates a BBA2TrackSelection factory.
+         *
+         * @param algorithmListener Provides necessary information to the
+         *                          algorithm.
+         */
+        public Factory(TransitionalAlgorithmListener algorithmListener) {
+            this.algorithmListener = algorithmListener;
+        }
+
         @Override
         public BBA2TrackSelection createTrackSelection(TrackGroup group, int... tracks) {
-            return new BBA2TrackSelection(group, tracks);
+            return new BBA2TrackSelection(group, tracks, algorithmListener);
         }
     }
+
+    private final TransitionalAlgorithmListener algorithmListener;
 
     private int inc = 0;
     private int m_staticAlgPar = 0;
@@ -41,8 +56,10 @@ public class BBA2TrackSelection extends BaseTrackSelection {
     /**
      * Creates a BBA2TrackSelection.
      */
-    public BBA2TrackSelection(TrackGroup group, int[] tracks) {
+    public BBA2TrackSelection(TrackGroup group, int[] tracks,
+                              TransitionalAlgorithmListener algorithmListener) {
         super(group, tracks);
+        this.algorithmListener = algorithmListener;
 
         selectedIndex = idealQuality();
         reason = C.SELECTION_REASON_INITIAL;
@@ -93,9 +110,9 @@ public class BBA2TrackSelection extends BaseTrackSelection {
     }
 
     public int idealQuality (){ //(double networkRate, TrackGroup group)
-        if(TransitionalAlgorithmListener.logSegment!=null) {
+        if(algorithmListener.logSegment!=null) {
             Log.d(TAG,"launched !");
-            return dash_do_rate_adaptation_bba2(TransitionalAlgorithmListener.logSegment);
+            return dash_do_rate_adaptation_bba2(algorithmListener.logSegment);
         }
         Log.d(TAG,"null log");
         return 0;

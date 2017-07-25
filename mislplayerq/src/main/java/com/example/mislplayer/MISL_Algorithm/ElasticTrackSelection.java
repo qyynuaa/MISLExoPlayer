@@ -167,18 +167,18 @@ public class ElasticTrackSelection extends BaseTrackSelection {
                 group->download_segment_index + 1 - number of downloaded segments
         */
 
-        if (TransitionalAlgorithmListener.logSegment == null) {
+        if (algorithmListener.logSegment == null) {
             // select lowest rate
             return length - 1;
         }
 
 
-        final int segmentIndex = TransitionalAlgorithmListener.logSegment.getSegNumber();
+        final int segmentIndex = algorithmListener.logSegment.getSegNumber();
 
-        final double totalSizeBytes = TransitionalAlgorithmListener.logSegment.getByteSize();
-        final double bytesPerSecond = TransitionalAlgorithmListener.logSegment.getDeliveryRate();
-        final double downloadTimeS = TransitionalAlgorithmListener.logSegment.getDeliveryTime() / 1E3;
-        final double lastSegmentDurationS = TransitionalAlgorithmListener.logSegment.getSegmentDuration() / 1E3;
+        final double totalSizeBytes = algorithmListener.logSegment.getByteSize();
+        final double bytesPerSecond = algorithmListener.logSegment.getDeliveryRate();
+        final double downloadTimeS = algorithmListener.logSegment.getDeliveryTime() / 1E3;
+        final double lastSegmentDurationS = algorithmListener.logSegment.getSegmentDuration() / 1E3;
 
         if (totalSizeBytes == 0 || bytesPerSecond == 0 || lastSegmentDurationS == 0) {
             // skipping rate adaptation – log details and return
