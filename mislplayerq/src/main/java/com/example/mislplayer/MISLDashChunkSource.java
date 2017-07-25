@@ -32,10 +32,7 @@ public class MISLDashChunkSource implements DashChunkSource {
         private final ChunkListener chunkListener;
 
         // fields for transitional period
-        private int lowestBitrate = 0;
-        private int highestBitrate = 0;
         private long mpdDuration;
-        public static TrackSelection trackSelection2;
 
         public Factory(DataSource.Factory dataSourceFactory, ChunkListener chunkListener) {
             this(dataSourceFactory, DEFAULT_MAX_SEGMENTS_PER_LOAD, chunkListener);
@@ -55,9 +52,6 @@ public class MISLDashChunkSource implements DashChunkSource {
             DataSource dataSource = dataSourceFactory.createDataSource();
 
             // code for transitional period
-            highestBitrate=(trackSelection.getFormat(0).bitrate)/1000;
-            lowestBitrate=trackSelection.getFormat(trackSelection.length()-1).bitrate/1000;
-            trackSelection2=trackSelection;
             mpdDuration= manifest.duration;
 
             return new MISLDashChunkSource(manifestLoaderErrorThrower, manifest, periodIndex,
@@ -66,26 +60,6 @@ public class MISLDashChunkSource implements DashChunkSource {
         }
 
         // methods added for compatibility while transitioning code
-
-        public int getLowestBitrate(){return lowestBitrate;}
-        public int getHighestBitrate(){return highestBitrate;}
-        public int getBitrate(int index){return trackSelection2.getFormat(index).bitrate;}
-        public int getNearestBitrateIndex(double repLevel){
-            double diff=0;
-            int index=-1;
-            Log.d("REP1",repLevel+"");
-            for(int i=trackSelection2.length()-1;i>0;i--){
-                Log.d("REP2",repLevel+"");
-                diff= (trackSelection2.getFormat(i).bitrate/1000)-repLevel;
-                if(diff>=0){
-                    index=i;
-                    return index;
-                }
-            }
-            if(diff<0) index=0;
-            return index;
-        }
-
         public long getMpdDuration(){return mpdDuration;}
 
     }

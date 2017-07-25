@@ -22,6 +22,41 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
         super(group, tracks);
     }
 
+    public int lowestBitrate() {
+        return group.getFormat(tracks[tracks.length - 1]).bitrate;
+    }
+
+    public int highestBitrate() {
+        return group.getFormat(tracks[0]).bitrate;
+    }
+
+    public int lowestBitrateIndex() {
+        return tracks[tracks.length - 1];
+    }
+
+    public int highestBitrateIndex() {
+        return tracks[0];
+    }
+
+    /**
+     * Finds the index of the lowest representation level whose rate is above
+     * a target rate.
+     *
+     * @param targetRate The target rate to find a representation level
+     *                   above, in kbps.
+     * @return The index of the lowest representation level above the target
+     * rate, or the highest representation level available.
+     */
+    public int getNearestBitrateIndex(double targetRate){
+        for (int i = tracks.length - 1; i >= 0; i--) {
+            if (group.getFormat(tracks[i]).bitrate / 1000 >= targetRate) {
+                return tracks[i];
+            }
+        }
+
+        return tracks[0];
+    }
+
     /**
      * A pythagorean arithmetic average.
      */

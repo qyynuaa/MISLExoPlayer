@@ -99,7 +99,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     public int adaptiveAlgorithm() { //(TrackGroup chunk, int i)
         if(inc==0 || inc==1){
             inc++;
-            return PlayerActivity.getRepIndex(df.getLowestBitrate());
+            return lowestBitrateIndex();
         }
         else {
             inc++;
@@ -143,7 +143,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         Log.d(TAG,"last rate index: "+lastRateIndex);
         int retVal;
         // set to the lowest rate
-        int qRateIndex= PlayerActivity.getRepIndex(df.getLowestBitrate());
+        int qRateIndex= lowestBitrateIndex();
         int resevoir = bba1UpdateResevoir(lastRate, lastRateIndex,dash);
         Log.d(TAG,"m_staticAlgPar: "+m_staticAlgPar);
         long SFT = (8*total_size)/dash.getDeliveryRate();
@@ -158,7 +158,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
             Log.d(TAG, "m_staticAlgPar"+m_staticAlgPar);
             if (m_staticAlgPar!=0) {
                 Log.d(TAG, "m_staticAlgPar is not a zero, returning lowest rate");
-                retVal = PlayerActivity.getRepIndex(df.getLowestBitrate());
+                retVal = lowestBitrateIndex();
             }
             else
             {
@@ -246,27 +246,27 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     int bba1VRAA(int lastRateIndex, int resevoir,LogSegment dash){
 
         int rateUindex = lastRateIndex==0? lastRateIndex:lastRateIndex - 1;
-        int rateLindex = lastRateIndex==df.trackSelection2.length()? lastRateIndex:lastRateIndex + 1;
+        int rateLindex = lastRateIndex == tracks.length? lastRateIndex : lastRateIndex + 1;
         Log.d(TAG, "rateUindex: "+rateUindex+" rateLindex: "+rateLindex);
         int optRateIndex = 0;
         if (dash.getBufferLevel() < resevoir) {
             Log.d(TAG, "Calling gf_list_count bufferLevel < reservoir");
-            optRateIndex = df.trackSelection2.length(); }
+            optRateIndex = tracks.length; }
         else if (dash.getBufferLevel() > 0.9 *(loadControl.getMaxBufferUs()/1000/dash.getSegmentDuration()) * dash.getSegmentDuration())
             optRateIndex = 0;
         else
         {
 
-            int low = df.getLowestBitrate();
-            int high = df.getHighestBitrate();
+            int low = lowestBitrate();
+            int high = highestBitrate();
             double slope = (high-low)/(0.9 * ((loadControl.getMaxBufferUs()/1000) / dash.getSegmentDuration()) * dash.getSegmentDuration() - resevoir);
             Log.d(TAG, "slope: "+slope);
             Log.d(TAG, "argument to findRate: "+(low + slope * (dash.getBufferLevel()-resevoir))/1000.0);
-            optRateIndex = df.getNearestBitrateIndex((low+ slope * (dash.getBufferLevel()-resevoir))/1000.0);
+            optRateIndex = getNearestBitrateIndex((low+ slope * (dash.getBufferLevel()-resevoir))/1000.0);
             Log.d(TAG, "optRateIndex: "+optRateIndex+" (BBA2)");
         }
 
-        if (optRateIndex == df.trackSelection2.length() || optRateIndex == 0)
+        if (optRateIndex == tracks.length || optRateIndex == 0)
             return optRateIndex;
         else if (optRateIndex <= rateUindex)
             return optRateIndex;

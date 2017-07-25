@@ -199,11 +199,11 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
         if (networkRate == -1 && inc == 0) {
             networkRate = bandwidthMeter.getBitrateEstimate();
             inc++;
-            return df.trackSelection2.length()-1;
+            return lowestBitrateIndex();
         }
         else if(inc==1){
             inc++;
-            return df.trackSelection2.length()-1;
+            return lowestBitrateIndex();
         }
         if (inc > 1) {
             networkRate = 0.2 * bandwidthMeter.getBitrateEstimate() + 0.8 * networkRate;
