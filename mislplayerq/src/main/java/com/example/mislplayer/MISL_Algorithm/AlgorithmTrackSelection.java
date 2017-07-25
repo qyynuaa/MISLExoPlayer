@@ -145,15 +145,11 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
 
         public double value() {
             double weights[] = new double[window];
+            double weightSum = (1 - Math.pow(1 - ratio, window));
             double subTotal = 0;
 
             for (int i = 0; i < window; i++) {
-                if (i == window - 1) {
-                    weights[i] = Math.pow(1 - ratio, i);
-                }
-                else {
-                    weights[i] = (ratio) * Math.pow(1 - ratio, i);
-                }
+                weights[i] = (ratio) * Math.pow(1 - ratio, i) / weightSum;
                 subTotal += weights[i] * rates[i];
             }
             return subTotal;
@@ -176,13 +172,11 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
 
         public double value() {
             double weights[] = new double[window];
+            double weightSum = (1 - Math.pow(1 - ratio, window));
             double totalDeviation = 0;
 
             for (int i = 0; i < window; i++) {
-                if (i == window - 1)
-                    weights[i] = Math.pow(1 - ratio, i);
-                else
-                    weights[i] = (ratio) * Math.pow(1 - ratio, i);
+                weights[i] = (ratio) * Math.pow(1 - ratio, i) / weightSum;
                 totalDeviation += weights[i] * Math.pow(averageRate - rates[i], 2);
             }
             return window * totalDeviation / (window - 1);
