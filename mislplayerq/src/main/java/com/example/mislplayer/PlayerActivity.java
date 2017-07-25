@@ -7,7 +7,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.transition.Transition;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -34,7 +33,6 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.ui.PlaybackControlView;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
@@ -45,7 +43,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.concurrent.Future;
 
 import com.opencsv.CSVReader;
 
@@ -68,7 +65,7 @@ import com.opencsv.CSVReader;
         private String videoInfo;
         private int segmentNumber = 0;
         public static DashMediaSource videoSource;
-        public static TransitionalAlgorithmListener dMSL = new TransitionalAlgorithmListener();
+        private final TransitionalAlgorithmListener ALGORITHM_LISTENER = new TransitionalAlgorithmListener();
         public Thread t;
         public static ArrayList<FutureSegmentInfos> futureSegmentInfos;
         public static ArrayList<Integer> reprLevel;
@@ -105,7 +102,7 @@ import com.opencsv.CSVReader;
             // Uri uri = Uri.parse("http://yt-dash-mse-test.commondatastorage.googleapis.com/media/oops-20120802-manifest.mpd");
 
             //Provides instances of DataSource from which streams of data can be read.
-            DataSource.Factory dataSourceFactory = buildDataSourceFactory2(dMSL);
+            DataSource.Factory dataSourceFactory = buildDataSourceFactory2(ALGORITHM_LISTENER);
 
             //Provides instances of TrackSelection, this will decide which segments we will download later
             TrackSelection.Factory videoTrackSelectionFactory = chooseAlgorithm(ALGORITHM_TYPE);
@@ -118,7 +115,7 @@ import com.opencsv.CSVReader;
             mainHandler = new Handler();
 
             //Provides instances of DashChunkSource
-            df = new MISLDashChunkSource.Factory(dataSourceFactory, dMSL);
+            df = new MISLDashChunkSource.Factory(dataSourceFactory, ALGORITHM_LISTENER);
 
             // Our video source media, we give it an URL, and all the stuff before
             videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, mainHandler, eventLogger);
@@ -196,16 +193,16 @@ import com.opencsv.CSVReader;
                     return new DASHTrackSelection.Factory(BANDWIDTH_METER);
                 case "OSCAR-H":
                     Log.d("NOTE","OSCAR-H has been chosen.");
-                    return new OscarHTrackSelection.Factory();
+                    return new OscarHTrackSelection.Factory(ALGORITHM_LISTENER);
                 case "ARBITER":
                     Log.d("NOTE","ARBITER has been chosen.");
-                    return new ArbiterTrackSelection.Factory();
+                    return new ArbiterTrackSelection.Factory(ALGORITHM_LISTENER);
                 case "BBA2":
                     Log.d("NOTE","BBA2 has been chosen.");
                     return new BBA2TrackSelection.Factory();
                 case "ELASTIC":
                     Log.d("NOTE", "ELASTIC has been chosen.");
-                    return new ElasticTrackSelection.Factory();
+                    return new ElasticTrackSelection.Factory(ALGORITHM_LISTENER);
             }
             Log.d("ERROR","ALGORITHM NOT FOUND");
             return new AdaptiveTrackSelection.Factory(BANDWIDTH_METER);
@@ -356,7 +353,7 @@ import com.opencsv.CSVReader;
             if (Util.SDK_INT > 23) {
                 releasePlayer();
             }
-            LogSegment.writeLogSegInFile(dMSL.getSegInfos(), BANDWIDTH_METER.getSampleBytesCollected());
+            LogSegment.writeLogSegInFile(ALGORITHM_LISTENER.getSegInfos(), BANDWIDTH_METER.getSampleBytesCollected());
         }
 
         private HttpDataSource.Factory buildHttpDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
