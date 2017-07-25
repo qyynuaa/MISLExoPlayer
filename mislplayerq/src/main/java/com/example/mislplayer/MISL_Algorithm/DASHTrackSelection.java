@@ -38,7 +38,7 @@ import com.google.android.exoplayer2.upstream.BandwidthMeter;
  * A bandwidth based adaptive {@link TrackSelection}, whose selected track is updated to be the one
  * of highest quality given the current network conditions and the state of the buffer.
  */
-public class DASHTrackSelection extends BaseTrackSelection {
+public class DASHTrackSelection extends AlgorithmTrackSelection {
 
     /**
      * Factory for {@link com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection} instances.

@@ -15,7 +15,7 @@ import static java.lang.Math.min;
  * Uses the MISL Elastic adaptation algorithm to select tracks.
  */
 
-public class ElasticTrackSelection extends BaseTrackSelection {
+public class ElasticTrackSelection extends AlgorithmTrackSelection {
 
     /**
      * Creates ElasticTrackSelection instances.
@@ -197,7 +197,7 @@ public class ElasticTrackSelection extends BaseTrackSelection {
                 rateSamples[i - 1] = algorithmListener.getSegInfos().get(segmentIndex - i).getDeliveryRate() * 1E3;
             }
 
-            double averageRateEstimate = getAverageRate(rateSamples);
+            double averageRateEstimate = new HarmonicAverage(averageWindow, rateSamples).value();
 
             Log.d(TAG, String.format("averageRateEstimate = %f bps", averageRateEstimate));
 
@@ -230,19 +230,5 @@ public class ElasticTrackSelection extends BaseTrackSelection {
             }
         }
         return length - 1;
-    }
-
-    /**
-     * Calculates the average of an array of samples.
-     *
-     * @param rateSamples The array of samples to find the average of.
-     * @return The average of the array of samples.
-     */
-    private double getAverageRate(double[] rateSamples) {
-        double average = 0;
-        for (int i = 0; i < rateSamples.length; i++) {
-            average += 1 / rateSamples[i];
-        }
-        return rateSamples.length / average;
     }
 }

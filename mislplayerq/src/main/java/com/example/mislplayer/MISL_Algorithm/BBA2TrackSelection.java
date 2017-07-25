@@ -16,7 +16,7 @@ import com.google.android.exoplayer2.trackselection.TrackSelection;
 /**
  * Uses the BBA2 adaptation algorithm to select tracks.
  */
-public class BBA2TrackSelection extends BaseTrackSelection {
+public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
     /**
      * Creates BBA2TrackSelection instances.
