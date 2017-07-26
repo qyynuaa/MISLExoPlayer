@@ -2,14 +2,10 @@ package com.example.mislplayer.MISL_Algorithm;
 
 import android.util.Log;
 
-import com.example.mislplayer.DashMediaSourceListener;
 import com.example.mislplayer.PlayerActivity;
 import com.example.mislplayer.TransitionalAlgorithmListener;
 import com.google.android.exoplayer2.source.TrackGroup;
-import com.google.android.exoplayer2.trackselection.BaseTrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
-
-import static java.lang.Math.min;
 
 /**
  * Uses the MISL Elastic adaptation algorithm to select tracks.
@@ -176,9 +172,11 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
         final int segmentIndex = algorithmListener.logSegment.getSegNumber();
 
         final double totalSizeBytes = algorithmListener.logSegment.getByteSize();
+        final double deliveryRateKbps = algorithmListener.logSegment.getDeliveryRate();
         final double downloadTimeS = algorithmListener.logSegment.getDeliveryTime() / 1E3;
         final double lastSegmentDurationS = algorithmListener.logSegment.getSegmentDuration() / 1E3;
 
+        if (totalSizeBytes == 0 || deliveryRateKbps == 0 || lastSegmentDurationS == 0) {
             // skipping rate adaptation – log details and return
             return -1;
         } else {
@@ -186,17 +184,12 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
 
             final double queueLengthS = bufferedDurationUs / 1E6;
 
-            int averageWindow = min(segmentIndex, elasticAverageWindow);
-
-            double[] rateSamples = new double[averageWindow];
-
-            for (int i = 1; i <= averageWindow; i++) {
-                // rateSamples is in bits/second
-                rateSamples[i - 1] = algorithmListener.getSegInfos().get(segmentIndex - i).getDeliveryRate() * 1E3;
-            }
+            int averageWindow = algorithmListener.getWindowSize(elasticAverageWindow);
+            double[] rateSamples = algorithmListener.getThroughputSamples(averageWindow);
 
             double averageRateEstimate = new HarmonicAverage(averageWindow, rateSamples).value();
 
+            Log.d(TAG, String.format("averageRateEstimate = %f kbps", averageRateEstimate));
 
             staticAlgParameter += downloadTimeS * (queueLengthS - elasticTargetQueueS);
 
@@ -208,7 +201,9 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
                 targetRate = 0;
             }
 
+            Log.d(TAG, String.format("targetRate = %f kbps", targetRate));
 
+            return findRateIndex(targetRate * 1000);
         }
     }
 
