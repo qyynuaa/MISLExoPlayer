@@ -2,8 +2,14 @@ package com.example.mislplayer.MISL_Algorithm;
 
 import android.util.Log;
 
+import com.example.mislplayer.LogSegment;
+import com.example.mislplayer.TransitionalAlgorithmListener;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.BaseTrackSelection;
+
+import java.util.ArrayList;
+
+import static java.lang.Math.min;
 
 /**
  * A common superclass for track selections which implement an adaptation
@@ -12,6 +18,9 @@ import com.google.android.exoplayer2.trackselection.BaseTrackSelection;
 public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
 
     private final String TAG = "AlgorithmTrackSelection";
+
+    public static final int HISTORIC_ESTIMATION = 0;
+    public static final int PREDICTIVE_ESTIMATION = 1;
 
     /**
      * @param group The {@link TrackGroup}. Must not be null.

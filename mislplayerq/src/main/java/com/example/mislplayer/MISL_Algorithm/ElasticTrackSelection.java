@@ -176,11 +176,9 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
         final int segmentIndex = algorithmListener.logSegment.getSegNumber();
 
         final double totalSizeBytes = algorithmListener.logSegment.getByteSize();
-        final double bytesPerSecond = algorithmListener.logSegment.getDeliveryRate();
         final double downloadTimeS = algorithmListener.logSegment.getDeliveryTime() / 1E3;
         final double lastSegmentDurationS = algorithmListener.logSegment.getSegmentDuration() / 1E3;
 
-        if (totalSizeBytes == 0 || bytesPerSecond == 0 || lastSegmentDurationS == 0) {
             // skipping rate adaptation – log details and return
             return -1;
         } else {
@@ -199,7 +197,6 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
 
             double averageRateEstimate = new HarmonicAverage(averageWindow, rateSamples).value();
 
-            Log.d(TAG, String.format("averageRateEstimate = %f bps", averageRateEstimate));
 
             staticAlgParameter += downloadTimeS * (queueLengthS - elasticTargetQueueS);
 
@@ -211,9 +208,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
                 targetRate = 0;
             }
 
-            Log.d(TAG, String.format("targetRate = %f bps", targetRate));
 
-            return findRateIndex(targetRate);
         }
     }
 

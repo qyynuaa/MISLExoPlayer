@@ -2,15 +2,11 @@ package com.example.mislplayer.MISL_Algorithm;
 
 import android.util.Log;
 
-import com.example.mislplayer.DefaultDashChunkSource2;
 import com.example.mislplayer.MISLDashChunkSource;
 import com.example.mislplayer.PlayerActivity;
-import com.example.mislplayer.TransitionalAlgorithmListener;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.source.TrackGroup;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
-import com.google.android.exoplayer2.trackselection.BaseTrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 

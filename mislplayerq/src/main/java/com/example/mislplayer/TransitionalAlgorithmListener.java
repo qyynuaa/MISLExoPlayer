@@ -21,6 +21,7 @@ import java.util.ArrayList;
 
 import static com.google.android.exoplayer2.ExoPlayer.STATE_BUFFERING;
 import static com.google.android.exoplayer2.ExoPlayer.STATE_READY;
+import static java.lang.Math.min;
 
 /**
  * A transitional listener, to be used while migrating code.
@@ -49,6 +50,19 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     private ArrayList<LogSegment> allSegLog = new ArrayList<>();
 
     public ArrayList<LogSegment> getSegInfos() {return allSegLog;}
+
+    public int getWindowSize(int window) {
+        return min(window, logSegment.getSegNumber());
+    }
+
+    public double[] getThroughputSamples(int window) {
+        double[] rateSamples = new double[window];
+        for (int i = 1; i <= window; i++) {
+            int chunkIndex = logSegment.getSegNumber();
+            rateSamples[i - 1] = (double) getSegInfos().get(chunkIndex - i).getDeliveryRate();
+        }
+        return rateSamples;
+    }
 
     /**
      * Gives the listener the last chunk that was downloaded, to be passed to the
