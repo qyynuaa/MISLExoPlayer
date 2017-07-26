@@ -116,7 +116,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
             return dash_do_rate_adaptation_bba2(algorithmListener.logSegment);
         }
         Log.d(TAG,"null log");
-        return 0;
+        return lowestBitrateIndex();
     }
 
     /* MISL BBA2 adaptation algorithm */
