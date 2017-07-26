@@ -86,6 +86,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
         /** The buffer level of the player in ms. */
         long bufferLevelMs = PlayerActivity.player.getBufferedPosition() - PlayerActivity.player.getCurrentPosition();
+        Log.d(TAG, String.format("Buffer level = %d", bufferLevelMs));
 
         long deliveryRateKbps = 0;
 
