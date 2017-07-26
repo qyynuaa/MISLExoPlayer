@@ -66,9 +66,6 @@ public class LogSegment {
     public long getByteSize(){
         return byteSize;
     }
-    public long getBufferLevel(){
-        return bufferLevel;
-    }
 
     public long getSegmentDuration(){
         return segmentDuration;
@@ -95,7 +92,6 @@ public class LogSegment {
         String deliveryRate = getDeliveryRate()+"";
         String actionRate = getActionRate()+"";
         String byteSize = getByteSize()+"";
-        String bufferLevel = getBufferLevel()+"";
         while (segNum.length()!=5){
             segNum = " "+segNum;
         }
@@ -119,9 +115,6 @@ public class LogSegment {
         }
         while(byteSize.length()!=10){
             byteSize = " "+byteSize;
-        }
-        while(bufferLevel.length()!=11){
-            bufferLevel = " "+bufferLevel;
         }
         return segNum+" "+arrivalTime+"\t"+deliveryTime+"\t"+stallDuration+"\t"+repLevel+"\t"+deliveryRate+"\t"+actionRate+"\t"+byteSize+"\t"+bufferLevel;
     }

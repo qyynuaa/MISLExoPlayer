@@ -121,10 +121,6 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         long byteSize = lastChunk.bytesLoaded();
         Log.d(TAG, String.format("Chunk size = %d bytes", byteSize));
 
-        /** The buffer level of the player in ms. */
-        long bufferLevelMs = PlayerActivity.player.getBufferedPosition() - PlayerActivity.player.getCurrentPosition();
-        Log.d(TAG, String.format("Buffer level = %d", bufferLevelMs));
-
         long deliveryRateKbps = 0;
 
         if (loadDurationMs > 0) {
@@ -136,7 +132,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
         logSegment = new LogSegment(segmentNumber, arrivalTimeMs,
                 loadDurationMs, stallDurationMs, representationLevelKbps,
-                deliveryRateKbps, actualRatebps, byteSize, bufferLevelMs,
+                deliveryRateKbps, actualRatebps, byteSize, 0,
                 segmentDurationMs, null);
 
         allSegLog.add(logSegment);
