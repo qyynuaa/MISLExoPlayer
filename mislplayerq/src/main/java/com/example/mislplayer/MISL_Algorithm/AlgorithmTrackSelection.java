@@ -67,6 +67,21 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
     }
 
     /**
+     * Finds the index for the highest quality level below a target rate.
+     *
+     * @param targetRate The target rate.
+     * @return The index of the highest suitable quality level.
+     */
+    public int findBestRateIndex(double targetRate) {
+        for (int i = 0; i < length; i++) {
+            if (getFormat(i).bitrate < targetRate) {
+                return tracks[i];
+            }
+        }
+        return length - 1;
+    }
+
+    /**
      * A pythagorean arithmetic average.
      */
     public class ArithmeticAverage {
