@@ -7,7 +7,6 @@ import com.example.mislplayer.MISLDashChunkSource;
 import com.example.mislplayer.PlayerActivity;
 import com.example.mislplayer.TransitionalAlgorithmListener;
 import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -44,7 +43,6 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
     private int inc = 0;
     private int m_staticAlgPar = 0;
-    private DefaultLoadControl loadControl = PlayerActivity.loadControl;
     private MISLDashChunkSource.Factory df = PlayerActivity.df;
 
     private static final String TAG = "BBA2";
@@ -216,7 +214,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     {
 
         int ii = 0;
-        int resvWin = (int)(2*(((loadControl.getMaxBufferUs()/1000) / dash.getSegmentDuration())) < (df.getMpdDuration()/dash.getSegNumber()) -(dash.getSegNumber())? 2*(((loadControl.getMaxBufferUs()/1000) / dash.getSegmentDuration())): (df.getMpdDuration()/dash.getSegNumber()) -(dash.getSegNumber()));
+        int resvWin = (int)(2*(((algorithmListener.getMaxBufferMs()) / dash.getSegmentDuration())) < (df.getMpdDuration()/dash.getSegNumber()) -(dash.getSegNumber())? 2*(((algorithmListener.getMaxBufferMs()) / dash.getSegmentDuration())): (df.getMpdDuration()/dash.getSegNumber()) -(dash.getSegNumber()));
         Log.d(TAG, "Last rate: "+lastRate);
         long avgSegSize = (lastRate * dash.getSegmentDuration()) / 8; //bytes
         Log.d(TAG, "avgSize: "+avgSegSize+" resvWin: "+resvWin);
@@ -236,8 +234,8 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         Log.d(TAG, "resevoir: "+resevoir);
         if (resevoir < (2 * dash.getSegmentDuration()))
             resevoir = 2 * dash.getSegmentDuration();
-        else if (resevoir > (0.6 * (loadControl.getMaxBufferUs()/1000/ dash.getSegmentDuration()) * dash.getSegmentDuration()))
-            resevoir = (0.6 * (loadControl.getMaxBufferUs()/1000/ dash.getSegmentDuration()) * dash.getSegmentDuration());
+        else if (resevoir > (0.6 * (algorithmListener.getMaxBufferMs() / dash.getSegmentDuration()) * dash.getSegmentDuration()))
+            resevoir = (0.6 * (algorithmListener.getMaxBufferMs() / dash.getSegmentDuration()) * dash.getSegmentDuration());
         Log.d(TAG, "resevoir: "+(int)resevoir);
         return (int)resevoir;
     }
@@ -251,14 +249,14 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         if (dash.getBufferLevel() < resevoir) {
             Log.d(TAG, "Calling gf_list_count bufferLevel < reservoir");
             optRateIndex = tracks.length; }
-        else if (dash.getBufferLevel() > 0.9 *(loadControl.getMaxBufferUs()/1000/dash.getSegmentDuration()) * dash.getSegmentDuration())
+        else if (dash.getBufferLevel() > 0.9 *(algorithmListener.getMaxBufferMs() / dash.getSegmentDuration()) * dash.getSegmentDuration())
             optRateIndex = 0;
         else
         {
 
             int low = lowestBitrate();
             int high = highestBitrate();
-            double slope = (high-low)/(0.9 * ((loadControl.getMaxBufferUs()/1000) / dash.getSegmentDuration()) * dash.getSegmentDuration() - resevoir);
+            double slope = (high-low)/(0.9 * (algorithmListener.getMaxBufferMs() / dash.getSegmentDuration()) * dash.getSegmentDuration() - resevoir);
             Log.d(TAG, "slope: "+slope);
             Log.d(TAG, "argument to findRate: "+(low + slope * (dash.getBufferLevel()-resevoir))/1000.0);
             optRateIndex = getNearestBitrateIndex((low+ slope * (dash.getBufferLevel()-resevoir))/1000.0);

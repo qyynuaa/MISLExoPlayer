@@ -46,15 +46,38 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     private long stallDurationMs;
 
     public LogSegment logSegment;
-
     private ArrayList<LogSegment> allSegLog = new ArrayList<>();
+
+    private PlayerActivity playerActivity;
+
+    public TransitionalAlgorithmListener(PlayerActivity playerActivity) {
+        this.playerActivity = playerActivity;
+    }
 
     public ArrayList<LogSegment> getSegInfos() {return allSegLog;}
 
+    /**
+     * Calculates an appropriate window size, based on the number of
+     * downloaded chunks available.
+     *
+     * @param window The ideal window size.
+     * @return The appropriate window size.
+     */
     public int getWindowSize(int window) {
         return min(window, logSegment.getSegNumber());
     }
 
+    /** Gives the current maximum buffer length the player is aiming for. */
+    public long getMaxBufferMs() {
+        return playerActivity.getMaxBufferMs();
+    }
+
+    /**
+     * Provides the last few throughput samples.
+     *
+     * @param window The number of throughput samples to provide.
+     * @return The last few throughput samples.
+     */
     public double[] getThroughputSamples(int window) {
         double[] rateSamples = new double[window];
         for (int i = 1; i <= window; i++) {

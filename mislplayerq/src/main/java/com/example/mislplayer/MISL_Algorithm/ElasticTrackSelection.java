@@ -2,7 +2,6 @@ package com.example.mislplayer.MISL_Algorithm;
 
 import android.util.Log;
 
-import com.example.mislplayer.PlayerActivity;
 import com.example.mislplayer.TransitionalAlgorithmListener;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -180,7 +179,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
             // skipping rate adaptation – log details and return
             return -1;
         } else {
-            final double elasticTargetQueueS = PlayerActivity.loadControl.getMaxBufferUs() / 1E6;
+            final double elasticTargetQueueS = algorithmListener.getMaxBufferMs() / 1E3;
 
             final double queueLengthS = bufferedDurationUs / 1E6;
 

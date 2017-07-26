@@ -67,17 +67,23 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
         private BandwidthMeterEventListener bm = new BandwidthMeterEventListener();
         private final DefaultBandwidthMeter2 BANDWIDTH_METER = new DefaultBandwidthMeter2(mainHandler, bm);
         // private final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter(mainHandler,bm);
-        public static DefaultLoadControl loadControl;
+        private DefaultLoadControl loadControl;
         private String videoInfo;
         private int segmentNumber = 0;
         public static DashMediaSource videoSource;
-        private final TransitionalAlgorithmListener algorithmListener = new TransitionalAlgorithmListener();
+        private final TransitionalAlgorithmListener algorithmListener = new TransitionalAlgorithmListener(this);
         public Thread t;
         public static ArrayList<FutureSegmentInfos> futureSegmentInfos;
         public static ArrayList<Integer> reprLevel;
         public static int beginningIndex;
         public static MISLDashChunkSource.Factory df;
         public static String ALGORITHM_TYPE;
+
+        private int minBufferMs = DEFAULT_MIN_BUFFER_MS;
+        private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
+        private long playbackBufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_MS;
+        private long rebufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
+
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -134,12 +140,9 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
             //If you want to modify buffer parameters use this
             DefaultAllocator allocator = new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE);
 
-            //Controls buffering of media.
-            loadControl = new DefaultLoadControl(allocator,
-                    26000,
-                    DEFAULT_MAX_BUFFER_MS,
-                    DEFAULT_BUFFER_FOR_PLAYBACK_MS,
-                    DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS);
+            minBufferMs = 26000;
+            loadControl = new DefaultLoadControl(allocator, minBufferMs,
+                    maxBufferMs, playbackBufferMs, rebufferMs);
 
             //Creates an instance of our player, we have to give it all previous stuff
             player = ExoPlayerFactory.newSimpleInstance(context, trackSelector, loadControl);
@@ -267,7 +270,9 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
             return null;
         }
 
-
+        public int getMaxBufferMs() {
+            return maxBufferMs;
+        }
 
         //To get the index of a given representation Level for our media content.
         public static int getRepIndex(int repLevel) {
