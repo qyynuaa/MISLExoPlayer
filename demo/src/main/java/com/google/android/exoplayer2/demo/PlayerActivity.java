@@ -35,7 +35,6 @@ import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
@@ -48,15 +47,13 @@ import com.google.android.exoplayer2.drm.UnsupportedDrmException;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.mediacodec.MediaCodecRenderer.DecoderInitializationException;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil.DecoderQueryException;
-import com.google.android.exoplayer2.misl.MISLDashMediaSource;
-import com.google.android.exoplayer2.misl.*;
 import com.google.android.exoplayer2.source.BehindLiveWindowException;
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.source.dash.DashMediaSource;
 import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource;
-import com.google.android.exoplayer2.source.dash.DefaultDashMediaSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.source.smoothstreaming.DefaultSsChunkSource;
 import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
@@ -96,7 +93,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public static final String URI_LIST_EXTRA = "uri_list";
   public static final String EXTENSION_LIST_EXTRA = "extension_list";
 
-  private static final AlgorithmListener ALGORITHM_LISTENER = new DefaultAlgorithmListener();
+  private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
   private static final CookieManager DEFAULT_COOKIE_MANAGER;
   static {
     DEFAULT_COOKIE_MANAGER = new CookieManager();
@@ -237,12 +234,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     Intent intent = getIntent();
     boolean needNewPlayer = player == null;
     if (needNewPlayer) {
-      AdaptationAlgorithm.Factory basicAlgorithmFactory =
-          new ElasticAdaptationAlgorithm.Factory(ALGORITHM_LISTENER);
-      TrackSelection.Factory algorithmTrackSelectionFactory =
-          new DefaultAlgorithmTrackSelection.Factory(basicAlgorithmFactory);
-      trackSelector = new DefaultTrackSelector(algorithmTrackSelectionFactory);
-      trackSelectionHelper = new TrackSelectionHelper(trackSelector, algorithmTrackSelectionFactory);
+      TrackSelection.Factory adaptiveTrackSelectionFactory =
+          new AdaptiveTrackSelection.Factory(BANDWIDTH_METER);
+      trackSelector = new DefaultTrackSelector(adaptiveTrackSelectionFactory);
+      trackSelectionHelper = new TrackSelectionHelper(trackSelector, adaptiveTrackSelectionFactory);
       lastSeenTrackGroupArray = null;
       eventLogger = new EventLogger(trackSelector);
 
@@ -273,12 +268,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
       DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this,
           drmSessionManager, extensionRendererMode);
 
-      MISLLoadControl loadControl = new MISLLoadControl();
-      player = ExoPlayerFactory.newSimpleInstance(renderersFactory, trackSelector, loadControl);
-      ALGORITHM_LISTENER.setLoadControl(loadControl);
+      player = ExoPlayerFactory.newSimpleInstance(renderersFactory, trackSelector);
       player.addListener(this);
       player.addListener(eventLogger);
-      player.addListener(ALGORITHM_LISTENER);
       player.setAudioDebugListener(eventLogger);
       player.setVideoDebugListener(eventLogger);
       player.setMetadataOutput(eventLogger);
@@ -337,8 +329,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         return new SsMediaSource(uri, buildDataSourceFactory(false),
             new DefaultSsChunkSource.Factory(mediaDataSourceFactory), mainHandler, eventLogger);
       case C.TYPE_DASH:
-        return new DefaultDashMediaSource(uri, buildDataSourceFactory(false),
-            new MISLDashChunkSource.Factory(mediaDataSourceFactory, ALGORITHM_LISTENER), mainHandler, eventLogger);
+        return new DashMediaSource(uri, buildDataSourceFactory(false),
+            new DefaultDashChunkSource.Factory(mediaDataSourceFactory), mainHandler, eventLogger);
       case C.TYPE_HLS:
         return new HlsMediaSource(uri, mediaDataSourceFactory, mainHandler, eventLogger);
       case C.TYPE_OTHER:
@@ -395,25 +387,25 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   /**
    * Returns a new DataSource factory.
    *
-   * @param useAlgorithmListener Whether to set {@link #ALGORITHM_LISTENER} as a listener to the new
+   * @param useBandwidthMeter Whether to set {@link #BANDWIDTH_METER} as a listener to the new
    *     DataSource factory.
    * @return A new DataSource factory.
    */
-  private DataSource.Factory buildDataSourceFactory(boolean useAlgorithmListener) {
+  private DataSource.Factory buildDataSourceFactory(boolean useBandwidthMeter) {
     return ((DemoApplication) getApplication())
-        .buildDataSourceFactory(useAlgorithmListener ? ALGORITHM_LISTENER : null);
+        .buildDataSourceFactory(useBandwidthMeter ? BANDWIDTH_METER : null);
   }
 
   /**
    * Returns a new HttpDataSource factory.
    *
-   * @param useAlgorithmListener Whether to set {@link #ALGORITHM_LISTENER} as a listener to the new
+   * @param useBandwidthMeter Whether to set {@link #BANDWIDTH_METER} as a listener to the new
    *     DataSource factory.
    * @return A new HttpDataSource factory.
    */
-  private HttpDataSource.Factory buildHttpDataSourceFactory(boolean useAlgorithmListener) {
+  private HttpDataSource.Factory buildHttpDataSourceFactory(boolean useBandwidthMeter) {
     return ((DemoApplication) getApplication())
-        .buildHttpDataSourceFactory(useAlgorithmListener ? ALGORITHM_LISTENER : null);
+        .buildHttpDataSourceFactory(useBandwidthMeter ? BANDWIDTH_METER : null);
   }
 
   // ExoPlayer.EventListener implementation

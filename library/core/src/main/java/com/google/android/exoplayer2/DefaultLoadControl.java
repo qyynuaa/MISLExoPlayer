@@ -202,4 +202,7 @@ public final class DefaultLoadControl implements LoadControl {
     }
   }
 
+  public long getMaxBufferUs() {
+    return maxBufferUs;
+  }
 }
