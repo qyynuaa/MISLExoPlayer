@@ -47,6 +47,8 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
     private static final String TAG = "BBA2";
 
+    private long bufferedDurationMs;
+
     private int selectedIndex;
     private int reason;
 
@@ -64,6 +66,8 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
     @Override
     public void updateSelectedTrack(long bufferedDurationUs) {
+        bufferedDurationMs = bufferedDurationUs / 1000;
+
         int currentSelectedIndex = selectedIndex;
 //          Format currentFormat = getSelectedFormat();
         int idealSelectedIndex = adaptiveAlgorithm();
@@ -106,7 +110,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
     }
 
-    public int idealQuality (){ //(double networkRate, TrackGroup group)
+    public int idealQuality() { //(double networkRate, TrackGroup group)
         if(algorithmListener.logSegment!=null) {
             Log.d(TAG,"launched !");
             return dash_do_rate_adaptation_bba2(algorithmListener.logSegment);
@@ -149,9 +153,9 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         if (SFT > dash.getSegmentDuration())
             m_staticAlgPar = 1; // switch to BBA1 if buffer is decreasing
         Log.d(TAG,"Before if ");
-        if (dash.getBufferLevel() < resevoir)               //CHECK BUFFER LEVEL
+        if (bufferedDurationMs < resevoir)               //CHECK BUFFER LEVEL
         {
-            Log.d(TAG, "buffer_level(="+dash.getBufferLevel()+")< resevoir(="+resevoir+")");
+            Log.d(TAG, "buffer_level(=" + bufferedDurationMs + ")< resevoir(="+resevoir+")");
             Log.d(TAG, "m_staticAlgPar"+m_staticAlgPar);
             if (m_staticAlgPar!=0) {
                 Log.d(TAG, "m_staticAlgPar is not a zero, returning lowest rate");
@@ -178,12 +182,12 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
             {
                 // execute BBA1
                 Log.d(TAG, "m_staticAlgPar is not zero, calling bba1VRAA"+SFT);
-                retVal = bba1VRAA(lastRateIndex,resevoir,dash);
+                retVal = bba1VRAA(lastRateIndex, resevoir, dash);
                 Log.d(TAG, "After bba1vraa : retVal:"+retVal);
             }
             else { // beyond resevoir
                 Log.d(TAG, "beyond reservoir, calling bba1 and bba2");
-                int bba1RateIndex = bba1VRAA(lastRateIndex,resevoir,dash);
+                int bba1RateIndex = bba1VRAA(lastRateIndex, resevoir, dash);
                 Log.d(TAG, "bba1RateIndex:"+bba1RateIndex);
                 if (SFT <= 0.5 * dash.getSegmentDuration()) {
                     // buffer level increasing fast
@@ -240,16 +244,16 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         return (int)resevoir;
     }
 
-    int bba1VRAA(int lastRateIndex, int resevoir,LogSegment dash){
+    int bba1VRAA(int lastRateIndex, int resevoir, LogSegment dash){
 
         int rateUindex = lastRateIndex==0? lastRateIndex:lastRateIndex - 1;
         int rateLindex = lastRateIndex == tracks.length? lastRateIndex : lastRateIndex + 1;
         Log.d(TAG, "rateUindex: "+rateUindex+" rateLindex: "+rateLindex);
         int optRateIndex = 0;
-        if (dash.getBufferLevel() < resevoir) {
+        if (bufferedDurationMs < resevoir) {
             Log.d(TAG, "Calling gf_list_count bufferLevel < reservoir");
             optRateIndex = tracks.length; }
-        else if (dash.getBufferLevel() > 0.9 *(algorithmListener.getMaxBufferMs() / dash.getSegmentDuration()) * dash.getSegmentDuration())
+        else if (bufferedDurationMs > 0.9 *(algorithmListener.getMaxBufferMs() / dash.getSegmentDuration()) * dash.getSegmentDuration())
             optRateIndex = 0;
         else
         {
@@ -258,8 +262,8 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
             int high = highestBitrate();
             double slope = (high-low)/(0.9 * (algorithmListener.getMaxBufferMs() / dash.getSegmentDuration()) * dash.getSegmentDuration() - resevoir);
             Log.d(TAG, "slope: "+slope);
-            Log.d(TAG, "argument to findRate: "+(low + slope * (dash.getBufferLevel()-resevoir))/1000.0);
-            optRateIndex = getNearestBitrateIndex((low+ slope * (dash.getBufferLevel()-resevoir))/1000.0);
+            Log.d(TAG, "argument to findRate: "+(low + slope * (bufferedDurationMs - resevoir))/1000.0);
+            optRateIndex = getNearestBitrateIndex((low+ slope * (bufferedDurationMs - resevoir))/1000.0);
             Log.d(TAG, "optRateIndex: "+optRateIndex+" (BBA2)");
         }
 
