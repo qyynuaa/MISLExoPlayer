@@ -107,7 +107,7 @@ public class DashMediaSourceListener implements AdaptiveMediaSourceEventListener
             Log.d("SEG-QUAL",repLevel+"");
             actualRate= (bytesLoaded * 8) *1000 /(segmentDuration);
             byteSize=bytesLoaded;
-            bufferLevel=PlayerActivity.player.getBufferedPosition()-PlayerActivity.player.getCurrentPosition();
+            //bufferLevel=PlayerActivity.player.getBufferedPosition()-PlayerActivity.player.getCurrentPosition();
             if(deliveryTime >0) deliveryRate= (bytesLoaded / deliveryTime)*8;
             Log.d("bufferL",bufferLevel+"");
             if(ExoPlayerListener.getStallDuration()!=0 && ExoPlayerListener.flag>0){

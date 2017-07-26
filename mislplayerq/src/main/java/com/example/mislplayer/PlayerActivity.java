@@ -60,7 +60,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
         private SimpleExoPlayerView playerView;
         private Handler mainHandler;
         private EventLogger eventLogger;
-        public static SimpleExoPlayer player;
+        private SimpleExoPlayer player;
         private int resumeWindow;
         private long resumePosition;
         private DefaultTrackSelector trackSelector;
