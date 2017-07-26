@@ -59,6 +59,14 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     public ArrayList<LogSegment> getSegInfos() {return allSegLog;}
 
     /**
+     * Indicates that data on previous chunks is not available.
+     *
+     * @return true if data on previous chunks is not available, false
+     * otherwise.
+     */
+    public boolean chunkDataNotAvailable() {return allSegLog.size() == 0;}
+
+    /**
      * Calculates an appropriate window size, based on the number of
      * downloaded chunks available.
      *

@@ -162,9 +162,8 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
                 group->download_segment_index + 1 - number of downloaded segments
         */
 
-        if (algorithmListener.logSegment == null) {
-            // select lowest rate
-            return length - 1;
+        if (algorithmListener.chunkDataNotAvailable()) {
+            return lowestBitrateIndex();
         }
 
 

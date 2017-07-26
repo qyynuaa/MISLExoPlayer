@@ -312,7 +312,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
         String bufferedPosition = "Buffer Level : " + player.getBufferedPosition() + "\n";
        // debugView.setText(videoInfo + buffer + trackgroups + period + videoID + videoBitrate + audioBitrate + bandwidth + bytesAllocated + bufferedPosition);
         */
-            if(algorithmListener.logSegment!=null) {
+            if(!algorithmListener.chunkDataNotAvailable()) {
                 String test = "SEG NUMBER : " + algorithmListener.logSegment.getSegNumber();
                 debugView.setText(test);
             }
