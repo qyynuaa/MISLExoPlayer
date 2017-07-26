@@ -19,9 +19,6 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
 
     private final String TAG = "AlgorithmTrackSelection";
 
-    public static final int HISTORIC_ESTIMATION = 0;
-    public static final int PREDICTIVE_ESTIMATION = 1;
-
     /**
      * @param group The {@link TrackGroup}. Must not be null.
      * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
