@@ -147,12 +147,10 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
             //Creates an instance of our player, we have to give it all previous stuff
             player = ExoPlayerFactory.newSimpleInstance(context, trackSelector, loadControl);
 
+            player.addListener(algorithmListener);
+
             //bind the player to a view
             playerView.setPlayer(player);
-
-            //Listen to the player behavior to get some infos about it
-            ExoPlayerListener exoPlayerListener = new ExoPlayerListener();
-            player.addListener(exoPlayerListener);
 
             // ?
             if (resumeWindow != C.INDEX_UNSET)
