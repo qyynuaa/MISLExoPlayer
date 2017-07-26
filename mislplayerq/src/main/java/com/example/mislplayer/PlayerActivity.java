@@ -70,13 +70,13 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
         private DefaultLoadControl loadControl;
         private String videoInfo;
         private int segmentNumber = 0;
-        public static DashMediaSource videoSource;
+        private DashMediaSource videoSource;
         private final TransitionalAlgorithmListener algorithmListener = new TransitionalAlgorithmListener(this);
         public Thread t;
         public static ArrayList<FutureSegmentInfos> futureSegmentInfos;
         public static ArrayList<Integer> reprLevel;
         public static int beginningIndex;
-        public static MISLDashChunkSource.Factory df;
+        private MISLDashChunkSource.Factory df;
         public static String ALGORITHM_TYPE;
 
         private int minBufferMs = DEFAULT_MIN_BUFFER_MS;

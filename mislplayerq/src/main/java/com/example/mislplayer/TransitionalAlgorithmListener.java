@@ -45,6 +45,8 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     private int lastPlaybackState;
     private long stallDurationMs;
 
+    private long mpdDuration;
+
     public LogSegment logSegment;
     private ArrayList<LogSegment> allSegLog = new ArrayList<>();
 
@@ -85,6 +87,20 @@ public class TransitionalAlgorithmListener implements ChunkListener,
             rateSamples[i - 1] = (double) getSegInfos().get(chunkIndex - i).getDeliveryRate();
         }
         return rateSamples;
+    }
+
+    /** Provides the duration of the current mpd. */
+    public long getMpdDuration() {
+        return mpdDuration;
+    }
+
+    /**
+     * Gives the listener the duration of the mpd.
+     *
+     * @param duration The duration of the mpd.
+     */
+    public void giveMpdDuration(long duration) {
+        mpdDuration = duration;
     }
 
     /**

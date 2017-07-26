@@ -231,6 +231,16 @@ public class DefaultAlgorithmListener implements AlgorithmListener {
     }
 
     /**
+     * Gives the listener the duration of the mpd.
+     *
+     * @param duration The duration of the mpd.
+     */
+    @Override
+    public void giveMpdDuration(long duration) {
+        // not yet implemented
+    }
+
+    /**
      * Called when a transfer starts.
      *
      * @param source   The source performing the transfer.

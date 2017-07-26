@@ -43,7 +43,6 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
     private int inc = 0;
     private int m_staticAlgPar = 0;
-    private MISLDashChunkSource.Factory df = PlayerActivity.df;
 
     private static final String TAG = "BBA2";
 
@@ -218,7 +217,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     {
 
         int ii = 0;
-        int resvWin = (int)(2*(((algorithmListener.getMaxBufferMs()) / dash.getSegmentDuration())) < (df.getMpdDuration()/dash.getSegNumber()) -(dash.getSegNumber())? 2*(((algorithmListener.getMaxBufferMs()) / dash.getSegmentDuration())): (df.getMpdDuration()/dash.getSegNumber()) -(dash.getSegNumber()));
+        int resvWin = (int)(2*(((algorithmListener.getMaxBufferMs()) / dash.getSegmentDuration())) < (algorithmListener.getMpdDuration()/dash.getSegNumber()) -(dash.getSegNumber())? 2*(((algorithmListener.getMaxBufferMs()) / dash.getSegmentDuration())): (algorithmListener.getMpdDuration()/dash.getSegNumber()) -(dash.getSegNumber()));
         Log.d(TAG, "Last rate: "+lastRate);
         long avgSegSize = (lastRate * dash.getSegmentDuration()) / 8; //bytes
         Log.d(TAG, "avgSize: "+avgSegSize+" resvWin: "+resvWin);

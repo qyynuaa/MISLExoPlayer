@@ -13,4 +13,11 @@ public interface ChunkListener {
      * @param lastChunk The last chunk that was downloaded.
      */
     void giveLastChunk(MediaChunk lastChunk);
+
+    /**
+     * Gives the listener the duration of the mpd.
+     *
+     * @param duration The duration of the mpd.
+     */
+    void giveMpdDuration(long duration);
 }
