@@ -2,15 +2,11 @@ package com.example.mislplayer.MISL_Algorithm;
 
 import android.util.Log;
 
-import com.example.mislplayer.DefaultDashChunkSource2;
 import com.example.mislplayer.MISLDashChunkSource;
 import com.example.mislplayer.PlayerActivity;
-import com.example.mislplayer.TransitionalAlgorithmListener;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.source.TrackGroup;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
-import com.google.android.exoplayer2.trackselection.BaseTrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 
@@ -38,7 +34,7 @@ import com.google.android.exoplayer2.upstream.BandwidthMeter;
  * A bandwidth based adaptive {@link TrackSelection}, whose selected track is updated to be the one
  * of highest quality given the current network conditions and the state of the buffer.
  */
-public class DASHTrackSelection extends BaseTrackSelection {
+public class DASHTrackSelection extends AlgorithmTrackSelection {
 
     /**
      * Factory for {@link com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection} instances.
@@ -199,11 +195,11 @@ public class DASHTrackSelection extends BaseTrackSelection {
         if (networkRate == -1 && inc == 0) {
             networkRate = bandwidthMeter.getBitrateEstimate();
             inc++;
-            return df.trackSelection2.length()-1;
+            return lowestBitrateIndex();
         }
         else if(inc==1){
             inc++;
-            return df.trackSelection2.length()-1;
+            return lowestBitrateIndex();
         }
         if (inc > 1) {
             networkRate = 0.2 * bandwidthMeter.getBitrateEstimate() + 0.8 * networkRate;

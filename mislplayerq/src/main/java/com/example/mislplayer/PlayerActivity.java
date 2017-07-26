@@ -33,6 +33,7 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.ui.PlaybackControlView;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DefaultAllocator;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
@@ -46,8 +47,13 @@ import java.util.ArrayList;
 
 import com.opencsv.CSVReader;
 
+import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
+import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS;
+import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_MAX_BUFFER_MS;
+import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_MIN_BUFFER_MS;
 
-    public class PlayerActivity extends Activity implements View.OnClickListener,ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
+
+public class PlayerActivity extends Activity implements View.OnClickListener,ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
 
 
         private Context userAgent = this;
@@ -126,10 +132,14 @@ import com.opencsv.CSVReader;
             Context context = this;
 
             //If you want to modify buffer parameters use this
-           // DefaultAllocator allocator = new DefaultAllocator(true, 10000);
+            DefaultAllocator allocator = new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE);
 
             //Controls buffering of media.
-            loadControl = new DefaultLoadControl(/*allocator, 20000, 40000,1000,0*/); //allocator, 5000, 15000, 10000, 0); //2nd : min duration before rebuffering, if we decrease it, it will take more time to rebuffer // 3nd is max duration before rebuffering // 4th min duration of buffer to playback or when there is a seek to
+            loadControl = new DefaultLoadControl(allocator,
+                    26000,
+                    DEFAULT_MAX_BUFFER_MS,
+                    DEFAULT_BUFFER_FOR_PLAYBACK_MS,
+                    DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS);
 
             //Creates an instance of our player, we have to give it all previous stuff
             player = ExoPlayerFactory.newSimpleInstance(context, trackSelector, loadControl);
