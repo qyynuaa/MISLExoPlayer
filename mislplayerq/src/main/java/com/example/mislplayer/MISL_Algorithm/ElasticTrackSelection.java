@@ -167,12 +167,12 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
         }
 
 
-        final int segmentIndex = algorithmListener.logSegment.getSegNumber();
+        final int segmentIndex = algorithmListener.getSegNumber();
 
-        final double totalSizeBytes = algorithmListener.logSegment.getByteSize();
-        final double deliveryRateKbps = algorithmListener.logSegment.getDeliveryRate();
-        final double downloadTimeS = algorithmListener.logSegment.getDeliveryTime() / 1E3;
-        final double lastSegmentDurationS = algorithmListener.logSegment.getSegmentDuration() / 1E3;
+        final double totalSizeBytes = algorithmListener.getByteSize();
+        final double deliveryRateKbps = algorithmListener.getDeliveryRate();
+        final double downloadTimeS = algorithmListener.getDeliveryTime() / 1E3;
+        final double lastSegmentDurationS = algorithmListener.getSegmentDuration() / 1E3;
 
         if (totalSizeBytes == 0 || deliveryRateKbps == 0 || lastSegmentDurationS == 0) {
             // skipping rate adaptation – log details and return

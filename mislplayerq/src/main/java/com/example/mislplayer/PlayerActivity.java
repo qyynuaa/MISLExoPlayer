@@ -310,7 +310,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
        // debugView.setText(videoInfo + buffer + trackgroups + period + videoID + videoBitrate + audioBitrate + bandwidth + bytesAllocated + bufferedPosition);
         */
             if(!algorithmListener.chunkDataNotAvailable()) {
-                String test = "SEG NUMBER : " + algorithmListener.logSegment.getSegNumber();
+                String test = "SEG NUMBER : " + algorithmListener.getSegNumber();
                 debugView.setText(test);
             }
         }

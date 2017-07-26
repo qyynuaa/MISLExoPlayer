@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import static com.google.android.exoplayer2.ExoPlayer.STATE_BUFFERING;
 import static com.google.android.exoplayer2.ExoPlayer.STATE_READY;
+import static java.lang.Math.log;
 import static java.lang.Math.min;
 
 /**
@@ -44,7 +45,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
     private long mpdDuration;
 
-    public LogSegment logSegment;
+    private LogSegment logSegment;
     private ArrayList<LogSegment> allSegLog = new ArrayList<>();
 
     private PlayerActivity playerActivity;
@@ -158,6 +159,33 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
         allSegLog.add(logSegment);
         this.lastChunk = lastChunk;
+    }
+
+    public int getSegNumber(){
+        return logSegment.getSegNumber();
+    }
+    public long getArrivalTime(){
+        return logSegment.getArrivalTime();
+    }
+    public long getDeliveryTime(){
+        return logSegment.getDeliveryTime();
+    }
+    public long getStallDuration(){
+        return logSegment.getStallDuration();
+    }
+    public int getRepLevel(){
+        return logSegment.getRepLevel();
+    }
+    public long getDeliveryRate() {return logSegment.getDeliveryRate();}
+    public long getActionRate(){
+        return logSegment.getActionRate();
+    }
+    public long getByteSize(){
+        return logSegment.getByteSize();
+    }
+
+    public long getSegmentDuration(){
+        return logSegment.getSegmentDuration();
     }
 
     /**
