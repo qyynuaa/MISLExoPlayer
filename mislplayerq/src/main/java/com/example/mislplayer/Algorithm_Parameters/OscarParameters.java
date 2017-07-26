@@ -4,13 +4,11 @@ package com.example.mislplayer.Algorithm_Parameters;
  * Created by Quentin L on 05/07/2017.
  */
 
-import com.example.mislplayer.Algorithm_Parameters.DashParameters;
-
 /**
  * Created by Quentin L on 27/06/2017.
  */
 
-public class OscarParameters implements DashParameters {
+public class OscarParameters {
     public static double OSCAR_H_STAT_THR;
     public static double OSCAR_H_ADAP_COEFF;
     public static double OSCAR_BW_SAFETY;

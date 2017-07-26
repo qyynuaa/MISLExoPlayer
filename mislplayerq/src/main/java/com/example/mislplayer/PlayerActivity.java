@@ -64,8 +64,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
         private int resumeWindow;
         private long resumePosition;
         private DefaultTrackSelector trackSelector;
-        private BandwidthMeterEventListener bm = new BandwidthMeterEventListener();
-        private final DefaultBandwidthMeter2 BANDWIDTH_METER = new DefaultBandwidthMeter2(mainHandler, bm);
+        private final DefaultBandwidthMeter2 BANDWIDTH_METER = new DefaultBandwidthMeter2(null, null);
         // private final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter(mainHandler,bm);
         private DefaultLoadControl loadControl;
         private String videoInfo;

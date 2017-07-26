@@ -3,9 +3,6 @@ package com.example.mislplayer;
 import android.os.SystemClock;
 import android.util.Log;
 
-import com.example.mislplayer.Algorithm_Parameters.ArbiterParameters;
-import com.example.mislplayer.Algorithm_Parameters.DashParameters;
-import com.example.mislplayer.Algorithm_Parameters.OscarParameters;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackParameters;
@@ -157,7 +154,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         logSegment = new LogSegment(segmentNumber, arrivalTimeMs,
                 loadDurationMs, stallDurationMs, representationLevelKbps,
                 deliveryRateKbps, actualRatebps, byteSize, 0,
-                segmentDurationMs, null);
+                segmentDurationMs);
 
         allSegLog.add(logSegment);
         this.lastChunk = lastChunk;

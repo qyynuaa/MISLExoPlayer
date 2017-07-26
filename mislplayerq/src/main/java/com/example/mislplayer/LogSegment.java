@@ -2,8 +2,6 @@ package com.example.mislplayer;
 
 import android.util.Log;
 
-import com.example.mislplayer.Algorithm_Parameters.DashParameters;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,10 +25,11 @@ public class LogSegment {
     private long bufferLevel;
     private long deliveryRate;
     private long segmentDuration;
-    private DashParameters dashParameters;
     public static String path = "/sdcard/Logs_Exoplayer";
 
-    public LogSegment(int segNumber,long arrivalTime,long deliveryTime,long stallDuration,int repLevel,long deliveryRate,long actionRate,long byteSize, long bufferLevel,long segmentDuration,DashParameters dashParameters){
+    public LogSegment(int segNumber,long arrivalTime,long deliveryTime,
+                      long stallDuration,int repLevel,long deliveryRate,
+                      long actionRate,long byteSize, long bufferLevel,long segmentDuration){
         this.segNumber=segNumber;
         this.arrivalTime=arrivalTime;
         this.deliveryTime=deliveryTime;
@@ -41,7 +40,6 @@ public class LogSegment {
         this.byteSize=byteSize;
         this.bufferLevel=bufferLevel;
         this.segmentDuration=segmentDuration;
-        this.dashParameters=dashParameters;
     }
 
     public int getSegNumber(){
@@ -71,16 +69,11 @@ public class LogSegment {
         return segmentDuration;
     }
 
-    public DashParameters getDashParameters(){
-        return dashParameters;
-    }
-
     public void setByteSize(long byteSize){this.byteSize=byteSize;}
     public void setDeliveryRate(long deliveryRate){this.deliveryRate=deliveryRate;}
     public void setBufferLevel(long bufferLevel){this.bufferLevel=bufferLevel;}
     public void setRepLevel(int repLevel){this.repLevel=repLevel;}
     public void setActionRate(long actionRate){this.actionRate=actionRate;}
-    public void setDashParameters(DashParameters dashParameters){this.dashParameters=dashParameters;}
 
     @Override
     public String toString(){
