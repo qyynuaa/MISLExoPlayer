@@ -379,6 +379,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 player = null;
                 eventLogger = null;
                 algorithmListener.writeLogsToFile();
+                algorithmListener.clearChunkInformation();
             }
         }
 

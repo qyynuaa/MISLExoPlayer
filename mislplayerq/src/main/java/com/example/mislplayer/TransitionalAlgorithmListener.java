@@ -375,6 +375,10 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
     }
 
+    public void clearChunkInformation() {
+        this.downloadedChunkInfo = new ArrayList<>();
+    }
+
     private static class ChunkInformation {
         private int segNumber;
         private long arrivalTime;
