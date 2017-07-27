@@ -14,7 +14,7 @@ import java.util.Date;
  * Created by Quentin L on 31/05/2017.
  */
 
-public class LogSegment {
+public class ChunkInformation {
     private int segNumber;
     private long arrivalTime;
     private long deliveryTime;
@@ -27,9 +27,9 @@ public class LogSegment {
     private long segmentDuration;
     public static String path = "/sdcard/Logs_Exoplayer";
 
-    public LogSegment(int segNumber,long arrivalTime,long deliveryTime,
-                      long stallDuration,int repLevel,long deliveryRate,
-                      long actionRate,long byteSize, long bufferLevel,long segmentDuration){
+    public ChunkInformation(int segNumber, long arrivalTime, long deliveryTime,
+                            long stallDuration, int repLevel, long deliveryRate,
+                            long actionRate, long byteSize, long bufferLevel, long segmentDuration){
         this.segNumber=segNumber;
         this.arrivalTime=arrivalTime;
         this.deliveryTime=deliveryTime;
@@ -113,7 +113,7 @@ public class LogSegment {
     }
 
 
-    public static void writeLogSegInFile(ArrayList<LogSegment> segmentsInfos, long[] byteSizes) {
+    public static void writeLogSegInFile(ArrayList<ChunkInformation> segmentsInfos, long[] byteSizes) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
         Date date = new Date();
         File file = new File(path, "/Log_Segments_ExoPlayer_" + dateFormat.format(date) + ".txt");

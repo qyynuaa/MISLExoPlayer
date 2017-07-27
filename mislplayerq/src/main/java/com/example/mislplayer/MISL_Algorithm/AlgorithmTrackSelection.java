@@ -2,12 +2,8 @@ package com.example.mislplayer.MISL_Algorithm;
 
 import android.util.Log;
 
-import com.example.mislplayer.LogSegment;
-import com.example.mislplayer.TransitionalAlgorithmListener;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.BaseTrackSelection;
-
-import java.util.ArrayList;
 
 import static java.lang.Math.min;
 

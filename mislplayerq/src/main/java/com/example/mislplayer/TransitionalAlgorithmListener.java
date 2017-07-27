@@ -18,7 +18,6 @@ import java.util.ArrayList;
 
 import static com.google.android.exoplayer2.ExoPlayer.STATE_BUFFERING;
 import static com.google.android.exoplayer2.ExoPlayer.STATE_READY;
-import static java.lang.Math.log;
 import static java.lang.Math.min;
 
 /**
@@ -45,8 +44,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
     private long mpdDuration;
 
-    private LogSegment logSegment;
-    private ArrayList<LogSegment> allSegLog = new ArrayList<>();
+    private ArrayList<ChunkInformation> downloadedChunkInfo = new ArrayList<>();
 
     private PlayerActivity playerActivity;
 
@@ -54,7 +52,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         this.playerActivity = playerActivity;
     }
 
-    public ArrayList<LogSegment> getSegInfos() {return allSegLog;}
+    public ArrayList<ChunkInformation> getSegInfos() {return downloadedChunkInfo;}
 
     /**
      * Indicates that data on previous chunks is not available.
@@ -62,7 +60,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      * @return true if data on previous chunks is not available, false
      * otherwise.
      */
-    public boolean chunkDataNotAvailable() {return allSegLog.size() == 0;}
+    public boolean chunkDataNotAvailable() {return downloadedChunkInfo.size() == 0;}
 
     /**
      * Calculates an appropriate window size, based on the number of
@@ -72,7 +70,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      * @return The appropriate window size.
      */
     public int getWindowSize(int window) {
-        return min(window, logSegment.getSegNumber());
+        return min(window, lastChunkInfo().getSegNumber());
     }
 
     /** Gives the current maximum buffer length the player is aiming for. */
@@ -89,14 +87,14 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     public double[] getThroughputSamples(int window) {
         double[] rateSamples = new double[window];
         for (int i = 1; i <= window; i++) {
-            int chunkIndex = logSegment.getSegNumber();
+            int chunkIndex = lastChunkInfo().getSegNumber();
             rateSamples[i - 1] = (double) getSegInfos().get(chunkIndex - i).getDeliveryRate();
         }
         return rateSamples;
     }
 
     /** Provides the duration of the current mpd. */
-    public long getMpdDuration() {
+    public long mpdDuration() {
         return mpdDuration;
     }
 
@@ -152,40 +150,59 @@ public class TransitionalAlgorithmListener implements ChunkListener,
             Log.d(TAG, String.format("Delivery rate = %d kbps", deliveryRateKbps));
         }
 
-        logSegment = new LogSegment(segmentNumber, arrivalTimeMs,
+        ChunkInformation lastChunkInfo = new ChunkInformation(segmentNumber, arrivalTimeMs,
                 loadDurationMs, stallDurationMs, representationLevelKbps,
-                deliveryRateKbps, actualRatebps, byteSize, 0,
-                segmentDurationMs);
+                deliveryRateKbps, actualRatebps, byteSize, 0, segmentDurationMs);
 
-        allSegLog.add(logSegment);
+        downloadedChunkInfo.add(lastChunkInfo);
         this.lastChunk = lastChunk;
     }
 
-    public int getSegNumber(){
-        return logSegment.getSegNumber();
-    }
-    public long getArrivalTime(){
-        return logSegment.getArrivalTime();
-    }
-    public long getDeliveryTime(){
-        return logSegment.getDeliveryTime();
-    }
-    public long getStallDuration(){
-        return logSegment.getStallDuration();
-    }
-    public int getRepLevel(){
-        return logSegment.getRepLevel();
-    }
-    public long getDeliveryRate() {return logSegment.getDeliveryRate();}
-    public long getActionRate(){
-        return logSegment.getActionRate();
-    }
-    public long getByteSize(){
-        return logSegment.getByteSize();
+    /** Returns the index of the most recently downloaded chunk. */
+    public int lastChunkIndex(){
+        return lastChunkInfo().getSegNumber();
     }
 
-    public long getSegmentDuration(){
-        return logSegment.getSegmentDuration();
+    /** Returns the arrival time of the last chunk, in ms. */
+    public long lastArrivalTimeMs(){
+        return lastChunkInfo().getArrivalTime();
+    }
+
+    /** Returns the amount of time it took to load the last chunk, in ms. */
+    public long lastLoadDurationMs(){
+        return lastChunkInfo().getDeliveryTime();
+    }
+
+    /** Returns the total amount of time the player has spent stalling, in ms. */
+    public long stallDurationMs(){
+        return lastChunkInfo().getStallDuration();
+    }
+
+    /** Returns the representation level of the most recently downloaded chunk, in kbps. */
+    public int lastRepLevelKbps(){
+        return lastChunkInfo().getRepLevel();
+    }
+
+    /** Returns the delivery rate of the most recently downloaded chunk, in kbps. */
+    public long lastDeliveryRateKbps() {return lastChunkInfo().getDeliveryRate();}
+
+    /** Returns the actual data rate of the most recently downloaded chunk, in bits per second. */
+    public long actualRatebps(){
+        return lastChunkInfo().getActionRate();
+    }
+
+    /** Returns the size of the most recently downloaded chunk, in bytes. */
+    public long lastByteSize(){
+        return lastChunkInfo().getByteSize();
+    }
+
+    /** Returns the duration of the most recently downloaded chunk, in ms. */
+    public long lastChunkDurationMs(){
+        return lastChunkInfo().getSegmentDuration();
+    }
+
+    private ChunkInformation lastChunkInfo() {
+        return downloadedChunkInfo.get(downloadedChunkInfo.size() - 1);
     }
 
     /**
