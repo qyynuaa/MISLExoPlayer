@@ -2,8 +2,6 @@ package com.example.mislplayer.MISL_Algorithm;
 
 import android.util.Log;
 import com.example.mislplayer.FutureSegmentInfos;
-import com.example.mislplayer.LogSegment;
-import com.example.mislplayer.MISLDashChunkSource;
 import com.example.mislplayer.PlayerActivity;
 import com.example.mislplayer.TransitionalAlgorithmListener;
 import com.google.android.exoplayer2.C;
@@ -115,42 +113,42 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
             return lowestBitrateIndex();
         } else {
             Log.d(TAG,"launched !");
-            return dash_do_rate_adaptation_bba2(algorithmListener.logSegment);
+            return dash_do_rate_adaptation_bba2();
         }
     }
 
     /* MISL BBA2 adaptation algorithm */
-    public int dash_do_rate_adaptation_bba2(LogSegment dash)
+    public int dash_do_rate_adaptation_bba2()
     {
 
         Double bitrate, time, speed;
         int nb_inter_rep = 0;
         long total_size, bytes_per_sec;
-        total_size = dash.getByteSize();
-        bytes_per_sec = dash.getByteSize() / dash.getDeliveryTime();
+        total_size = algorithmListener.lastByteSize();
+        bytes_per_sec = algorithmListener.lastByteSize() / algorithmListener.lastLoadDurationMs();
 
-        if (total_size != 0 && bytes_per_sec != 0 && dash.getSegmentDuration() != 0) {
+        if (total_size != 0 && bytes_per_sec != 0 && algorithmListener.lastChunkDurationMs() != 0) {
         } else {
             Log.d(TAG, "[DASH] Downloaded segment  " + total_size + " bytes at " + bytes_per_sec + " bytes per seconds - skipping rate adaptation\n");
             return -1;
         }
         // save the information about segment statistics (kbps)
-        Log.d(TAG,"Segment index: "+dash.getSegNumber());
+        Log.d(TAG,"Segment index: "+algorithmListener.lastChunkIndex());
 
 
         // take the last rate and find its index
-        int lastRate = dash.getRepLevel();
+        int lastRate = algorithmListener.lastRepLevelKbps();
         int lastRateIndex = PlayerActivity.getRepIndex(lastRate);
         Log.d(TAG,"last rate index: "+lastRateIndex);
         int retVal;
         // set to the lowest rate
         int qRateIndex= lowestBitrateIndex();
-        int resevoir = bba1UpdateResevoir(lastRate, lastRateIndex,dash);
+        int resevoir = bba1UpdateResevoir(lastRate, lastRateIndex);
         Log.d(TAG,"m_staticAlgPar: "+m_staticAlgPar);
-        long SFT = (8*total_size)/dash.getDeliveryRate();
-        Log.d(TAG,"SFT2: "+(8*total_size)/dash.getDeliveryRate());
+        long SFT = (8*total_size)/algorithmListener.lastDeliveryRateKbps();
+        Log.d(TAG,"SFT2: "+(8*total_size)/algorithmListener.lastDeliveryRateKbps());
         Log.d(TAG,"SFT: "+SFT);
-        if (SFT > dash.getSegmentDuration())
+        if (SFT > algorithmListener.lastChunkDurationMs())
             m_staticAlgPar = 1; // switch to BBA1 if buffer is decreasing
         Log.d(TAG,"Before if ");
         if (bufferedDurationMs < resevoir)               //CHECK BUFFER LEVEL
@@ -165,7 +163,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
             {
                 Log.d(TAG, "Check SFT against 1/8 of segment duration "+SFT);
                 // start up phase
-                if (SFT < 0.125 * dash.getSegmentDuration()) {
+                if (SFT < 0.125 * algorithmListener.lastChunkDurationMs()) {
                     // buffer level increasing fast
                     Log.d(TAG, "buffer level increasing fast:"+SFT);
                     retVal = lastRateIndex - 1 >= 0 ? lastRateIndex - 1 : 0;
@@ -182,14 +180,14 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
             {
                 // execute BBA1
                 Log.d(TAG, "m_staticAlgPar is not zero, calling bba1VRAA"+SFT);
-                retVal = bba1VRAA(lastRateIndex, resevoir, dash);
+                retVal = bba1VRAA(lastRateIndex, resevoir);
                 Log.d(TAG, "After bba1vraa : retVal:"+retVal);
             }
             else { // beyond resevoir
                 Log.d(TAG, "beyond reservoir, calling bba1 and bba2");
-                int bba1RateIndex = bba1VRAA(lastRateIndex, resevoir, dash);
+                int bba1RateIndex = bba1VRAA(lastRateIndex, resevoir);
                 Log.d(TAG, "bba1RateIndex:"+bba1RateIndex);
-                if (SFT <= 0.5 * dash.getSegmentDuration()) {
+                if (SFT <= 0.5 * algorithmListener.lastChunkDurationMs()) {
                     // buffer level increasing fast
                     qRateIndex = lastRateIndex - 1 >= 0?lastRateIndex - 1 : 0;}
                 retVal = bba1RateIndex < qRateIndex? bba1RateIndex:qRateIndex;
@@ -214,37 +212,37 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     }
 
 
-    int bba1UpdateResevoir (int lastRate, int lastRateIndex,LogSegment dash)
+    int bba1UpdateResevoir(int lastRate, int lastRateIndex)
     {
 
         int ii = 0;
-        int resvWin = (int)(2*(((algorithmListener.getMaxBufferMs()) / dash.getSegmentDuration())) < (algorithmListener.getMpdDuration()/dash.getSegNumber()) -(dash.getSegNumber())? 2*(((algorithmListener.getMaxBufferMs()) / dash.getSegmentDuration())): (algorithmListener.getMpdDuration()/dash.getSegNumber()) -(dash.getSegNumber()));
+        int resvWin = (int)(2*(((algorithmListener.getMaxBufferMs()) / algorithmListener.lastChunkDurationMs())) < (algorithmListener.mpdDuration()/algorithmListener.lastChunkIndex()) -(algorithmListener.lastChunkIndex())? 2*(((algorithmListener.getMaxBufferMs()) / algorithmListener.lastChunkDurationMs())): (algorithmListener.mpdDuration()/algorithmListener.lastChunkIndex()) -(algorithmListener.lastChunkIndex()));
         Log.d(TAG, "Last rate: "+lastRate);
-        long avgSegSize = (lastRate * dash.getSegmentDuration()) / 8; //bytes
+        long avgSegSize = (lastRate * algorithmListener.lastChunkDurationMs()) / 8; //bytes
         Log.d(TAG, "avgSize: "+avgSegSize+" resvWin: "+resvWin);
         int largeChunks = 0;
         int smallChunks = 0;
         for (ii=0; ii<resvWin ;ii++)
         {
-            if (FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, dash.getSegNumber() + ii, lastRateIndex) > avgSegSize)
-                largeChunks+= FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, dash.getSegNumber() + ii, lastRateIndex);
+            if (FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, algorithmListener.lastChunkIndex() + ii, lastRateIndex) > avgSegSize)
+                largeChunks+= FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, algorithmListener.lastChunkIndex() + ii, lastRateIndex);
             else
-                smallChunks += FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, dash.getSegNumber() + ii, lastRateIndex);
+                smallChunks += FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, algorithmListener.lastChunkIndex() + ii, lastRateIndex);
 
         }
         Log.d(TAG, "smallChunks: "+smallChunks+"largeChunks: "+largeChunks);
         Log.d(TAG, "diff: "+(largeChunks-smallChunks));
         double resevoir =  8 * ((largeChunks-smallChunks))/(lastRate);
         Log.d(TAG, "resevoir: "+resevoir);
-        if (resevoir < (2 * dash.getSegmentDuration()))
-            resevoir = 2 * dash.getSegmentDuration();
-        else if (resevoir > (0.6 * (algorithmListener.getMaxBufferMs() / dash.getSegmentDuration()) * dash.getSegmentDuration()))
-            resevoir = (0.6 * (algorithmListener.getMaxBufferMs() / dash.getSegmentDuration()) * dash.getSegmentDuration());
+        if (resevoir < (2 * algorithmListener.lastChunkDurationMs()))
+            resevoir = 2 * algorithmListener.lastChunkDurationMs();
+        else if (resevoir > (0.6 * (algorithmListener.getMaxBufferMs() / algorithmListener.lastChunkDurationMs()) * algorithmListener.lastChunkDurationMs()))
+            resevoir = (0.6 * (algorithmListener.getMaxBufferMs() / algorithmListener.lastChunkDurationMs()) * algorithmListener.lastChunkDurationMs());
         Log.d(TAG, "resevoir: "+(int)resevoir);
         return (int)resevoir;
     }
 
-    int bba1VRAA(int lastRateIndex, int resevoir, LogSegment dash){
+    int bba1VRAA(int lastRateIndex, int resevoir){
 
         int rateUindex = lastRateIndex==0? lastRateIndex:lastRateIndex - 1;
         int rateLindex = lastRateIndex == tracks.length? lastRateIndex : lastRateIndex + 1;
@@ -253,14 +251,14 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         if (bufferedDurationMs < resevoir) {
             Log.d(TAG, "Calling gf_list_count bufferLevel < reservoir");
             optRateIndex = tracks.length; }
-        else if (bufferedDurationMs > 0.9 *(algorithmListener.getMaxBufferMs() / dash.getSegmentDuration()) * dash.getSegmentDuration())
+        else if (bufferedDurationMs > 0.9 *(algorithmListener.getMaxBufferMs() / algorithmListener.lastChunkDurationMs()) * algorithmListener.lastChunkDurationMs())
             optRateIndex = 0;
         else
         {
 
             int low = lowestBitrate();
             int high = highestBitrate();
-            double slope = (high-low)/(0.9 * (algorithmListener.getMaxBufferMs() / dash.getSegmentDuration()) * dash.getSegmentDuration() - resevoir);
+            double slope = (high-low)/(0.9 * (algorithmListener.getMaxBufferMs() / algorithmListener.lastChunkDurationMs()) * algorithmListener.lastChunkDurationMs() - resevoir);
             Log.d(TAG, "slope: "+slope);
             Log.d(TAG, "argument to findRate: "+(low + slope * (bufferedDurationMs - resevoir))/1000.0);
             optRateIndex = getNearestBitrateIndex((low+ slope * (bufferedDurationMs - resevoir))/1000.0);

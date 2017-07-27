@@ -1,5 +1,6 @@
 package com.example.mislplayer;
 
+import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -14,7 +15,13 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.TransferListener;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import static com.google.android.exoplayer2.ExoPlayer.STATE_BUFFERING;
 import static com.google.android.exoplayer2.ExoPlayer.STATE_READY;
@@ -28,6 +35,8 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         TransferListener, ExoPlayer.EventListener {
 
     private static final String TAG = "TransitionalAL";
+
+    public static final String LOG_FILE_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
 
     private MediaChunk lastChunk;
 
@@ -44,8 +53,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
     private long mpdDuration;
 
-    public LogSegment logSegment;
-    private ArrayList<LogSegment> allSegLog = new ArrayList<>();
+    private ArrayList<ChunkInformation> downloadedChunkInfo = new ArrayList<>();
 
     private PlayerActivity playerActivity;
 
@@ -53,7 +61,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         this.playerActivity = playerActivity;
     }
 
-    public ArrayList<LogSegment> getSegInfos() {return allSegLog;}
+    public ArrayList<ChunkInformation> getSegInfos() {return downloadedChunkInfo;}
 
     /**
      * Indicates that data on previous chunks is not available.
@@ -61,7 +69,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      * @return true if data on previous chunks is not available, false
      * otherwise.
      */
-    public boolean chunkDataNotAvailable() {return allSegLog.size() == 0;}
+    public boolean chunkDataNotAvailable() {return downloadedChunkInfo.size() == 0;}
 
     /**
      * Calculates an appropriate window size, based on the number of
@@ -71,7 +79,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      * @return The appropriate window size.
      */
     public int getWindowSize(int window) {
-        return min(window, logSegment.getSegNumber());
+        return min(window, lastChunkInfo().getSegNumber());
     }
 
     /** Gives the current maximum buffer length the player is aiming for. */
@@ -88,14 +96,14 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     public double[] getThroughputSamples(int window) {
         double[] rateSamples = new double[window];
         for (int i = 1; i <= window; i++) {
-            int chunkIndex = logSegment.getSegNumber();
+            int chunkIndex = lastChunkInfo().getSegNumber();
             rateSamples[i - 1] = (double) getSegInfos().get(chunkIndex - i).getDeliveryRate();
         }
         return rateSamples;
     }
 
     /** Provides the duration of the current mpd. */
-    public long getMpdDuration() {
+    public long mpdDuration() {
         return mpdDuration;
     }
 
@@ -151,13 +159,83 @@ public class TransitionalAlgorithmListener implements ChunkListener,
             Log.d(TAG, String.format("Delivery rate = %d kbps", deliveryRateKbps));
         }
 
-        logSegment = new LogSegment(segmentNumber, arrivalTimeMs,
+        ChunkInformation lastChunkInfo = new ChunkInformation(segmentNumber, arrivalTimeMs,
                 loadDurationMs, stallDurationMs, representationLevelKbps,
-                deliveryRateKbps, actualRatebps, byteSize, 0,
-                segmentDurationMs);
+                deliveryRateKbps, actualRatebps, byteSize, 0, segmentDurationMs);
 
-        allSegLog.add(logSegment);
+        downloadedChunkInfo.add(lastChunkInfo);
         this.lastChunk = lastChunk;
+    }
+
+    /** Returns the index of the most recently downloaded chunk. */
+    public int lastChunkIndex(){
+        return lastChunkInfo().getSegNumber();
+    }
+
+    /** Returns the arrival time of the last chunk, in ms. */
+    public long lastArrivalTimeMs(){
+        return lastChunkInfo().getArrivalTime();
+    }
+
+    /** Returns the amount of time it took to load the last chunk, in ms. */
+    public long lastLoadDurationMs(){
+        return lastChunkInfo().getDeliveryTime();
+    }
+
+    /** Returns the total amount of time the player has spent stalling, in ms. */
+    public long stallDurationMs(){
+        return lastChunkInfo().getStallDuration();
+    }
+
+    /** Returns the representation level of the most recently downloaded chunk, in kbps. */
+    public int lastRepLevelKbps(){
+        return lastChunkInfo().getRepLevel();
+    }
+
+    /** Returns the delivery rate of the most recently downloaded chunk, in kbps. */
+    public long lastDeliveryRateKbps() {return lastChunkInfo().getDeliveryRate();}
+
+    /** Returns the actual data rate of the most recently downloaded chunk, in bits per second. */
+    public long actualRatebps(){
+        return lastChunkInfo().getActionRate();
+    }
+
+    /** Returns the size of the most recently downloaded chunk, in bytes. */
+    public long lastByteSize(){
+        return lastChunkInfo().getByteSize();
+    }
+
+    /** Returns the duration of the most recently downloaded chunk, in ms. */
+    public long lastChunkDurationMs(){
+        return lastChunkInfo().getSegmentDuration();
+    }
+
+    /** Logs to file data about all the chunks downloaded so far. */
+    public void writeLogsToFile() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
+        Date date = new Date();
+        File file = new File(LOG_FILE_PATH, "/Log_Segments_ExoPlayer_" + dateFormat.format(date) + ".txt");
+        try {
+            FileOutputStream stream = new FileOutputStream(file);
+            stream.write("Seg_#\t\tArr_time\t\tDel_Time\t\tStall_Dur\t\tRep_Level\t\tDel_Rate\t\tAct_Rate\t\tByte_Size\t\tBuff_Level\n".getBytes());
+            int index;
+            for (index = 0; index < downloadedChunkInfo.size(); index++) {
+                if (downloadedChunkInfo.get(index) != null) {
+                    stream.write(downloadedChunkInfo.get(index).toString().getBytes());
+                    stream.write("\n".getBytes());
+                }
+
+            }
+            stream.close();
+        } catch (IOException e) {
+            Log.e("Exception", "File write failed: " + e.toString());
+        }
+
+
+    }
+
+    private ChunkInformation lastChunkInfo() {
+        return downloadedChunkInfo.get(downloadedChunkInfo.size() - 1);
     }
 
     /**
@@ -296,6 +374,111 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      */
     @Override
     public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
+
+    }
+
+    private static class ChunkInformation {
+        private int segNumber;
+        private long arrivalTime;
+        private long deliveryTime;
+        private long stallDuration;
+        private int repLevel;
+        private long actionRate;
+        private long byteSize;
+        private long bufferLevel;
+        private long deliveryRate;
+        private long segmentDuration;
+
+        public ChunkInformation(int segNumber, long arrivalTime, long deliveryTime,
+                                long stallDuration, int repLevel, long deliveryRate,
+                                long actionRate, long byteSize, long bufferLevel, long segmentDuration){
+            this.segNumber=segNumber;
+            this.arrivalTime=arrivalTime;
+            this.deliveryTime=deliveryTime;
+            this.stallDuration=stallDuration;
+            this.repLevel=repLevel;
+            this.deliveryRate=deliveryRate;
+            this.actionRate=actionRate;
+            this.byteSize=byteSize;
+            this.bufferLevel=bufferLevel;
+            this.segmentDuration=segmentDuration;
+        }
+
+        public int getSegNumber(){
+            return segNumber;
+        }
+        public long getArrivalTime(){
+            return arrivalTime;
+        }
+        public long getDeliveryTime(){
+            return deliveryTime;
+        }
+        public long getStallDuration(){
+            return stallDuration;
+        }
+        public int getRepLevel(){
+            return repLevel;
+        }
+        public long getDeliveryRate() {return deliveryRate;}
+        public long getActionRate(){
+            return actionRate;
+        }
+        public long getByteSize(){
+            return byteSize;
+        }
+
+        public long getSegmentDuration(){
+            return segmentDuration;
+        }
+
+        public void setByteSize(long byteSize){this.byteSize=byteSize;}
+        public void setDeliveryRate(long deliveryRate){this.deliveryRate=deliveryRate;}
+        public void setBufferLevel(long bufferLevel){this.bufferLevel=bufferLevel;}
+        public void setRepLevel(int repLevel){this.repLevel=repLevel;}
+        public void setActionRate(long actionRate){this.actionRate=actionRate;}
+
+        @Override
+        public String toString(){
+            String segNum= (getSegNumber())+"";
+            String arrivalTime = getArrivalTime()+"";
+            String deliveryTime = getDeliveryTime()+"";
+            String stallDuration = getStallDuration()+"";
+            String repLevel = getRepLevel()+"";
+            String deliveryRate = getDeliveryRate()+"";
+            String actionRate = getActionRate()+"";
+            String byteSize = getByteSize()+"";
+            while (segNum.length()!=5){
+                segNum = " "+segNum;
+            }
+            while(arrivalTime.length()!=8){
+                arrivalTime = " "+arrivalTime;
+            }
+            while(deliveryTime.length()!=9){
+                deliveryTime = " "+deliveryTime;
+            }
+            while(stallDuration.length()!=10){
+                stallDuration = " "+stallDuration;
+            }
+            while(repLevel.length()!=10){
+                repLevel = " "+repLevel;
+            }
+            while(deliveryRate.length()!=9){
+                deliveryRate = " "+deliveryRate;
+            }
+            while(actionRate.length()!=9){
+                actionRate = " "+actionRate;
+            }
+            while(byteSize.length()!=10){
+                byteSize = " "+byteSize;
+            }
+            return segNum+" "+arrivalTime+"\t"+deliveryTime+"\t"+stallDuration+"\t"+repLevel+"\t"+deliveryRate+"\t"+actionRate+"\t"+byteSize+"\t"+bufferLevel;
+        }
+
+
+
+
+
+
 
     }
 }
