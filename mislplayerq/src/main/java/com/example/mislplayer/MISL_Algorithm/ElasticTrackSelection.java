@@ -67,7 +67,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
     private static final double DEFAULT_K_P = 0.01;
     private static final double DEFAULT_K_I = 0.001;
 
-    private static final String TAG = "ElasticTrackSelection";
+    private static final String TAG = "Elastic";
 
     private TransitionalAlgorithmListener algorithmListener;
 
