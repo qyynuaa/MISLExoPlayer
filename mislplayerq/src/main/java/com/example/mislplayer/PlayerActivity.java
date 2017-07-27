@@ -365,7 +365,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
             if (Util.SDK_INT > 23) {
                 releasePlayer();
             }
-            LogSegment.writeLogSegInFile(algorithmListener.getSegInfos(), BANDWIDTH_METER.getSampleBytesCollected());
+            algorithmListener.writeLogsToFile();
         }
 
         private HttpDataSource.Factory buildHttpDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
