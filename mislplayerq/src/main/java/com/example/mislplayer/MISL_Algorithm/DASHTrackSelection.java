@@ -166,10 +166,10 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
         int currentSelectedIndex = selectedIndex;
         int idealSelectedIndex = adaptiveAlgorithm();
         selectedIndex = idealSelectedIndex;
+        Log.d(TAG, String.format("Selected index = %d", selectedIndex));
         if(selectedIndex!=currentSelectedIndex){
             reason = C.SELECTION_REASON_ADAPTIVE;
         }
-        Log.d(TAG, "updateselectedtrack");
     }
 
     @Override

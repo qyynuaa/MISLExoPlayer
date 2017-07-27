@@ -70,6 +70,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         int idealSelectedIndex = adaptiveAlgorithm();
         Format idealFormat = getFormat(idealSelectedIndex);
         selectedIndex = idealSelectedIndex;
+        Log.d(TAG, String.format("Selected index = %d", selectedIndex));
         if(selectedIndex!=currentSelectedIndex){
             reason = C.SELECTION_REASON_ADAPTIVE;
         }
@@ -109,10 +110,8 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
     public int idealQuality() {
         if (algorithmListener.chunkDataNotAvailable()) {
-            Log.d(TAG, "null log");
             return lowestBitrateIndex();
         } else {
-            Log.d(TAG,"launched !");
             return dash_do_rate_adaptation_bba2();
         }
     }
@@ -139,69 +138,48 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         // take the last rate and find its index
         int lastRate = algorithmListener.lastRepLevelKbps();
         int lastRateIndex = PlayerActivity.getRepIndex(lastRate);
-        Log.d(TAG,"last rate index: "+lastRateIndex);
         int retVal;
         // set to the lowest rate
         int qRateIndex= lowestBitrateIndex();
         int resevoir = bba1UpdateResevoir(lastRate, lastRateIndex);
-        Log.d(TAG,"m_staticAlgPar: "+m_staticAlgPar);
         long SFT = (8*total_size)/algorithmListener.lastDeliveryRateKbps();
-        Log.d(TAG,"SFT2: "+(8*total_size)/algorithmListener.lastDeliveryRateKbps());
-        Log.d(TAG,"SFT: "+SFT);
         if (SFT > algorithmListener.lastChunkDurationMs())
             m_staticAlgPar = 1; // switch to BBA1 if buffer is decreasing
-        Log.d(TAG,"Before if ");
         if (bufferedDurationMs < resevoir)               //CHECK BUFFER LEVEL
         {
-            Log.d(TAG, "buffer_level(=" + bufferedDurationMs + ")< resevoir(="+resevoir+")");
-            Log.d(TAG, "m_staticAlgPar"+m_staticAlgPar);
             if (m_staticAlgPar!=0) {
-                Log.d(TAG, "m_staticAlgPar is not a zero, returning lowest rate");
                 retVal = lowestBitrateIndex();
             }
             else
             {
-                Log.d(TAG, "Check SFT against 1/8 of segment duration "+SFT);
                 // start up phase
                 if (SFT < 0.125 * algorithmListener.lastChunkDurationMs()) {
                     // buffer level increasing fast
-                    Log.d(TAG, "buffer level increasing fast:"+SFT);
                     retVal = lastRateIndex - 1 >= 0 ? lastRateIndex - 1 : 0;
-                    Log.d(TAG, "increasing fast retval: "+retVal);
                 }
                 else {
                     retVal = lastRateIndex; //<<<<<<<??????
-                    Log.d(TAG, "retval (same as last rate): "+retVal);
                 }}
 
         } else {
-            Log.d(TAG,"Greater than reservoir, checking m_staticAlgPar");
             if (m_staticAlgPar!=0)
             {
                 // execute BBA1
-                Log.d(TAG, "m_staticAlgPar is not zero, calling bba1VRAA"+SFT);
                 retVal = bba1VRAA(lastRateIndex, resevoir);
-                Log.d(TAG, "After bba1vraa : retVal:"+retVal);
             }
             else { // beyond resevoir
-                Log.d(TAG, "beyond reservoir, calling bba1 and bba2");
                 int bba1RateIndex = bba1VRAA(lastRateIndex, resevoir);
-                Log.d(TAG, "bba1RateIndex:"+bba1RateIndex);
                 if (SFT <= 0.5 * algorithmListener.lastChunkDurationMs()) {
                     // buffer level increasing fast
                     qRateIndex = lastRateIndex - 1 >= 0?lastRateIndex - 1 : 0;}
                 retVal = bba1RateIndex < qRateIndex? bba1RateIndex:qRateIndex;
 
-                Log.d(TAG, "qRateIndex: "+qRateIndex);
-                Log.d(TAG,  "retVal: "+retVal);
                 if (bba1RateIndex < qRateIndex) {
-                    Log.d(TAG, "Switching to BBA1 completely");
                     m_staticAlgPar = 1;
                 }
 
             }
         }
-        Log.d(TAG, "selected quality :"+retVal);
         return retVal;
         //dash->wait_bef_send_req = getRequestDelay(dash,group);
         //Log.d("[DASH BBA2]"" dash->wait_bef_send_req:%d\n",dash->wait_bef_send_req));
@@ -217,9 +195,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
         int ii = 0;
         int resvWin = (int)(2*(((algorithmListener.getMaxBufferMs()) / algorithmListener.lastChunkDurationMs())) < (algorithmListener.mpdDuration()/algorithmListener.lastChunkIndex()) -(algorithmListener.lastChunkIndex())? 2*(((algorithmListener.getMaxBufferMs()) / algorithmListener.lastChunkDurationMs())): (algorithmListener.mpdDuration()/algorithmListener.lastChunkIndex()) -(algorithmListener.lastChunkIndex()));
-        Log.d(TAG, "Last rate: "+lastRate);
         long avgSegSize = (lastRate * algorithmListener.lastChunkDurationMs()) / 8; //bytes
-        Log.d(TAG, "avgSize: "+avgSegSize+" resvWin: "+resvWin);
         int largeChunks = 0;
         int smallChunks = 0;
         for (ii=0; ii<resvWin ;ii++)
@@ -230,15 +206,11 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
                 smallChunks += FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, algorithmListener.lastChunkIndex() + ii, lastRateIndex);
 
         }
-        Log.d(TAG, "smallChunks: "+smallChunks+"largeChunks: "+largeChunks);
-        Log.d(TAG, "diff: "+(largeChunks-smallChunks));
         double resevoir =  8 * ((largeChunks-smallChunks))/(lastRate);
-        Log.d(TAG, "resevoir: "+resevoir);
         if (resevoir < (2 * algorithmListener.lastChunkDurationMs()))
             resevoir = 2 * algorithmListener.lastChunkDurationMs();
         else if (resevoir > (0.6 * (algorithmListener.getMaxBufferMs() / algorithmListener.lastChunkDurationMs()) * algorithmListener.lastChunkDurationMs()))
             resevoir = (0.6 * (algorithmListener.getMaxBufferMs() / algorithmListener.lastChunkDurationMs()) * algorithmListener.lastChunkDurationMs());
-        Log.d(TAG, "resevoir: "+(int)resevoir);
         return (int)resevoir;
     }
 
@@ -246,10 +218,8 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
         int rateUindex = lastRateIndex==0? lastRateIndex:lastRateIndex - 1;
         int rateLindex = lastRateIndex == tracks.length? lastRateIndex : lastRateIndex + 1;
-        Log.d(TAG, "rateUindex: "+rateUindex+" rateLindex: "+rateLindex);
         int optRateIndex = 0;
         if (bufferedDurationMs < resevoir) {
-            Log.d(TAG, "Calling gf_list_count bufferLevel < reservoir");
             optRateIndex = tracks.length; }
         else if (bufferedDurationMs > 0.9 *(algorithmListener.getMaxBufferMs() / algorithmListener.lastChunkDurationMs()) * algorithmListener.lastChunkDurationMs())
             optRateIndex = 0;
@@ -259,10 +229,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
             int low = lowestBitrate();
             int high = highestBitrate();
             double slope = (high-low)/(0.9 * (algorithmListener.getMaxBufferMs() / algorithmListener.lastChunkDurationMs()) * algorithmListener.lastChunkDurationMs() - resevoir);
-            Log.d(TAG, "slope: "+slope);
-            Log.d(TAG, "argument to findRate: "+(low + slope * (bufferedDurationMs - resevoir))/1000.0);
             optRateIndex = getNearestBitrateIndex((low+ slope * (bufferedDurationMs - resevoir))/1000.0);
-            Log.d(TAG, "optRateIndex: "+optRateIndex+" (BBA2)");
         }
 
         if (optRateIndex == tracks.length || optRateIndex == 0)

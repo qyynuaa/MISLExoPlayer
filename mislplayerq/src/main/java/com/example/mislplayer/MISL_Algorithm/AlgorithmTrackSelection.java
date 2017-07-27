@@ -117,8 +117,6 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
             }
             if (window > 1) {
                 result = totalDeviation / (window - 1);
-            } else {
-                Log.d(TAG, "Call rate variance estimator with uniary window");
             }
 
             return result;
