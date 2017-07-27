@@ -366,7 +366,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             if (Util.SDK_INT > 23) {
                 releasePlayer();
             }
-            algorithmListener.writeLogsToFile();
         }
 
         private HttpDataSource.Factory buildHttpDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
@@ -379,6 +378,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 player.release();
                 player = null;
                 eventLogger = null;
+                algorithmListener.writeLogsToFile();
             }
         }
 
