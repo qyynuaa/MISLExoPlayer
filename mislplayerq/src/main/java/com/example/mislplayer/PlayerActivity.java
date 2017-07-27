@@ -53,8 +53,10 @@ import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_MAX_BUFFE
 import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_MIN_BUFFER_MS;
 
 
-public class PlayerActivity extends Activity implements View.OnClickListener,ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
+public class PlayerActivity extends Activity implements View.OnClickListener,
+        ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
 
+        private final static String TAG = "PlayerActivity";
 
         private Context userAgent = this;
         private SimpleExoPlayerView playerView;
@@ -167,7 +169,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
             //futur segment sizes obtained thanks to CSV file
             futureSegmentInfos = getSegmentSizes();
             if(futureSegmentInfos!=null)
-                Log.d("FUTSEG",""+FutureSegmentInfos.getByteSize(futureSegmentInfos,3,getRepIndex(4310)));
+                Log.d(TAG,""+FutureSegmentInfos.getByteSize(futureSegmentInfos,3,getRepIndex(4310)));
             debugView.setTextColor(Color.WHITE);
             debugView.setTextSize(15);
 
@@ -196,25 +198,25 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
         public TrackSelection.Factory chooseAlgorithm (String name){
             switch (name){
                 case "BASIC_EXOPLAYER":
-                    Log.d("NOTE","BASIC_EXOPLAYER has been chosen.");
+                    Log.d(TAG,"BASIC_EXOPLAYER has been chosen.");
                     return new AdaptiveTrackSelection.Factory(BANDWIDTH_METER);
                 case "BASIC_ADAPTIVE":
-                    Log.d("NOTE","BASIC_ADAPTIVE has been chosen.");
+                    Log.d(TAG,"BASIC_ADAPTIVE has been chosen.");
                     return new DASHTrackSelection.Factory(BANDWIDTH_METER);
                 case "OSCAR-H":
-                    Log.d("NOTE","OSCAR-H has been chosen.");
+                    Log.d(TAG,"OSCAR-H has been chosen.");
                     return new OscarHTrackSelection.Factory(algorithmListener);
                 case "ARBITER":
-                    Log.d("NOTE","ARBITER has been chosen.");
+                    Log.d(TAG,"ARBITER has been chosen.");
                     return new ArbiterTrackSelection.Factory(algorithmListener);
                 case "BBA2":
-                    Log.d("NOTE","BBA2 has been chosen.");
+                    Log.d(TAG,"BBA2 has been chosen.");
                     return new BBA2TrackSelection.Factory(algorithmListener);
                 case "ELASTIC":
-                    Log.d("NOTE", "ELASTIC has been chosen.");
+                    Log.d(TAG, "ELASTIC has been chosen.");
                     return new ElasticTrackSelection.Factory(algorithmListener);
             }
-            Log.d("ERROR","ALGORITHM NOT FOUND");
+            Log.d(TAG,"ALGORITHM NOT FOUND");
             return new AdaptiveTrackSelection.Factory(BANDWIDTH_METER);
         }
 
@@ -249,7 +251,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
                         if (Integer.valueOf(nextLine[0].trim()) >= 1) { // This value nextLine[0] (first column of the read line) corresponds to our segment Number,
                             // as 0 is the number of the INIT segment we are not interested in storing it, but all segments after will be stored -> that's why >=1
                             for (int i = 0; i < reprLevel.size(); i++) { //number i will correspond each time to representation level index not its value.
-                                Log.d("STORED","index: "+index+" repIndex: "+i+" value: "+Integer.valueOf(nextLine[i+2].trim()));
                                 FutureSegmentInfos futureSeg = new FutureSegmentInfos(index, i, Integer.valueOf(nextLine[i+2].trim())); // create a future segment info
                                 segmentSizes.add(futureSeg); // add it to the array
                                 inc++;
@@ -262,7 +263,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,Exo
                 }
                 return segmentSizes;
             } catch (IOException e) {
-                Log.d("ERREUR", "erreur de lecture fichier");
+                Log.d(TAG, "erreur de lecture fichier");
             }
             return null;
         }

@@ -136,7 +136,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
     @Override
     public void updateSelectedTrack(long bufferedDurationUs) {
         selectedIndex = doRateAdaptation(bufferedDurationUs);
-        Log.d(TAG, String.format("selectedIndex = %d", selectedIndex));
+        Log.d(TAG, String.format("Selected index = %d", selectedIndex));
     }
 
     // internal
@@ -187,11 +187,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
 
             double averageRateEstimate = new HarmonicAverage(averageWindow, rateSamples).value();
 
-            Log.d(TAG, String.format("averageRateEstimate = %f kbps", averageRateEstimate));
-
             staticAlgParameter += downloadTimeS * (queueLengthS - elasticTargetQueueS);
-
-            Log.d(TAG, String.format("staticAlgParameter = %f s", staticAlgParameter));
 
             double targetRate = averageRateEstimate / (1 - k_p * queueLengthS - k_i * staticAlgParameter);
 
