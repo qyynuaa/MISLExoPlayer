@@ -214,8 +214,13 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     public void writeLogsToFile() {
         DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
         Date date = new Date();
-        File file = new File(LOG_FILE_PATH, "/Log_Segments_ExoPlayer_" + dateFormat.format(date) + ".txt");
+        File directory = new File(LOG_FILE_PATH);
+        File file = new File(directory, "/Log_Segments_ExoPlayer_" + dateFormat.format(date) + ".txt");
         try {
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+            file.createNewFile();
             FileOutputStream stream = new FileOutputStream(file);
             stream.write("Seg_#\t\tArr_time\t\tDel_Time\t\tStall_Dur\t\tRep_Level\t\tDel_Rate\t\tAct_Rate\t\tByte_Size\t\tBuff_Level\n".getBytes());
             int index;

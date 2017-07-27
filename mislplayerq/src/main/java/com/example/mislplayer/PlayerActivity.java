@@ -56,7 +56,7 @@ import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_MIN_BUFFE
 public class PlayerActivity extends Activity implements View.OnClickListener,
         ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
 
-        private final static String TAG = "PlayerActivity";
+        private static final String TAG = "PlayerActivity";
 
         private Context userAgent = this;
         private SimpleExoPlayerView playerView;
