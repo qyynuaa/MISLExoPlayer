@@ -382,6 +382,19 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         this.downloadedChunkInfo = new ArrayList<>();
     }
 
+    /**
+     * Calculates a harmonic average of the available throughput samples.
+     *
+     * @param preferredWindow The number of samples that should be used in
+     *                        the calculation, if available.
+     * @return If there are the `preferredWindow` number of samples available,
+     * the harmonic average of those samples. If not, the harmonic average of
+     * the samples that are available.
+     */
+    public double getSampleHarmonicAverage(int preferredWindow) {
+        return new HarmonicAverage(getThroughputSamples(preferredWindow)).value();
+    }
+
     private static class ChunkInformation {
         private int segNumber;
         private long arrivalTime;

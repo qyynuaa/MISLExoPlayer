@@ -152,13 +152,11 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
             return lowestBitrateIndex();
         }
 
+        double averageRateEstimate = algorithmListener.getSampleHarmonicAverage(elasticAverageWindow);
+
         final double downloadTimeS = algorithmListener.lastLoadDurationMs() / 1E3;
         final double elasticTargetQueueS = algorithmListener.getMaxBufferMs() / 1E3;
         final double queueLengthS = bufferedDurationUs / 1E6;
-
-        int averageWindow = algorithmListener.getWindowSize(elasticAverageWindow);
-        double[] rateSamples = algorithmListener.getThroughputSamples(averageWindow);
-        double averageRateEstimate = new HarmonicAverage(averageWindow, rateSamples).value();
 
         staticAlgParameter += downloadTimeS * (queueLengthS - elasticTargetQueueS);
         double targetRate = averageRateEstimate / (1 - k_p * queueLengthS - k_i * staticAlgParameter);
