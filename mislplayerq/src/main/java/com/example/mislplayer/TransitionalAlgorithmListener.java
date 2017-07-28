@@ -98,10 +98,11 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     public double[] getThroughputSamples(int window) {
         int workingWindow = getWindowSize(window);
         double[] rateSamples = new double[workingWindow];
+
         for (int i = 1; i <= workingWindow; i++) {
-            int chunkIndex = lastChunkInfo().getSegNumber();
-            rateSamples[i - 1] = (double) getSegInfos().get(chunkIndex - i).getDeliveryRate();
+            rateSamples[i - 1] = downloadedChunkInfo.get(lastChunkIndex() - i).getDeliveryRate();
         }
+
         return rateSamples;
     }
 
