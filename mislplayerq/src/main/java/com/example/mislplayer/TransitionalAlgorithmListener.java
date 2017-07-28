@@ -395,6 +395,24 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         return new HarmonicAverage(getThroughputSamples(preferredWindow)).value();
     }
 
+    /**
+     * Finds the minimum of the available throughput samples.
+     *
+     * @param maxWindow The maximum number of most recent samples to consider.
+     * @return The minimum sample in the window.
+     */
+    public double getMinimumSample(int maxWindow) {
+        double minimumSample = 0;
+
+        for (double thisSample: getThroughputSamples(maxWindow)) {
+            if (thisSample < minimumSample) {
+                minimumSample = thisSample;
+            }
+        }
+
+        return minimumSample;
+    }
+
     private static class ChunkInformation {
         private int segNumber;
         private long arrivalTime;
