@@ -22,6 +22,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.ListIterator;
 
 import static com.google.android.exoplayer2.ExoPlayer.STATE_BUFFERING;
 import static com.google.android.exoplayer2.ExoPlayer.STATE_READY;
@@ -104,6 +106,77 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         }
 
         return rateSamples;
+    }
+
+    /**
+     * Provides the load durations of a window of recently downloaded
+     * chunks, in ms.
+     *
+     * <p>If {@code maxWindow} is greater than the number of available chunks,
+     * the window will contain only the available chunk load durations.
+     *
+     * @param maxWindow The maximum size of the window.
+     * @return The load durations of the most recently downloaded chunks,
+     * in ms.
+     */
+    public List<Long> getLoadDurationsMs(int maxWindow) {
+        ListIterator<ChunkInformation> listIterator =
+                downloadedChunkInfo.listIterator(downloadedChunkInfo.size());
+        ArrayList<Long> chunkDurations = new ArrayList<>(maxWindow);
+
+        for (int i = 0; i < maxWindow && listIterator.hasPrevious(); i++) {
+            ChunkInformation thisChunk = listIterator.previous();
+            chunkDurations.add(thisChunk.getDeliveryTime());
+        }
+        return chunkDurations;
+    }
+
+    /**
+     * Provides the load durations of a window of recently downloaded
+     * chunks, scaled by the total load duration, in ms.
+     *
+     * <p>If {@code maxWindow} is greater than the number of available chunks,
+     * the window will contain only the available chunk load durations.
+     *
+     * @param maxWindow The maximum size of the window.
+     * @return The relative load durations of the most recently downloaded
+     * chunks, in ms.
+     */
+    public List<Double> getRelativeLoadDurationsMs(int maxWindow) {
+        double totalLoadDurationMs = getTotalLoadDurationMs(maxWindow);
+        ListIterator<ChunkInformation> listIterator =
+                downloadedChunkInfo.listIterator(downloadedChunkInfo.size());
+        ArrayList<Double> chunkDurations = new ArrayList<>(maxWindow);
+
+        for (int i = 0; i < maxWindow && listIterator.hasPrevious(); i++) {
+            ChunkInformation thisChunk = listIterator.previous();
+            chunkDurations.add(thisChunk.getDeliveryTime()
+                    / totalLoadDurationMs);
+        }
+        return chunkDurations;
+    }
+
+    /**
+     * Returns the cumulative load duration of a window of recently
+     * downloaded chunks, in ms.
+     *
+     * <p>If {@code maxWindow} is greater than the number of available chunks,
+     * only the available chunks will be considered.
+     *
+     * @param maxWindow The maximum size of the window.
+     * @return The cumulative load duration of the most recently
+     * downloaded chunks, in ms.
+     */
+    public long getTotalLoadDurationMs(int maxWindow) {
+        ListIterator<ChunkInformation> listIterator =
+                downloadedChunkInfo.listIterator(downloadedChunkInfo.size());
+        long totalDuration = 0;
+
+        for (int i = 0; i < maxWindow && listIterator.hasPrevious(); i++) {
+            totalDuration += listIterator.previous().getDeliveryTime();
+        }
+
+        return totalDuration;
     }
 
     /**
