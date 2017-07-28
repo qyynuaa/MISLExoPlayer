@@ -1,6 +1,4 @@
-package com.example.mislplayer.MISL_Algorithm;
-
-import android.util.Log;
+package com.example.mislplayer.algorithm;
 
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.BaseTrackSelection;

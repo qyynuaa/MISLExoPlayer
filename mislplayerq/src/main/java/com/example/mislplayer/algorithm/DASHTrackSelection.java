@@ -1,9 +1,7 @@
-package com.example.mislplayer.MISL_Algorithm;
+package com.example.mislplayer.algorithm;
 
 import android.util.Log;
 
-import com.example.mislplayer.MISLDashChunkSource;
-import com.example.mislplayer.PlayerActivity;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.source.TrackGroup;

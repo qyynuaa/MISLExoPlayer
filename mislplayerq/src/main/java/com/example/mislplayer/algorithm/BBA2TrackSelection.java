@@ -1,4 +1,4 @@
-package com.example.mislplayer.MISL_Algorithm;
+package com.example.mislplayer.algorithm;
 
 import android.util.Log;
 import com.example.mislplayer.FutureSegmentInfos;
