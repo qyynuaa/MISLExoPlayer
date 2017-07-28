@@ -124,6 +124,45 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         return minimumSample;
     }
 
+    /**
+     * Finds the maximum of the available throughput samples.
+     *
+     * @param maxWindow The maximum number of most recent samples to consider.
+     * @return The maximum sample in the window.
+     */
+    public double getMaximumSample(int maxWindow) {
+        double maximumSample = 0;
+
+        for (double thisSample: getThroughputSamples(maxWindow)) {
+            if (thisSample > maximumSample) {
+                maximumSample = thisSample;
+            }
+        }
+
+        return maximumSample;
+    }
+
+    /**
+     * Returns an array of the most recent normalised throughput samples.
+     *
+     * @param maxWindow The maximum number of throughput samples to consider.
+     * @return An array of normalised throughput samples.
+     */
+    public double[] getNormalisedSamples(int maxWindow) {
+        double maxRate = 0;
+        double[] samples = getThroughputSamples(maxWindow);
+        for (double thisSample : samples) {
+            if (thisSample > maxRate) {
+                maxRate = thisSample;
+            }
+        }
+
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] /= (maxRate * 1.01);
+        }
+        return samples;
+    }
+
     /** Provides the duration of the current mpd. */
     public long mpdDuration() {
         return mpdDuration;
