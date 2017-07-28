@@ -79,7 +79,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      * @return The appropriate window size.
      */
     public int getWindowSize(int window) {
-        return min(window, lastChunkInfo().getSegNumber());
+        return min(window, downloadedChunkInfo.size());
     }
 
     /** Gives the current maximum buffer length the player is aiming for. */
@@ -88,14 +88,17 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     }
 
     /**
-     * Provides the last few throughput samples.
+     * Provides a number of recent throughput samples.
      *
      * @param window The number of throughput samples to provide.
-     * @return The last few throughput samples.
+     * @return If the number of throughput samples specified by `window` are
+     * available, then that number of samples. If not, then as many as are
+     * available.
      */
     public double[] getThroughputSamples(int window) {
-        double[] rateSamples = new double[window];
-        for (int i = 1; i <= window; i++) {
+        int workingWindow = getWindowSize(window);
+        double[] rateSamples = new double[workingWindow];
+        for (int i = 1; i <= workingWindow; i++) {
             int chunkIndex = lastChunkInfo().getSegNumber();
             rateSamples[i - 1] = (double) getSegInfos().get(chunkIndex - i).getDeliveryRate();
         }
