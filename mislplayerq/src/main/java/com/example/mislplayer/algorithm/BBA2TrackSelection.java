@@ -5,7 +5,6 @@ import com.example.mislplayer.FutureSegmentInfos;
 import com.example.mislplayer.PlayerActivity;
 import com.example.mislplayer.TransitionalAlgorithmListener;
 import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 
@@ -39,7 +38,6 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
     private final TransitionalAlgorithmListener algorithmListener;
 
-    private int inc = 0;
     private int m_staticAlgPar = 0;
 
     private static final String TAG = "BBA2";
@@ -57,7 +55,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         super(group, tracks);
         this.algorithmListener = algorithmListener;
 
-        selectedIndex = idealQuality();
+        selectedIndex = adaptiveAlgorithm();
         reason = C.SELECTION_REASON_INITIAL;
     }
 
@@ -90,24 +88,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         return null;
     }
 
-
-
-
-
-    public int adaptiveAlgorithm() { //(TrackGroup chunk, int i)
-        if(inc==0 || inc==1){
-            inc++;
-            return lowestBitrateIndex();
-        }
-        else {
-            inc++;
-            return idealQuality();
-        }
-        // return idealQuality(effectiveNetworkRate,chunk);
-
-    }
-
-    public int idealQuality() {
+    private int adaptiveAlgorithm() {
         if (algorithmListener.chunkDataNotAvailable()) {
             return lowestBitrateIndex();
         } else {
@@ -116,7 +97,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     }
 
     /* MISL BBA2 adaptation algorithm */
-    public int dash_do_rate_adaptation_bba2()
+    private int dash_do_rate_adaptation_bba2()
     {
         long total_size = algorithmListener.lastByteSize();
         long bytes_per_sec = algorithmListener.lastByteSize() / algorithmListener.lastLoadDurationMs();
