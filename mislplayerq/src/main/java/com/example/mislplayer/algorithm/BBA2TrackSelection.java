@@ -68,7 +68,6 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         int currentSelectedIndex = selectedIndex;
 //          Format currentFormat = getSelectedFormat();
         int idealSelectedIndex = adaptiveAlgorithm();
-        Format idealFormat = getFormat(idealSelectedIndex);
         selectedIndex = idealSelectedIndex;
         Log.d(TAG, String.format("Selected index = %d", selectedIndex));
         if(selectedIndex!=currentSelectedIndex){
@@ -119,12 +118,8 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     /* MISL BBA2 adaptation algorithm */
     public int dash_do_rate_adaptation_bba2()
     {
-
-        Double bitrate, time, speed;
-        int nb_inter_rep = 0;
-        long total_size, bytes_per_sec;
-        total_size = algorithmListener.lastByteSize();
-        bytes_per_sec = algorithmListener.lastByteSize() / algorithmListener.lastLoadDurationMs();
+        long total_size = algorithmListener.lastByteSize();
+        long bytes_per_sec = algorithmListener.lastByteSize() / algorithmListener.lastLoadDurationMs();
 
         if (total_size != 0 && bytes_per_sec != 0 && algorithmListener.lastChunkDurationMs() != 0) {
         } else {
