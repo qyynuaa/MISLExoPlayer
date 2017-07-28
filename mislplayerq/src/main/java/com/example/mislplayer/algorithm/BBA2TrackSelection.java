@@ -110,8 +110,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         lastChunkIndex = algorithmListener.lastChunkIndex();
         maxBufferMs = algorithmListener.getMaxBufferMs();
 
-        if (total_size != 0 && bytes_per_sec != 0 && lastChunkDurationMs != 0) {
-        } else {
+        if (total_size == 0 || bytes_per_sec == 0 || lastChunkDurationMs == 0) {
             Log.d(TAG, "[DASH] Downloaded segment  " + total_size + " bytes at " + bytes_per_sec + " bytes per seconds - skipping rate adaptation\n");
             return -1;
         }
@@ -204,7 +203,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     int bba1VRAA(int lastRateIndex, int resevoir){
         int rateUindex = max(lastRateIndex - 1, 0);
         int rateLindex = min(lastRateIndex + 1, tracks.length);
-        
+
         int optRateIndex;
         if (bufferedDurationMs < resevoir) {
             optRateIndex = tracks.length; }
