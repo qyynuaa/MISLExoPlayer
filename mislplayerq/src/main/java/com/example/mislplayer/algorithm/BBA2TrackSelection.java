@@ -8,6 +8,9 @@ import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
 /**
  * Uses the BBA2 adaptation algorithm to select tracks.
  */
@@ -136,7 +139,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
                 // start up phase
                 if (SFT < 0.125 * lastChunkDurationMs) {
                     // buffer level increasing fast
-                    retVal = lastRateIndex - 1 >= 0 ? lastRateIndex - 1 : 0;
+                    retVal = max(lastRateIndex - 1, 0);
                 }
                 else {
                     retVal = lastRateIndex; //<<<<<<<??????
@@ -152,8 +155,9 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
                 int bba1RateIndex = bba1VRAA(lastRateIndex, resevoir);
                 if (SFT <= 0.5 * lastChunkDurationMs) {
                     // buffer level increasing fast
-                    qRateIndex = lastRateIndex - 1 >= 0?lastRateIndex - 1 : 0;}
-                retVal = bba1RateIndex < qRateIndex? bba1RateIndex:qRateIndex;
+                    qRateIndex = max(lastRateIndex - 1, 0);
+                }
+                retVal = min(bba1RateIndex, qRateIndex);
 
                 if (bba1RateIndex < qRateIndex) {
                     m_staticAlgPar = 1;
@@ -173,18 +177,18 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
     int bba1UpdateResevoir(int lastRate, int lastRateIndex)
     {
-
-        int ii = 0;
-        int resvWin = (int)(2*(maxBufferMs / lastChunkDurationMs) < (algorithmListener.mpdDuration()/lastChunkIndex) -(lastChunkIndex)? 2*(maxBufferMs / lastChunkDurationMs) : (algorithmListener.mpdDuration()/lastChunkIndex) -(lastChunkIndex));
+        long resvWin = min(2 * maxBufferMs / lastChunkDurationMs,
+                (algorithmListener.mpdDuration()/lastChunkIndex) - lastChunkIndex);
         long avgSegSize = (lastRate * lastChunkDurationMs) / 8; //bytes
+
         int largeChunks = 0;
         int smallChunks = 0;
-        for (ii=0; ii<resvWin ;ii++)
+        for (int i = 0; i < resvWin; i++)
         {
-            if (FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, lastChunkIndex + ii, lastRateIndex) > avgSegSize)
-                largeChunks+= FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, lastChunkIndex + ii, lastRateIndex);
+            if (FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, lastChunkIndex + i, lastRateIndex) > avgSegSize)
+                largeChunks+= FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, lastChunkIndex + i, lastRateIndex);
             else
-                smallChunks += FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, lastChunkIndex + ii, lastRateIndex);
+                smallChunks += FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, lastChunkIndex + i, lastRateIndex);
 
         }
         double resevoir =  8 * ((largeChunks-smallChunks))/(lastRate);
@@ -198,10 +202,10 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     }
 
     int bba1VRAA(int lastRateIndex, int resevoir){
-
-        int rateUindex = lastRateIndex==0? lastRateIndex:lastRateIndex - 1;
-        int rateLindex = lastRateIndex == tracks.length? lastRateIndex : lastRateIndex + 1;
-        int optRateIndex = 0;
+        int rateUindex = max(lastRateIndex - 1, 0);
+        int rateLindex = min(lastRateIndex + 1, tracks.length);
+        
+        int optRateIndex;
         if (bufferedDurationMs < resevoir) {
             optRateIndex = tracks.length; }
         else if (bufferedDurationMs > 0.9 *(maxBufferMs / lastChunkDurationMs) * lastChunkDurationMs)
