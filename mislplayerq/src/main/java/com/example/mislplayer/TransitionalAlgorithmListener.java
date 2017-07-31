@@ -636,6 +636,46 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         return new HarmonicAverage(getThroughputSamples(preferredWindow)).value();
     }
 
+    /**
+     * Calculates an exponential average of the most recent throughput
+     * samples.
+     *
+     * @param maxWindow The maximum number of recent samples to use in the
+     *                  calculation.
+     * @param exponentialAverageRatio The ratio to use for the exponential
+     *                                average.
+     * @return The exponential average of the {@code maxWindow} most
+     * recent samples, if that many are available. Otherwise, the
+     * exponential average of the available samples.
+     */
+    public double getSampleExponentialAverage(int maxWindow,
+                                              double exponentialAverageRatio) {
+        return new ExponentialAverage(getThroughputSamples(maxWindow),
+                exponentialAverageRatio).value();
+    }
+
+    /**
+     * Calculates an exponential variance of the most recent throughput
+     * samples.
+     *
+     * @param sampleAverage The exponential average of the most recent
+     *                      throughput samples.
+     * @param maxWindow The maximum number of recent samples to use in the
+     *                  calculation.
+     * @param exponentialVarianceRatio The ratio to use for the exponential
+     *                                variance.
+     * @return The exponential variance of the {@code maxWindow} most
+     * recent samples, if that many are available. Otherwise, the
+     * exponential variance of the available samples.
+     */
+    public double getSampleExponentialVariance(double sampleAverage,
+                                               int maxWindow,
+                                               double exponentialVarianceRatio) {
+        return new ExponentialVariance(sampleAverage,
+                getThroughputSamples(maxWindow),
+                exponentialVarianceRatio).value();
+    }
+
     private static class ChunkInformation {
         private int segNumber;
         private long arrivalTime;
