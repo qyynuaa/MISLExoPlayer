@@ -46,9 +46,6 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     private long loadDurationMs;
     private long transferClockMs;
 
-    private int numberOfStreams = 0;
-    private long byteClock;
-
     private long stallClockMs;
     private int lastPlaybackState;
     private long stallDurationMs;
@@ -499,8 +496,6 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     @Override
     public void onTransferStart(Object source, DataSpec dataSpec) {
         transferClockMs = SystemClock.elapsedRealtime();
-        numberOfStreams++;
-        byteClock = 0;
     }
 
     /**
@@ -510,9 +505,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      * @param bytesTransferred The number of bytes transferred since the previous call to this
      */
     @Override
-    public void onBytesTransferred(Object source, int bytesTransferred) {
-        byteClock += bytesTransferred;
-    }
+    public void onBytesTransferred(Object source, int bytesTransferred) {}
 
     /**
      * Called when a transfer ends.
@@ -523,7 +516,6 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     public void onTransferEnd(Object source) {
         arrivalTimeMs = SystemClock.elapsedRealtime();
         loadDurationMs = arrivalTimeMs - transferClockMs;
-        numberOfStreams--;
     }
 
     /**
