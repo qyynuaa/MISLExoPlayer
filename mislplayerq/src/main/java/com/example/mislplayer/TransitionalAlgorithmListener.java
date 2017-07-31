@@ -636,6 +636,46 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         return new HarmonicAverage(getThroughputSamples(preferredWindow)).value();
     }
 
+    /**
+     * Calculates an exponential average of the most recent throughput
+     * samples.
+     *
+     * @param maxWindow The maximum number of recent samples to use in the
+     *                  calculation.
+     * @param exponentialAverageRatio The ratio to use for the exponential
+     *                                average.
+     * @return The exponential average of the {@code maxWindow} most
+     * recent samples, if that many are available. Otherwise, the
+     * exponential average of the available samples.
+     */
+    public double getSampleExponentialAverage(int maxWindow,
+                                              double exponentialAverageRatio) {
+        return new ExponentialAverage(getThroughputSamples(maxWindow),
+                exponentialAverageRatio).value();
+    }
+
+    /**
+     * Calculates an exponential variance of the most recent throughput
+     * samples.
+     *
+     * @param sampleAverage The exponential average of the most recent
+     *                      throughput samples.
+     * @param maxWindow The maximum number of recent samples to use in the
+     *                  calculation.
+     * @param exponentialVarianceRatio The ratio to use for the exponential
+     *                                variance.
+     * @return The exponential variance of the {@code maxWindow} most
+     * recent samples, if that many are available. Otherwise, the
+     * exponential variance of the available samples.
+     */
+    public double getSampleExponentialVariance(double sampleAverage,
+                                               int maxWindow,
+                                               double exponentialVarianceRatio) {
+        return new ExponentialVariance(sampleAverage,
+                getThroughputSamples(maxWindow),
+                exponentialVarianceRatio).value();
+    }
+
     private static class ChunkInformation {
         private int segNumber;
         private long arrivalTime;
@@ -847,22 +887,20 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      */
     public class ExponentialAverage {
 
-        private int window;
         private double[] rates;
         private double ratio;
 
-        public ExponentialAverage(int window, double[] rates, double ratio) {
-            this.window = window;
+        public ExponentialAverage(double[] rates, double ratio) {
             this.rates = rates;
             this.ratio = ratio;
         }
 
         public double value() {
-            double weights[] = new double[window];
-            double weightSum = (1 - Math.pow(1 - ratio, window));
+            double weights[] = new double[rates.length];
+            double weightSum = (1 - Math.pow(1 - ratio, rates.length));
             double subTotal = 0;
 
-            for (int i = 0; i < window; i++) {
+            for (int i = 0; i < rates.length; i++) {
                 weights[i] = (ratio) * Math.pow(1 - ratio, i) / weightSum;
                 subTotal += weights[i] * rates[i];
             }
@@ -872,28 +910,26 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
     public class ExponentialVariance {
 
-        private int window;
         private double averageRate;
         private double[] rates;
         private double ratio;
 
-        public ExponentialVariance(int window, double averageRate, double[] rates, double ratio) {
-            this.window = window;
+        public ExponentialVariance(double averageRate, double[] rates, double ratio) {
             this.averageRate = averageRate;
             this.rates = rates;
             this.ratio = ratio;
         }
 
         public double value() {
-            double weights[] = new double[window];
-            double weightSum = (1 - Math.pow(1 - ratio, window));
+            double weights[] = new double[rates.length];
+            double weightSum = (1 - Math.pow(1 - ratio, rates.length));
             double totalDeviation = 0;
 
-            for (int i = 0; i < window; i++) {
+            for (int i = 0; i < rates.length; i++) {
                 weights[i] = (ratio) * Math.pow(1 - ratio, i) / weightSum;
                 totalDeviation += weights[i] * Math.pow(averageRate - rates[i], 2);
             }
-            return window * totalDeviation / (window - 1);
+            return rates.length * totalDeviation / (rates.length - 1);
         }
     }
 }
