@@ -237,16 +237,15 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     }
 
     public double[] oscarKumarParEstimation(int estWindow, double expAvgRatio) {
-        int i = 0;                                  //group
         int window = getWindowSize(estWindow);
         double[] rateSamples = getThroughputSamples(window);
         double maxRate=rateSamples[0];
-        for (i = 1; i < window; i++) {
+        for (int i = 1; i < window; i++) {
             if (rateSamples[i] > maxRate)
                 maxRate = rateSamples[i];
         }
         double normalizedSamples[] = new double[window];
-        for (i = 0; i < window; i++) {
+        for (int i = 0; i < window; i++) {
             normalizedSamples[i] = rateSamples[i] / maxRate / 1.01;
 
         }
@@ -257,24 +256,24 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         double weightSum = (1 - Math.pow(1 - expAvgRatio, window));
         double totalDuration = 0;
         double relWght = 1;
-        for (i = 0; i < window; i++) {
+        for (int i = 0; i < window; i++) {
             freshWeights[i] = (expAvgRatio) * Math.pow(1 - expAvgRatio, i) / weightSum;
             durationWeight[i] = lastLoadDurationMs();
             //(dash->transmittedSegmentsData[group->download_segment_index -i].receiveTime - dash->transmittedSegmentsData[group->download_segment_index -i].requestTime);
             totalDuration += durationWeight[i];
         }
-        for (i = 0; i < window; i++) {
+        for (int i = 0; i < window; i++) {
             durationWeight[i] = durationWeight[i] / totalDuration;
             weights[i] = relWght * freshWeights[i] + (1 - relWght) * durationWeight[i];
         }
         // Calculate the average and variance
         double avgRate = 0;
-        for (i = 0; i < window; i++) {
+        for (int i = 0; i < window; i++) {
             avgRate += weights[i] * normalizedSamples[i];
         }
         // avgRate =  OSCAR_KUM_REDUCTION * avgRate;
         double rateVar = 0;
-        for (i = 0; i < window; i++) {
+        for (int i = 0; i < window; i++) {
             rateVar += weights[i] * Math.pow(normalizedSamples[i] - avgRate, 2);
         }
         rateVar = window * rateVar / (window - 1);
@@ -316,7 +315,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         }
 
         double kum2 = 0;
-        for (i = 0; i < window; i++) {
+        for (int i = 0; i < window; i++) {
             kum2 += weights[i] * Math.log(1 - Math.pow(normalizedSamples[i], kum1));
         }
 
@@ -343,7 +342,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
             T2 += weights[i] * Math.log(y) / (yCompl) * y;
             T3 += weights[i] * Math.log(yCompl);
         }
-        
+
         return (1 + T1 + T2 / T3);
     }
 
