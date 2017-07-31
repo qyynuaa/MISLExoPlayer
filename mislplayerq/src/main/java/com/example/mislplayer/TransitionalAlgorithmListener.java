@@ -60,8 +60,6 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         this.playerActivity = playerActivity;
     }
 
-    public List<ChunkInformation> getSegInfos() {return downloadedChunkInfo;}
-
     /**
      * Indicates that data on previous chunks is not available.
      *
