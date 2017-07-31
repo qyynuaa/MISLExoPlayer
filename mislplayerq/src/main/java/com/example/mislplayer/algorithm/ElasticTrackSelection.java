@@ -151,8 +151,6 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
         selectionReason = C.SELECTION_REASON_ADAPTIVE;
     }
 
-    // internal
-
     /**
      * Applies the adaptation algorithm.
      *
