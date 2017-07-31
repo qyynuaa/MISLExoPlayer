@@ -236,6 +236,121 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         return samples;
     }
 
+    public double[] oscarKumarParEstimation(int estWindow, double expAvgRatio) {
+        int i = 0;                                  //group
+        int window = getWindowSize(estWindow);
+        double[] rateSamples = getThroughputSamples(window);
+        double maxRate=rateSamples[0];
+        for (i = 1; i < window; i++) {
+            if (rateSamples[i] > maxRate)
+                maxRate = rateSamples[i];
+        }
+        double normalizedSamples[] = new double[window];
+        for (i = 0; i < window; i++) {
+            normalizedSamples[i] = rateSamples[i] / maxRate / 1.01;
+
+        }
+        // estimate the weights of different samples
+        double weights[] = new double[window];
+        double freshWeights[] = new double[window];
+        double durationWeight[] = new double[window];
+        double weightSum = (1 - Math.pow(1 - expAvgRatio, window));
+        double totalDuration = 0;
+        double relWght = 1;
+        for (i = 0; i < window; i++) {
+            freshWeights[i] = (expAvgRatio) * Math.pow(1 - expAvgRatio, i) / weightSum;
+            durationWeight[i] = lastLoadDurationMs();
+            //(dash->transmittedSegmentsData[group->download_segment_index -i].receiveTime - dash->transmittedSegmentsData[group->download_segment_index -i].requestTime);
+            totalDuration += durationWeight[i];
+        }
+        for (i = 0; i < window; i++) {
+            durationWeight[i] = durationWeight[i] / totalDuration;
+            weights[i] = relWght * freshWeights[i] + (1 - relWght) * durationWeight[i];
+        }
+        // Calculate the average and variance
+        double avgRate = 0;
+        for (i = 0; i < window; i++) {
+            avgRate += weights[i] * normalizedSamples[i];
+        }
+        // avgRate =  OSCAR_KUM_REDUCTION * avgRate;
+        double rateVar = 0;
+        for (i = 0; i < window; i++) {
+            rateVar += weights[i] * Math.pow(normalizedSamples[i] - avgRate, 2);
+        }
+        rateVar = window * rateVar / (window - 1);
+
+        double checkTerm = avgRate * (1 - avgRate) / rateVar;
+
+        // estimate beta parameters for the initial guess
+        double beta1 = 0;
+        //double beta2 = 0;
+        if (checkTerm > 1) {
+            beta1 = avgRate * (checkTerm - 1);
+
+        } else {
+            beta1 = 1;
+
+        }
+        double kum1Min = beta1;
+        double smin = computeS(window, normalizedSamples, weights, kum1Min);
+        while (smin < 0 && kum1Min > 0.0001) {
+            kum1Min = kum1Min / 2;
+            smin = computeS(window, normalizedSamples, weights, kum1Min);
+        }
+        double kum1Max = beta1;
+        double smax = computeS(window, normalizedSamples, weights, kum1Max);
+        while (smax > 0 && kum1Max < 2000) {
+            kum1Max = kum1Max * 2;
+            smax = computeS(window, normalizedSamples, weights, kum1Max);
+        }
+
+        double kum1 = (kum1Max + kum1Min) / 2;
+        double smid = 0;
+        while (kum1Max - kum1Min > 0.001) {
+            kum1 = (kum1Max + kum1Min) / 2;
+            smid = computeS(window, normalizedSamples, weights, kum1);
+            if (smid > 0)
+                kum1Min = kum1;
+            else
+                kum1Max = kum1;
+        }
+
+        double kum2 = 0;
+        for (i = 0; i < window; i++) {
+            kum2 += weights[i] * Math.log(1 - Math.pow(normalizedSamples[i], kum1));
+        }
+
+        if (kum2 == 0)
+            kum2 = 1e-5;
+        else {
+            kum2 = -1 / kum2;
+            kum2 = kum2 > 1e5 ? 1e5 : kum2;
+        }
+        double[] parameters = new double[4];
+        parameters[0] = kum1;
+        parameters[1] = kum2;
+        parameters[2] = 0;
+        parameters[3] = maxRate;
+        return parameters;
+    }
+
+    double computeS(int window, double[] samples, double[] weights, double kum1) {
+        int ii;
+        double T1 = 0;
+        double T2 = 0;
+        double T3 = 0;
+        double y, yCompl;
+        for (ii = 0; ii < window; ii++) {
+
+            y = Math.pow(samples[ii], kum1);
+            yCompl = 1 - y;
+            T1 += weights[ii] * Math.log(y) / (yCompl);
+            T2 += weights[ii] * Math.log(y) / (yCompl) * y;
+            T3 += weights[ii] * Math.log(yCompl);
+        }
+        return (1 + T1 + T2 / T3);
+    }
+
     /** Provides the duration of the current mpd. */
     public long mpdDuration() {
         return mpdDuration;
