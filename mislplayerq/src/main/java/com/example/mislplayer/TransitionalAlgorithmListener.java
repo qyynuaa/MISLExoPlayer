@@ -329,20 +329,21 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         return new double[] {kum1, kum2, 0, maxRate};
     }
 
-        int ii;
     private double computeS(int window, double[] samples, double[] weights, double kum1) {
         double T1 = 0;
         double T2 = 0;
         double T3 = 0;
         double y, yCompl;
-        for (ii = 0; ii < window; ii++) {
 
-            y = Math.pow(samples[ii], kum1);
+        for (int i = 0; i < window; i++) {
+
+            y = Math.pow(samples[i], kum1);
             yCompl = 1 - y;
-            T1 += weights[ii] * Math.log(y) / (yCompl);
-            T2 += weights[ii] * Math.log(y) / (yCompl) * y;
-            T3 += weights[ii] * Math.log(yCompl);
+            T1 += weights[i] * Math.log(y) / (yCompl);
+            T2 += weights[i] * Math.log(y) / (yCompl) * y;
+            T3 += weights[i] * Math.log(yCompl);
         }
+        
         return (1 + T1 + T2 / T3);
     }
 
