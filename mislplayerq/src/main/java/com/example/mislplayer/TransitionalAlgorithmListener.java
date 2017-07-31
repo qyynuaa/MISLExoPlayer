@@ -38,7 +38,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
     private static final String TAG = "TransitionalAL";
 
-    public static final String LOG_FILE_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
+    private static final String LOG_FILE_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
 
     private MediaChunk lastChunk;
 
