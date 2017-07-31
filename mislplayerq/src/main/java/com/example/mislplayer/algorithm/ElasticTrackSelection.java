@@ -3,6 +3,7 @@ package com.example.mislplayer.algorithm;
 import android.util.Log;
 
 import com.example.mislplayer.TransitionalAlgorithmListener;
+import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 
@@ -78,6 +79,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
     private double staticAlgParameter = 0;
 
     private int selectedIndex;
+    private int selectionReason;
 
 
     /**
@@ -102,6 +104,9 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
         this.elasticAverageWindow = elasticAverageWindow;
         this.k_p = k_p;
         this.k_i = k_i;
+
+        selectedIndex = lowestBitrateIndex();
+        selectionReason = C.SELECTION_REASON_INITIAL;
     }
 
     /**
@@ -117,7 +122,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      */
     @Override
     public int getSelectionReason() {
-        return 0;
+        return selectionReason;
     }
 
     /**
@@ -137,6 +142,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
     public void updateSelectedTrack(long bufferedDurationUs) {
         selectedIndex = doRateAdaptation(bufferedDurationUs);
         Log.d(TAG, String.format("Selected index = %d", selectedIndex));
+        selectionReason = C.SELECTION_REASON_ADAPTIVE;
     }
 
     // internal
