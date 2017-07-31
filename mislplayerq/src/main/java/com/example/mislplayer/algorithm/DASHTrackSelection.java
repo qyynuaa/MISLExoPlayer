@@ -163,10 +163,10 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
     @Override
     public void updateSelectedTrack(long bufferedDurationUs) {
         int currentSelectedIndex = selectedIndex;
-        int idealSelectedIndex = adaptiveAlgorithm();
-        selectedIndex = idealSelectedIndex;
+        selectedIndex = adaptiveAlgorithm();
         Log.d(TAG, String.format("Selected index = %d", selectedIndex));
-        if(selectedIndex!=currentSelectedIndex){
+
+        if (selectedIndex != currentSelectedIndex) {
             reason = C.SELECTION_REASON_ADAPTIVE;
         }
     }

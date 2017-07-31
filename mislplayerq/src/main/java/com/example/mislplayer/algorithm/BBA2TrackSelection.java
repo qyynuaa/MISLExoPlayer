@@ -71,10 +71,10 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         bufferedDurationMs = bufferedDurationUs / 1000;
 
         int currentSelectedIndex = selectedIndex;
-//          Format currentFormat = getSelectedFormat();
         selectedIndex = adaptiveAlgorithm();
         Log.d(TAG, String.format("Selected index = %d", selectedIndex));
-        if(selectedIndex!=currentSelectedIndex){
+
+        if (selectedIndex != currentSelectedIndex) {
             reason = C.SELECTION_REASON_ADAPTIVE;
         }
     }
