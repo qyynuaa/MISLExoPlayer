@@ -61,7 +61,8 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         super(group, tracks);
         this.algorithmListener = algorithmListener;
 
-        selectedIndex = adaptiveAlgorithm();
+        selectedIndex = lowestBitrateIndex();
+        Log.d(TAG, String.format("Initial selected index = %d", selectedIndex));
         reason = C.SELECTION_REASON_INITIAL;
     }
 
@@ -70,10 +71,14 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         bufferedDurationMs = bufferedDurationUs / 1000;
 
         int currentSelectedIndex = selectedIndex;
-//          Format currentFormat = getSelectedFormat();
-        selectedIndex = adaptiveAlgorithm();
+        if (algorithmListener.chunkDataNotAvailable()) {
+            selectedIndex = lowestBitrateIndex();
+        } else {
+            selectedIndex = dash_do_rate_adaptation_bba2();
+        }
         Log.d(TAG, String.format("Selected index = %d", selectedIndex));
-        if(selectedIndex!=currentSelectedIndex){
+
+        if (selectedIndex != currentSelectedIndex) {
             reason = C.SELECTION_REASON_ADAPTIVE;
         }
     }
@@ -93,27 +98,14 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         return null;
     }
 
-    private int adaptiveAlgorithm() {
-        if (algorithmListener.chunkDataNotAvailable()) {
-            return lowestBitrateIndex();
-        } else {
-            return dash_do_rate_adaptation_bba2();
-        }
-    }
-
     /* MISL BBA2 adaptation algorithm */
     private int dash_do_rate_adaptation_bba2()
     {
         long total_size = algorithmListener.lastByteSize();
-        long bytes_per_sec = total_size / algorithmListener.lastLoadDurationMs();
         lastChunkDurationMs = algorithmListener.lastChunkDurationMs();
         lastChunkIndex = algorithmListener.lastChunkIndex();
         maxBufferMs = algorithmListener.getMaxBufferMs();
 
-        if (total_size == 0 || bytes_per_sec == 0 || lastChunkDurationMs == 0) {
-            Log.d(TAG, "[DASH] Downloaded segment  " + total_size + " bytes at " + bytes_per_sec + " bytes per seconds - skipping rate adaptation\n");
-            return -1;
-        }
         // save the information about segment statistics (kbps)
         Log.d(TAG,"Segment index: " + lastChunkIndex);
 
@@ -124,11 +116,11 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         int retVal;
         // set to the lowest rate
         int qRateIndex= lowestBitrateIndex();
-        int resevoir = bba1UpdateResevoir(lastRate, lastRateIndex);
+        int reservoir = bba1UpdateResevoir(lastRate, lastRateIndex);
         double SFT = (8*total_size)/algorithmListener.lastDeliveryRateKbps();
         if (SFT > lastChunkDurationMs)
             m_staticAlgPar = 1; // switch to BBA1 if buffer is decreasing
-        if (bufferedDurationMs < resevoir)               //CHECK BUFFER LEVEL
+        if (bufferedDurationMs < reservoir)               //CHECK BUFFER LEVEL
         {
             if (m_staticAlgPar!=0) {
                 retVal = lowestBitrateIndex();
@@ -141,17 +133,17 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
                     retVal = max(lastRateIndex - 1, 0);
                 }
                 else {
-                    retVal = lastRateIndex; //<<<<<<<??????
-                }}
-
+                    retVal = lastRateIndex;
+                }
+            }
         } else {
             if (m_staticAlgPar!=0)
             {
                 // execute BBA1
-                retVal = bba1VRAA(lastRateIndex, resevoir);
+                retVal = bba1VRAA(lastRateIndex, reservoir);
             }
-            else { // beyond resevoir
-                int bba1RateIndex = bba1VRAA(lastRateIndex, resevoir);
+            else { // beyond reservoir
+                int bba1RateIndex = bba1VRAA(lastRateIndex, reservoir);
                 if (SFT <= 0.5 * lastChunkDurationMs) {
                     // buffer level increasing fast
                     qRateIndex = max(lastRateIndex - 1, 0);
@@ -165,16 +157,10 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
             }
         }
         return retVal;
-        //dash->wait_bef_send_req = getRequestDelay(dash,group);
-        //Log.d("[DASH BBA2]"" dash->wait_bef_send_req:%d\n",dash->wait_bef_send_req));
-        //Log.d("[DASH BBA2]" dash->transmittedSegmentsData[%d].requestTime = %d\n",group->download_segment_index+1,dash->transmittedSegmentsData[group->download_segment_index+1].requestTime));
-        //   if (lastRateIndex != retVal)
-        //gf_dash_set_group_representation(group,gf_list_get(group->adaptation_set->representations,retVal) );
-
     }
 
 
-    int bba1UpdateResevoir(int lastRate, int lastRateIndex)
+    private int bba1UpdateResevoir(int lastRate, int lastRateIndex)
     {
         long resvWin = min(2 * maxBufferMs / lastChunkDurationMs,
                 (algorithmListener.mpdDuration()/lastChunkIndex) - lastChunkIndex);
@@ -200,7 +186,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         return (int)resevoir;
     }
 
-    int bba1VRAA(int lastRateIndex, int resevoir){
+    private int bba1VRAA(int lastRateIndex, int resevoir){
         int rateUindex = max(lastRateIndex - 1, 0);
         int rateLindex = min(lastRateIndex + 1, tracks.length);
 

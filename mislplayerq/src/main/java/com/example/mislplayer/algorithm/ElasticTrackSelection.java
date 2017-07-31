@@ -3,6 +3,7 @@ package com.example.mislplayer.algorithm;
 import android.util.Log;
 
 import com.example.mislplayer.TransitionalAlgorithmListener;
+import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 
@@ -78,6 +79,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
     private double staticAlgParameter = 0;
 
     private int selectedIndex;
+    private int selectionReason;
 
 
     /**
@@ -102,6 +104,10 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
         this.elasticAverageWindow = elasticAverageWindow;
         this.k_p = k_p;
         this.k_i = k_i;
+
+        selectedIndex = lowestBitrateIndex();
+        Log.d(TAG, String.format("Initial selected index = %d", selectedIndex));
+        selectionReason = C.SELECTION_REASON_INITIAL;
     }
 
     /**
@@ -117,7 +123,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      */
     @Override
     public int getSelectionReason() {
-        return 0;
+        return selectionReason;
     }
 
     /**
@@ -135,11 +141,15 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      */
     @Override
     public void updateSelectedTrack(long bufferedDurationUs) {
-        selectedIndex = doRateAdaptation(bufferedDurationUs);
-        Log.d(TAG, String.format("Selected index = %d", selectedIndex));
-    }
+        if (algorithmListener.chunkDataNotAvailable()) {
+            selectedIndex = lowestBitrateIndex();
+        } else {
+            selectedIndex = doRateAdaptation(bufferedDurationUs);
+        }
 
-    // internal
+        Log.d(TAG, String.format("Selected index = %d", selectedIndex));
+        selectionReason = C.SELECTION_REASON_ADAPTIVE;
+    }
 
     /**
      * Applies the adaptation algorithm.
@@ -148,10 +158,6 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      * @return The index (in sorted order) of the track to switch to.
      */
     private int doRateAdaptation(long bufferedDurationUs) {
-        if (algorithmListener.chunkDataNotAvailable()) {
-            return lowestBitrateIndex();
-        }
-
         double averageRateEstimate = algorithmListener.getSampleHarmonicAverage(elasticAverageWindow);
 
         final double downloadTimeS = algorithmListener.lastLoadDurationMs() / 1E3;
