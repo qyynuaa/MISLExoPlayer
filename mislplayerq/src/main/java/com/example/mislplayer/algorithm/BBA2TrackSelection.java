@@ -125,7 +125,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         // set to the lowest rate
         int qRateIndex= lowestBitrateIndex();
         int resevoir = bba1UpdateResevoir(lastRate, lastRateIndex);
-        long SFT = (8*total_size)/algorithmListener.lastDeliveryRateKbps();
+        double SFT = (8*total_size)/algorithmListener.lastDeliveryRateKbps();
         if (SFT > lastChunkDurationMs)
             m_staticAlgPar = 1; // switch to BBA1 if buffer is decreasing
         if (bufferedDurationMs < resevoir)               //CHECK BUFFER LEVEL
