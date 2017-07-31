@@ -156,6 +156,7 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
         this.minDurationToRetainAfterDiscardUs = minDurationToRetainAfterDiscardMs * 1000L;
         this.bandwidthFraction = bandwidthFraction;
         selectedIndex = idealQuality(Long.MIN_VALUE);
+        Log.d(TAG, String.format("Initial selected index = %d", selectedIndex));
         reason = C.SELECTION_REASON_INITIAL;
     }
 

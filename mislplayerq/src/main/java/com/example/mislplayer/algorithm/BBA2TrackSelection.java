@@ -62,6 +62,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         this.algorithmListener = algorithmListener;
 
         selectedIndex = adaptiveAlgorithm();
+        Log.d(TAG, String.format("Initial selected index = %d", selectedIndex));
         reason = C.SELECTION_REASON_INITIAL;
     }
 

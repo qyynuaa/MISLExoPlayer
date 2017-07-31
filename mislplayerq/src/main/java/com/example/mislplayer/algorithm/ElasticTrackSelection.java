@@ -106,6 +106,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
         this.k_i = k_i;
 
         selectedIndex = lowestBitrateIndex();
+        Log.d(TAG, String.format("Initial selected index = %d", selectedIndex));
         selectionReason = C.SELECTION_REASON_INITIAL;
     }
 
