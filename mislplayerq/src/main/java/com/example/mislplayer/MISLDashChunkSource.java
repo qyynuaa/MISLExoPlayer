@@ -4,7 +4,7 @@ import android.util.Log;
 
 import com.google.android.exoplayer2.source.chunk.Chunk;
 import com.google.android.exoplayer2.source.chunk.ChunkHolder;
-import com.google.android.exoplayer2.source.chunk.DefaultChunkSampleStream;
+import com.google.android.exoplayer2.source.chunk.ChunkSampleStream;
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
 import com.google.android.exoplayer2.source.dash.DashChunkSource;
 import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource;
@@ -130,7 +130,7 @@ public class MISLDashChunkSource implements DashChunkSource {
     }
 
     /**
-     * Called when the {@link DefaultChunkSampleStream} has finished loading a chunk obtained from this
+     * Called when the {@link ChunkSampleStream} has finished loading a chunk obtained from this
      * source.
      * <p>
      * This method should only be called when the source is enabled.
@@ -143,7 +143,7 @@ public class MISLDashChunkSource implements DashChunkSource {
     }
 
     /**
-     * Called when the {@link DefaultChunkSampleStream} encounters an error loading a chunk obtained from
+     * Called when the {@link ChunkSampleStream} encounters an error loading a chunk obtained from
      * this source.
      * <p>
      * This method should only be called when the source is enabled.
