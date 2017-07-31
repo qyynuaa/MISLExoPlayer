@@ -141,7 +141,12 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      */
     @Override
     public void updateSelectedTrack(long bufferedDurationUs) {
-        selectedIndex = doRateAdaptation(bufferedDurationUs);
+        if (algorithmListener.chunkDataNotAvailable()) {
+            selectedIndex = lowestBitrateIndex();
+        } else {
+            selectedIndex = doRateAdaptation(bufferedDurationUs);
+        }
+
         Log.d(TAG, String.format("Selected index = %d", selectedIndex));
         selectionReason = C.SELECTION_REASON_ADAPTIVE;
     }
@@ -155,10 +160,6 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      * @return The index (in sorted order) of the track to switch to.
      */
     private int doRateAdaptation(long bufferedDurationUs) {
-        if (algorithmListener.chunkDataNotAvailable()) {
-            return lowestBitrateIndex();
-        }
-
         double averageRateEstimate = algorithmListener.getSampleHarmonicAverage(elasticAverageWindow);
 
         final double downloadTimeS = algorithmListener.lastLoadDurationMs() / 1E3;

@@ -61,7 +61,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         super(group, tracks);
         this.algorithmListener = algorithmListener;
 
-        selectedIndex = adaptiveAlgorithm();
+        selectedIndex = lowestBitrateIndex();
         Log.d(TAG, String.format("Initial selected index = %d", selectedIndex));
         reason = C.SELECTION_REASON_INITIAL;
     }
@@ -71,7 +71,11 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         bufferedDurationMs = bufferedDurationUs / 1000;
 
         int currentSelectedIndex = selectedIndex;
-        selectedIndex = adaptiveAlgorithm();
+        if (algorithmListener.chunkDataNotAvailable()) {
+            selectedIndex = lowestBitrateIndex();
+        } else {
+            selectedIndex = dash_do_rate_adaptation_bba2();
+        }
         Log.d(TAG, String.format("Selected index = %d", selectedIndex));
 
         if (selectedIndex != currentSelectedIndex) {
@@ -92,14 +96,6 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     @Override
     public Object getSelectionData() {
         return null;
-    }
-
-    private int adaptiveAlgorithm() {
-        if (algorithmListener.chunkDataNotAvailable()) {
-            return lowestBitrateIndex();
-        } else {
-            return dash_do_rate_adaptation_bba2();
-        }
     }
 
     /* MISL BBA2 adaptation algorithm */

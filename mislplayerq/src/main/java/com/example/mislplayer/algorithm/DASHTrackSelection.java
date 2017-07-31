@@ -8,6 +8,8 @@ import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 
+import static com.google.android.exoplayer2.upstream.BandwidthMeter.NO_ESTIMATE;
+
 /**
  * Created by Quentin L on 17/05/2017.
  */
@@ -155,7 +157,7 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
         this.maxDurationForQualityDecreaseUs = maxDurationForQualityDecreaseMs * 1000L;
         this.minDurationToRetainAfterDiscardUs = minDurationToRetainAfterDiscardMs * 1000L;
         this.bandwidthFraction = bandwidthFraction;
-        selectedIndex = idealQuality(Long.MIN_VALUE);
+        selectedIndex = lowestBitrateIndex();
         Log.d(TAG, String.format("Initial selected index = %d", selectedIndex));
         reason = C.SELECTION_REASON_INITIAL;
     }
@@ -188,42 +190,14 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
 
 
     public int adaptiveAlgorithm() {
-        double effectiveNetworkRate = -1;
-        networkRate=-1;
-        if (networkRate == -1 && inc == 0) {
-            networkRate = bandwidthMeter.getBitrateEstimate();
-            inc++;
+        long bitrateEstimate = bandwidthMeter.getBitrateEstimate();
+
+        if (bitrateEstimate == NO_ESTIMATE) {
             return lowestBitrateIndex();
         }
-        else if(inc==1){
-            inc++;
-            return lowestBitrateIndex();
-        }
-        if (inc > 1) {
-            networkRate = 0.2 * bandwidthMeter.getBitrateEstimate() + 0.8 * networkRate;
-            effectiveNetworkRate = 0.85 * networkRate;
-            inc++;
-            return idealQuality(effectiveNetworkRate);
-        }
-        return -1;
+        networkRate = 0.2 * bitrateEstimate + 0.8 * networkRate;
+        double effectiveNetworkRate = 0.85 * networkRate;
+
+        return findBestRateIndex(effectiveNetworkRate);
     }
-
-    public int idealQuality (double networkRate){ //(double networkRate, TrackGroup group)
-        for(int i=0; i<length;i++){
-            Format format = getFormat(i);
-            if (format.bitrate <= networkRate) {
-                return i;
-            }
-        }
-        return 0;
-    }
-
-
-
-
-
-
-
-
-
 }
