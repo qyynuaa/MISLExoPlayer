@@ -20,6 +20,7 @@ import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
@@ -50,7 +51,6 @@ import com.opencsv.CSVReader;
 import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
 import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS;
 import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_MAX_BUFFER_MS;
-import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_MIN_BUFFER_MS;
 
 
 public class PlayerActivity extends Activity implements View.OnClickListener,
@@ -68,11 +68,11 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         private DefaultTrackSelector trackSelector;
         private final DefaultBandwidthMeter2 BANDWIDTH_METER = new DefaultBandwidthMeter2(null, null);
         // private final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter(mainHandler,bm);
-        private DefaultLoadControl loadControl;
+        private LoadControl loadControl;
         private String videoInfo;
         private int segmentNumber = 0;
         private DashMediaSource videoSource;
-        private final TransitionalAlgorithmListener algorithmListener = new TransitionalAlgorithmListener(this);
+        private TransitionalAlgorithmListener algorithmListener;
         public Thread t;
         public static ArrayList<FutureSegmentInfos> futureSegmentInfos;
         public static ArrayList<Integer> reprLevel;
@@ -80,7 +80,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         private MISLDashChunkSource.Factory df;
         public static String ALGORITHM_TYPE;
 
-        private int minBufferMs = DEFAULT_MIN_BUFFER_MS;
+        private int minBufferMs = 26000;
         private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
         private long playbackBufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_MS;
         private long rebufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
@@ -114,6 +114,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             //You can only use another mpd file if you have ITS CSV in raw folder
             // Uri uri = Uri.parse("http://yt-dash-mse-test.commondatastorage.googleapis.com/media/oops-20120802-manifest.mpd");
 
+            algorithmListener = new TransitionalAlgorithmListener(maxBufferMs);
+
             //Provides instances of DataSource from which streams of data can be read.
             DataSource.Factory dataSourceFactory = buildDataSourceFactory2(algorithmListener);
 
@@ -136,17 +138,13 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             //Used to play media indefinitely (loop)
             LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
 
-            Context context = this;
-
-            //If you want to modify buffer parameters use this
             DefaultAllocator allocator = new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE);
 
-            minBufferMs = 26000;
             loadControl = new DefaultLoadControl(allocator, minBufferMs,
                     maxBufferMs, playbackBufferMs, rebufferMs);
 
             //Creates an instance of our player, we have to give it all previous stuff
-            player = ExoPlayerFactory.newSimpleInstance(context, trackSelector, loadControl);
+            player = ExoPlayerFactory.newSimpleInstance(this, trackSelector, loadControl);
 
             player.addListener(algorithmListener);
 

@@ -37,7 +37,6 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         TransferListener, ExoPlayer.EventListener {
 
     private static final String TAG = "TransitionalAL";
-
     private static final String LOG_FILE_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
 
     private MediaChunk lastChunk;
@@ -53,11 +52,10 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     private long mpdDuration;
 
     private List<ChunkInformation> downloadedChunkInfo = new ArrayList<>();
+    private int maxBufferMs;
 
-    private PlayerActivity playerActivity;
-
-    public TransitionalAlgorithmListener(PlayerActivity playerActivity) {
-        this.playerActivity = playerActivity;
+    public TransitionalAlgorithmListener(int maxBufferMs) {
+        this.maxBufferMs = maxBufferMs;
     }
 
     /**
@@ -391,7 +389,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
     /** Gives the current maximum buffer length the player is aiming for. */
     public long getMaxBufferMs() {
-        return playerActivity.getMaxBufferMs();
+        return maxBufferMs;
     }
 
     /**
