@@ -97,7 +97,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      * available, then that number of samples. If not, then as many as are
      * available.
      */
-    public double[] getThroughputSamples(int window) {
+    private double[] getThroughputSamples(int window) {
         int workingWindow = getWindowSize(window);
         double[] rateSamples = new double[workingWindow];
 
