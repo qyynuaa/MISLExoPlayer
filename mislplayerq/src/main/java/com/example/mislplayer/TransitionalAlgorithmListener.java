@@ -326,12 +326,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
             kum2 = -1 / kum2;
             kum2 = kum2 > 1e5 ? 1e5 : kum2;
         }
-        double[] parameters = new double[4];
-        parameters[0] = kum1;
-        parameters[1] = kum2;
-        parameters[2] = 0;
-        parameters[3] = maxRate;
-        return parameters;
+        return new double[] {kum1, kum2, 0, maxRate};
     }
 
     double computeS(int window, double[] samples, double[] weights, double kum1) {
