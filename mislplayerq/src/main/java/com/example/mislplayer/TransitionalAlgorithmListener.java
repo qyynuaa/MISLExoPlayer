@@ -55,7 +55,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
     private long mpdDuration;
 
-    private ArrayList<ChunkInformation> downloadedChunkInfo = new ArrayList<>();
+    private List<ChunkInformation> downloadedChunkInfo = new ArrayList<>();
 
     private PlayerActivity playerActivity;
 
@@ -63,7 +63,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         this.playerActivity = playerActivity;
     }
 
-    public ArrayList<ChunkInformation> getSegInfos() {return downloadedChunkInfo;}
+    public List<ChunkInformation> getSegInfos() {return downloadedChunkInfo;}
 
     /**
      * Indicates that data on previous chunks is not available.
@@ -97,12 +97,15 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      * available, then that number of samples. If not, then as many as are
      * available.
      */
-    private double[] getThroughputSamples(int window) {
+    private List<Double> getThroughputSamples(int window) {
         int workingWindow = getWindowSize(window);
-        double[] rateSamples = new double[workingWindow];
+        int lastIndex = downloadedChunkInfo.size();
+        int firstIndex = lastIndex - workingWindow;
+        List<ChunkInformation> chunkSublist = downloadedChunkInfo.subList(firstIndex, lastIndex);
+        List<Double> rateSamples = new ArrayList<>(workingWindow);
 
-        for (int i = 1; i <= workingWindow; i++) {
-            rateSamples[i - 1] = downloadedChunkInfo.get(lastChunkIndex() - i).getDeliveryRate();
+        for (ChunkInformation chunkInfo : chunkSublist) {
+            rateSamples.add(chunkInfo.getDeliveryRate());
         }
 
         return rateSamples;
@@ -221,32 +224,32 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      * @param maxWindow The maximum number of throughput samples to consider.
      * @return An array of normalised throughput samples.
      */
-    public double[] getNormalisedSamples(int maxWindow) {
+    public List<Double> getNormalisedSamples(int maxWindow) {
         double maxRate = 0;
-        double[] samples = getThroughputSamples(maxWindow);
+        List<Double> samples = getThroughputSamples(maxWindow);
         for (double thisSample : samples) {
             if (thisSample > maxRate) {
                 maxRate = thisSample;
             }
         }
 
-        for (int i = 0; i < samples.length; i++) {
-            samples[i] /= (maxRate * 1.01);
+        for (int i = 0; i < samples.size(); i++) {
+            samples.set(i, samples.get(i) / (maxRate * 1.01));
         }
         return samples;
     }
 
     public double[] oscarKumarParEstimation(int estWindow, double expAvgRatio) {
         int window = getWindowSize(estWindow);
-        double[] rateSamples = getThroughputSamples(window);
-        double maxRate=rateSamples[0];
+        List<Double> rateSamples = getThroughputSamples(window);
+        double maxRate=rateSamples.get(0);
         for (int i = 1; i < window; i++) {
-            if (rateSamples[i] > maxRate)
-                maxRate = rateSamples[i];
+            if (rateSamples.get(i) > maxRate)
+                maxRate = rateSamples.get(i);
         }
         double normalizedSamples[] = new double[window];
         for (int i = 0; i < window; i++) {
-            normalizedSamples[i] = rateSamples[i] / maxRate / 1.01;
+            normalizedSamples[i] = rateSamples.get(i) / maxRate / 1.01;
 
         }
         // estimate the weights of different samples
@@ -394,13 +397,13 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         long byteSize = lastChunk.bytesLoaded();
         Log.d(TAG, String.format("Chunk size = %d bytes", byteSize));
 
-        long deliveryRateKbps = 0;
+        double deliveryRateKbps = 0;
 
         if (loadDurationMs > 0) {
             /** The delivery rate of the chunk, in kbps. */
             deliveryRateKbps = byteSize * 8 / loadDurationMs;
             Log.d(TAG, String.format("Load duration = %d ms", loadDurationMs));
-            Log.d(TAG, String.format("Delivery rate = %d kbps", deliveryRateKbps));
+            Log.d(TAG, String.format("Delivery rate = %f kbps", deliveryRateKbps));
         }
 
         ChunkInformation lastChunkInfo = new ChunkInformation(segmentNumber, arrivalTimeMs,
@@ -437,7 +440,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     }
 
     /** Returns the delivery rate of the most recently downloaded chunk, in kbps. */
-    public long lastDeliveryRateKbps() {return lastChunkInfo().getDeliveryRate();}
+    public double lastDeliveryRateKbps() {return lastChunkInfo().getDeliveryRate();}
 
     /** Returns the actual data rate of the most recently downloaded chunk, in bits per second. */
     public long actualRatebps(){
@@ -685,11 +688,11 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         private long actionRate;
         private long byteSize;
         private long bufferLevel;
-        private long deliveryRate;
+        private double deliveryRate;
         private long segmentDuration;
 
         public ChunkInformation(int segNumber, long arrivalTime, long deliveryTime,
-                                long stallDuration, int repLevel, long deliveryRate,
+                                long stallDuration, int repLevel, double deliveryRate,
                                 long actionRate, long byteSize, long bufferLevel, long segmentDuration){
             this.segNumber=segNumber;
             this.arrivalTime=arrivalTime;
@@ -718,7 +721,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         public int getRepLevel(){
             return repLevel;
         }
-        public long getDeliveryRate() {return deliveryRate;}
+        public double getDeliveryRate() {return deliveryRate;}
         public long getActionRate(){
             return actionRate;
         }
@@ -829,13 +832,13 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     public class HarmonicAverage {
 
         private int window;
-        private double[] rates;
+        private List<Double> rates;
 
-        public HarmonicAverage(double[] samples) {
-            this(samples.length, samples);
+        public HarmonicAverage(List<Double> samples) {
+            this(samples.size(), samples);
         }
 
-        public HarmonicAverage(int window, double[] rates) {
+        public HarmonicAverage(int window, List<Double> rates) {
             this.window = window;
             this.rates = rates;
         }
@@ -843,7 +846,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         public double value() {
             double subTotal = 0;
             for (int i = 0; i < window; i++) {
-                subTotal += 1 / rates[i];
+                subTotal += 1 / rates.get(i);
             }
             return window / subTotal;
         }
@@ -887,22 +890,21 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      */
     public class ExponentialAverage {
 
-        private double[] rates;
+        private List<Double> rates;
         private double ratio;
 
-        public ExponentialAverage(double[] rates, double ratio) {
+        public ExponentialAverage(List<Double> rates, double ratio) {
             this.rates = rates;
             this.ratio = ratio;
         }
 
         public double value() {
-            double weights[] = new double[rates.length];
-            double weightSum = (1 - Math.pow(1 - ratio, rates.length));
+            double weightSum = (1 - Math.pow(1 - ratio, rates.size()));
             double subTotal = 0;
 
-            for (int i = 0; i < rates.length; i++) {
-                weights[i] = (ratio) * Math.pow(1 - ratio, i) / weightSum;
-                subTotal += weights[i] * rates[i];
+            for (int i = 0; i < rates.size(); i++) {
+                double thisWeight = ratio * Math.pow(1 - ratio, i) / weightSum;
+                subTotal += thisWeight * rates.get(i);
             }
             return subTotal;
         }
@@ -911,25 +913,24 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     public class ExponentialVariance {
 
         private double averageRate;
-        private double[] rates;
+        private List<Double> rates;
         private double ratio;
 
-        public ExponentialVariance(double averageRate, double[] rates, double ratio) {
+        public ExponentialVariance(double averageRate, List<Double> rates, double ratio) {
             this.averageRate = averageRate;
             this.rates = rates;
             this.ratio = ratio;
         }
 
         public double value() {
-            double weights[] = new double[rates.length];
-            double weightSum = (1 - Math.pow(1 - ratio, rates.length));
+            double weightSum = (1 - Math.pow(1 - ratio, rates.size()));
             double totalDeviation = 0;
 
-            for (int i = 0; i < rates.length; i++) {
-                weights[i] = (ratio) * Math.pow(1 - ratio, i) / weightSum;
-                totalDeviation += weights[i] * Math.pow(averageRate - rates[i], 2);
+            for (int i = 0; i < rates.size(); i++) {
+                double thisWeight = (ratio) * Math.pow(1 - ratio, i) / weightSum;
+                totalDeviation += thisWeight * Math.pow(averageRate - rates.get(i), 2);
             }
-            return rates.length * totalDeviation / (rates.length - 1);
+            return rates.size() * totalDeviation / (rates.size() - 1);
         }
     }
 }
