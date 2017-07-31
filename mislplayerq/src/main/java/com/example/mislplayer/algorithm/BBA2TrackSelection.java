@@ -102,7 +102,6 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     private int dash_do_rate_adaptation_bba2()
     {
         long total_size = algorithmListener.lastByteSize();
-        long bytes_per_sec = total_size / algorithmListener.lastLoadDurationMs();
         lastChunkDurationMs = algorithmListener.lastChunkDurationMs();
         lastChunkIndex = algorithmListener.lastChunkIndex();
         maxBufferMs = algorithmListener.getMaxBufferMs();
@@ -161,7 +160,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     }
 
 
-    int bba1UpdateResevoir(int lastRate, int lastRateIndex)
+    private int bba1UpdateResevoir(int lastRate, int lastRateIndex)
     {
         long resvWin = min(2 * maxBufferMs / lastChunkDurationMs,
                 (algorithmListener.mpdDuration()/lastChunkIndex) - lastChunkIndex);
@@ -187,7 +186,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         return (int)resevoir;
     }
 
-    int bba1VRAA(int lastRateIndex, int resevoir){
+    private int bba1VRAA(int lastRateIndex, int resevoir){
         int rateUindex = max(lastRateIndex - 1, 0);
         int rateLindex = min(lastRateIndex + 1, tracks.length);
 
