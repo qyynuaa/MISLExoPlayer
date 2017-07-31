@@ -394,13 +394,13 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         long byteSize = lastChunk.bytesLoaded();
         Log.d(TAG, String.format("Chunk size = %d bytes", byteSize));
 
-        long deliveryRateKbps = 0;
+        double deliveryRateKbps = 0;
 
         if (loadDurationMs > 0) {
             /** The delivery rate of the chunk, in kbps. */
             deliveryRateKbps = byteSize * 8 / loadDurationMs;
             Log.d(TAG, String.format("Load duration = %d ms", loadDurationMs));
-            Log.d(TAG, String.format("Delivery rate = %d kbps", deliveryRateKbps));
+            Log.d(TAG, String.format("Delivery rate = %f kbps", deliveryRateKbps));
         }
 
         ChunkInformation lastChunkInfo = new ChunkInformation(segmentNumber, arrivalTimeMs,
@@ -437,7 +437,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     }
 
     /** Returns the delivery rate of the most recently downloaded chunk, in kbps. */
-    public long lastDeliveryRateKbps() {return lastChunkInfo().getDeliveryRate();}
+    public double lastDeliveryRateKbps() {return lastChunkInfo().getDeliveryRate();}
 
     /** Returns the actual data rate of the most recently downloaded chunk, in bits per second. */
     public long actualRatebps(){
@@ -685,11 +685,11 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         private long actionRate;
         private long byteSize;
         private long bufferLevel;
-        private long deliveryRate;
+        private double deliveryRate;
         private long segmentDuration;
 
         public ChunkInformation(int segNumber, long arrivalTime, long deliveryTime,
-                                long stallDuration, int repLevel, long deliveryRate,
+                                long stallDuration, int repLevel, double deliveryRate,
                                 long actionRate, long byteSize, long bufferLevel, long segmentDuration){
             this.segNumber=segNumber;
             this.arrivalTime=arrivalTime;
@@ -718,7 +718,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
         public int getRepLevel(){
             return repLevel;
         }
-        public long getDeliveryRate() {return deliveryRate;}
+        public double getDeliveryRate() {return deliveryRate;}
         public long getActionRate(){
             return actionRate;
         }
