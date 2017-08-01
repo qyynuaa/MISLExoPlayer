@@ -51,7 +51,9 @@ public class MISLDashChunkSource implements DashChunkSource {
                                                      boolean enableEventMessageTrack, boolean enableCea608Track) {
             DataSource dataSource = dataSourceFactory.createDataSource();
 
-            chunkListener.giveMpdDuration(manifest.duration);
+            if (chunkListener != null){
+                chunkListener.giveMpdDuration(manifest.duration);
+            }
 
             return new MISLDashChunkSource(manifestLoaderErrorThrower, manifest, periodIndex,
                     adaptationSetIndex, trackSelection, dataSource, elapsedRealtimeOffsetMs,
@@ -77,7 +79,9 @@ public class MISLDashChunkSource implements DashChunkSource {
     /** Delegates to the {@link DefaultDashChunkSource} */
     @Override
     public void updateManifest(DashManifest newManifest, int periodIndex) {
-        chunkListener.giveMpdDuration(newManifest.duration);
+        if (chunkListener != null) {
+            chunkListener.giveMpdDuration(newManifest.duration);
+        }
         dashChunkSource.updateManifest(newManifest, periodIndex);
     }
 
@@ -125,7 +129,9 @@ public class MISLDashChunkSource implements DashChunkSource {
      */
     @Override
     public void getNextChunk(MediaChunk previous, long playbackPositionUs, ChunkHolder out) {
-        chunkListener.giveLastChunk(previous);
+        if (chunkListener != null) {
+            chunkListener.giveLastChunk(previous);
+        }
         dashChunkSource.getNextChunk(previous, playbackPositionUs, out);
     }
 
