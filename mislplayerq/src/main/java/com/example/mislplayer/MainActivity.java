@@ -75,9 +75,6 @@ public class MainActivity extends Activity  {
         AdaptationAlgorithmType type;
 
         switch (algorithmType) {
-            case R.id.basic_exoplayer:
-                type = AdaptationAlgorithmType.BASIC_EXOPLAYER;
-                break;
             case R.id.basic_adaptive:
                 type = AdaptationAlgorithmType.BASIC_ADAPTIVE;
                 break;

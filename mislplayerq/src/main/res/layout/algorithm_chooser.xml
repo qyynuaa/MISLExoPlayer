@@ -48,15 +48,6 @@
             android:visibility="visible">
 
             <RadioButton
-                android:id="@+id/basic_exoplayer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.38"
-                android:checked="true"
-                android:text="BASIC_EXOPLAYER"
-                android:textColor="@android:color/white" />
-
-            <RadioButton
                 android:id="@+id/basic_adaptive"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
