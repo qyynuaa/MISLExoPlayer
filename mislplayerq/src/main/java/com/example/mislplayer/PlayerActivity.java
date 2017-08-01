@@ -17,6 +17,7 @@ import com.example.mislplayer.algorithm.ElasticTrackSelection;
 import com.example.mislplayer.algorithm.OscarHTrackSelection;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
@@ -143,8 +144,9 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             loadControl = new DefaultLoadControl(allocator, minBufferMs,
                     maxBufferMs, playbackBufferMs, rebufferMs);
 
-            //Creates an instance of our player, we have to give it all previous stuff
-            player = ExoPlayerFactory.newSimpleInstance(this, trackSelector, loadControl);
+            player = ExoPlayerFactory.newSimpleInstance(
+                    new DefaultRenderersFactory(this), trackSelector,
+                    loadControl);
 
             player.addListener(algorithmListener);
 
