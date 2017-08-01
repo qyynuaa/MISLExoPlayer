@@ -1,5 +1,6 @@
 package com.example.mislplayer;
 
+import com.example.mislplayer.algorithm.AdaptationAlgorithm;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.upstream.TransferListener;
 

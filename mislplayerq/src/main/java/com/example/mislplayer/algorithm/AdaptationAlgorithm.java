@@ -1,5 +1,6 @@
-package com.example.mislplayer;
+package com.example.mislplayer.algorithm;
 
+import com.example.mislplayer.ChunkListener;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.upstream.DataSource;
@@ -25,4 +26,8 @@ public interface AdaptationAlgorithm {
      * @return The TrackSelection Factory for the algorithm.
      */
     TrackSelection.Factory trackSelectionFactory();
+
+    void writeLogsToFile();
+
+    void clearChunkInformation();
 }
