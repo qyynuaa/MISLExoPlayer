@@ -1,6 +1,4 @@
-package com.example.mislplayer.MISL_Algorithm;
-
-import com.google.android.exoplayer2.trackselection.TrackSelection;
+package com.example.mislplayer;
 
 /**
  * The adaptation algorithms that are available.
