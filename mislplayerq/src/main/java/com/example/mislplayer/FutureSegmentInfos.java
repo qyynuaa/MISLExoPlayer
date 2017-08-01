@@ -23,7 +23,6 @@ public class FutureSegmentInfos {
 
     public static int getByteSize(ArrayList<FutureSegmentInfos> segInfos, int segmentNumber, int representationLevel){
         for(int i=0;i<segInfos.size();i++){
-            Log.d("RPL",segInfos.get(i).representationLevel+"");
             if(segInfos.get(i).representationLevel==representationLevel && segInfos.get(i).segmentNumber==segmentNumber){
                 return segInfos.get(i).byteSize;
             }

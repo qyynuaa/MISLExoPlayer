@@ -10,18 +10,18 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-
-import com.example.mislplayer.MISL_Algorithm.AdaptationAlgorithmType;
-import com.example.mislplayer.MISL_Algorithm.ArbiterTrackSelection;
-import com.example.mislplayer.MISL_Algorithm.BBA2TrackSelection;
-import com.example.mislplayer.MISL_Algorithm.DASHTrackSelection;
-import com.example.mislplayer.MISL_Algorithm.ElasticTrackSelection;
-import com.example.mislplayer.MISL_Algorithm.OscarHTrackSelection;
+import com.example.mislplayer.algorithm.ArbiterTrackSelection;
+import com.example.mislplayer.algorithm.BBA2TrackSelection;
+import com.example.mislplayer.algorithm.DASHTrackSelection;
+import com.example.mislplayer.algorithm.ElasticTrackSelection;
+import com.example.mislplayer.algorithm.OscarHTrackSelection;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
@@ -48,34 +48,43 @@ import java.util.ArrayList;
 
 import com.opencsv.CSVReader;
 
+import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
+import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS;
+import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_MAX_BUFFER_MS;
 
-    public class PlayerActivity extends Activity
-            implements View.OnClickListener, ExoPlayer.EventListener,
-            PlaybackControlView.VisibilityListener {
 
+public class PlayerActivity extends Activity implements View.OnClickListener,
+        ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
+
+        private static final String TAG = "PlayerActivity";
 
         private Context userAgent = this;
         private SimpleExoPlayerView playerView;
         private Handler mainHandler;
         private EventLogger eventLogger;
-        public static SimpleExoPlayer player;
+        private SimpleExoPlayer player;
         private int resumeWindow;
         private long resumePosition;
         private DefaultTrackSelector trackSelector;
-        private BandwidthMeterEventListener bm = new BandwidthMeterEventListener();
-        private final DefaultBandwidthMeter2 BANDWIDTH_METER = new DefaultBandwidthMeter2(mainHandler, bm);
+        private final DefaultBandwidthMeter2 BANDWIDTH_METER = new DefaultBandwidthMeter2(null, null);
         // private final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter(mainHandler,bm);
-        public static DefaultLoadControl loadControl;
+        private LoadControl loadControl;
         private String videoInfo;
         private int segmentNumber = 0;
-        public static DashMediaSource videoSource;
-        public static TransitionalAlgorithmListener dMSL = new TransitionalAlgorithmListener();
+        private DashMediaSource videoSource;
+        private TransitionalAlgorithmListener algorithmListener;
         public Thread t;
         public static ArrayList<FutureSegmentInfos> futureSegmentInfos;
         public static ArrayList<Integer> reprLevel;
         public static int beginningIndex;
-        public static MISLDashChunkSource.Factory df;
-        private AdaptationAlgorithmType algorithmType;
+        private MISLDashChunkSource.Factory df;
+        public static String ALGORITHM_TYPE;
+
+        private int minBufferMs = 26000;
+        private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
+        private long playbackBufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_MS;
+        private long rebufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
+
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -105,8 +114,10 @@ import com.opencsv.CSVReader;
             //You can only use another mpd file if you have ITS CSV in raw folder
             // Uri uri = Uri.parse("http://yt-dash-mse-test.commondatastorage.googleapis.com/media/oops-20120802-manifest.mpd");
 
+            algorithmListener = new TransitionalAlgorithmListener(maxBufferMs);
+
             //Provides instances of DataSource from which streams of data can be read.
-            DataSource.Factory dataSourceFactory = buildDataSourceFactory2(dMSL);
+            DataSource.Factory dataSourceFactory = buildDataSourceFactory2(algorithmListener);
 
             //Provides instances of TrackSelection, this will decide which segments we will download later
             TrackSelection.Factory videoTrackSelectionFactory = chooseAlgorithm(algorithmType);
@@ -119,7 +130,7 @@ import com.opencsv.CSVReader;
             mainHandler = new Handler();
 
             //Provides instances of DashChunkSource
-            df = new MISLDashChunkSource.Factory(dataSourceFactory, dMSL);
+            df = new MISLDashChunkSource.Factory(dataSourceFactory, algorithmListener);
 
             // Our video source media, we give it an URL, and all the stuff before
             videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, mainHandler, eventLogger);
@@ -127,23 +138,19 @@ import com.opencsv.CSVReader;
             //Used to play media indefinitely (loop)
             LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
 
-            Context context = this;
+            DefaultAllocator allocator = new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE);
 
-            //If you want to modify buffer parameters use this
-           // DefaultAllocator allocator = new DefaultAllocator(true, 10000);
+            loadControl = new DefaultLoadControl(allocator, minBufferMs,
+                    maxBufferMs, playbackBufferMs, rebufferMs);
 
-            //Controls buffering of media.
-            loadControl = new DefaultLoadControl(/*allocator, 20000, 40000,1000,0*/); //allocator, 5000, 15000, 10000, 0); //2nd : min duration before rebuffering, if we decrease it, it will take more time to rebuffer // 3nd is max duration before rebuffering // 4th min duration of buffer to playback or when there is a seek to
+            player = ExoPlayerFactory.newSimpleInstance(
+                    new DefaultRenderersFactory(this), trackSelector,
+                    loadControl);
 
-            //Creates an instance of our player, we have to give it all previous stuff
-            player = ExoPlayerFactory.newSimpleInstance(context, trackSelector, loadControl);
+            player.addListener(algorithmListener);
 
             //bind the player to a view
             playerView.setPlayer(player);
-
-            //Listen to the player behavior to get some infos about it
-            ExoPlayerListener exoPlayerListener = new ExoPlayerListener();
-            player.addListener(exoPlayerListener);
 
             // ?
             if (resumeWindow != C.INDEX_UNSET)
@@ -161,7 +168,7 @@ import com.opencsv.CSVReader;
             //futur segment sizes obtained thanks to CSV file
             futureSegmentInfos = getSegmentSizes();
             if(futureSegmentInfos!=null)
-                Log.d("FUTSEG",""+FutureSegmentInfos.getByteSize(futureSegmentInfos,3,getRepIndex(4310)));
+                Log.d(TAG,""+FutureSegmentInfos.getByteSize(futureSegmentInfos,3,getRepIndex(4310)));
             debugView.setTextColor(Color.WHITE);
             debugView.setTextSize(15);
 
@@ -187,31 +194,29 @@ import com.opencsv.CSVReader;
         }
 
         //Choose our algorithm given the button selected in the previous Activity
-        public TrackSelection.Factory chooseAlgorithm (
-                AdaptationAlgorithmType algorithmType) {
-            switch (algorithmType){
-                case BASIC_EXOPLAYER:
-                    Log.d("NOTE","BASIC_EXOPLAYER has been chosen.");
+        public TrackSelection.Factory chooseAlgorithm (String name){
+            switch (name){
+                case "BASIC_EXOPLAYER":
+                    Log.d(TAG,"BASIC_EXOPLAYER has been chosen.");
                     return new AdaptiveTrackSelection.Factory(BANDWIDTH_METER);
-                case BASIC_ADAPTIVE:
-                    Log.d("NOTE","BASIC_ADAPTIVE has been chosen.");
+                case "BASIC_ADAPTIVE":
+                    Log.d(TAG,"BASIC_ADAPTIVE has been chosen.");
                     return new DASHTrackSelection.Factory(BANDWIDTH_METER);
-                case OSCAR_H:
-                    Log.d("NOTE","OSCAR-H has been chosen.");
-                    return new OscarHTrackSelection.Factory();
-                case ARBITER:
-                    Log.d("NOTE","ARBITER has been chosen.");
-                    return new ArbiterTrackSelection.Factory();
-                case BBA2:
-                    Log.d("NOTE","BBA2 has been chosen.");
-                    return new BBA2TrackSelection.Factory();
-                case ELASTIC:
-                    Log.d("NOTE", "ELASTIC has been chosen.");
-                    return new ElasticTrackSelection.Factory();
-                default:
-                    throw new IllegalArgumentException(
-                            "Unrecognised algorithm");
+                case "OSCAR-H":
+                    Log.d(TAG,"OSCAR-H has been chosen.");
+                    return new OscarHTrackSelection.Factory(algorithmListener);
+                case "ARBITER":
+                    Log.d(TAG,"ARBITER has been chosen.");
+                    return new ArbiterTrackSelection.Factory(algorithmListener);
+                case "BBA2":
+                    Log.d(TAG,"BBA2 has been chosen.");
+                    return new BBA2TrackSelection.Factory(algorithmListener);
+                case "ELASTIC":
+                    Log.d(TAG, "ELASTIC has been chosen.");
+                    return new ElasticTrackSelection.Factory(algorithmListener);
             }
+            Log.d(TAG,"ALGORITHM NOT FOUND");
+            return new AdaptiveTrackSelection.Factory(BANDWIDTH_METER);
         }
 
         // Here we use our CSV file to obtain all future segment sizes of our media content. Will be used in our algorithms
@@ -245,7 +250,6 @@ import com.opencsv.CSVReader;
                         if (Integer.valueOf(nextLine[0].trim()) >= 1) { // This value nextLine[0] (first column of the read line) corresponds to our segment Number,
                             // as 0 is the number of the INIT segment we are not interested in storing it, but all segments after will be stored -> that's why >=1
                             for (int i = 0; i < reprLevel.size(); i++) { //number i will correspond each time to representation level index not its value.
-                                Log.d("STORED","index: "+index+" repIndex: "+i+" value: "+Integer.valueOf(nextLine[i+2].trim()));
                                 FutureSegmentInfos futureSeg = new FutureSegmentInfos(index, i, Integer.valueOf(nextLine[i+2].trim())); // create a future segment info
                                 segmentSizes.add(futureSeg); // add it to the array
                                 inc++;
@@ -258,12 +262,14 @@ import com.opencsv.CSVReader;
                 }
                 return segmentSizes;
             } catch (IOException e) {
-                Log.d("ERREUR", "erreur de lecture fichier");
+                Log.d(TAG, "erreur de lecture fichier");
             }
             return null;
         }
 
-
+        public int getMaxBufferMs() {
+            return maxBufferMs;
+        }
 
         //To get the index of a given representation Level for our media content.
         public static int getRepIndex(int repLevel) {
@@ -303,8 +309,8 @@ import com.opencsv.CSVReader;
         String bufferedPosition = "Buffer Level : " + player.getBufferedPosition() + "\n";
        // debugView.setText(videoInfo + buffer + trackgroups + period + videoID + videoBitrate + audioBitrate + bandwidth + bytesAllocated + bufferedPosition);
         */
-            if(TransitionalAlgorithmListener.logSegment!=null) {
-                String test = "SEG NUMBER : " + TransitionalAlgorithmListener.logSegment.getSegNumber();
+            if(!algorithmListener.chunkDataNotAvailable()) {
+                String test = "SEG NUMBER : " + algorithmListener.lastChunkIndex();
                 debugView.setText(test);
             }
         }
@@ -359,7 +365,6 @@ import com.opencsv.CSVReader;
             if (Util.SDK_INT > 23) {
                 releasePlayer();
             }
-            LogSegment.writeLogSegInFile(dMSL.getSegInfos(), BANDWIDTH_METER.getSampleBytesCollected());
         }
 
         private HttpDataSource.Factory buildHttpDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
@@ -372,6 +377,8 @@ import com.opencsv.CSVReader;
                 player.release();
                 player = null;
                 eventLogger = null;
+                algorithmListener.writeLogsToFile();
+                algorithmListener.clearChunkInformation();
             }
         }
 
@@ -428,7 +435,3 @@ import com.opencsv.CSVReader;
 
 
     }
-
-
-
-
