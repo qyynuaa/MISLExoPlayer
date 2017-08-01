@@ -1,4 +1,4 @@
-package com.example.mislplayer.algorithm;
+package com.example.mislplayer.trackselection;
 
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.BaseTrackSelection;

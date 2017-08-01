@@ -34,7 +34,7 @@ import static java.lang.Math.min;
  */
 
 public class TransitionalAlgorithmListener implements ChunkListener,
-        TransferListener, ExoPlayer.EventListener {
+        TransferListener<Object>, ExoPlayer.EventListener {
 
     private static final String TAG = "TransitionalAL";
     private static final String LOG_FILE_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";

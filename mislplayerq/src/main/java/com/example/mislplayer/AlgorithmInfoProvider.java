@@ -1,5 +1,7 @@
 package com.example.mislplayer;
 
+import com.example.mislplayer.algorithm.AdaptationAlgorithm;
+
 /**
  * Provides necessary information to {@link AdaptationAlgorithm}s.
  */
