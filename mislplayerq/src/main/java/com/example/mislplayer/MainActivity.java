@@ -61,7 +61,7 @@ public class MainActivity extends Activity  {
 
                 // find the radiobutton by returned id
                 RadioButton radioButton = (RadioButton) findViewById(selectedId);
-                sendMessage(radioButton.getText().toString());
+                sendMessage(radioButton.getId());
 
             }
 
@@ -69,28 +69,28 @@ public class MainActivity extends Activity  {
     }
 
     //Method to launch next activity, we provide the ALGORITHM TYPE string for next activity
-    public void sendMessage(String algorithmType)
+    public void sendMessage(int algorithmType)
     {
         Intent intent = new Intent(MainActivity.this, PlayerActivity.class);
         AdaptationAlgorithmType type;
 
         switch (algorithmType) {
-            case "basic_exoplayer":
+            case R.id.basic_exoplayer:
                 type = AdaptationAlgorithmType.BASIC_EXOPLAYER;
                 break;
-            case "basic_adaptive":
+            case R.id.basic_adaptive:
                 type = AdaptationAlgorithmType.BASIC_ADAPTIVE;
                 break;
-            case "bba2":
+            case R.id.bba2:
                 type = AdaptationAlgorithmType.BBA2;
                 break;
-            case "oscar_h":
+            case R.id.oscar_h:
                 type = AdaptationAlgorithmType.OSCAR_H;
                 break;
-            case "arbiter":
+            case R.id.arbiter:
                 type = AdaptationAlgorithmType.ARBITER;
                 break;
-            case "elastic":
+            case R.id.elastic:
                 type = AdaptationAlgorithmType.ELASTIC;
                 break;
             default:
