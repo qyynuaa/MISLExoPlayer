@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+
 import com.example.mislplayer.algorithm.ArbiterTrackSelection;
 import com.example.mislplayer.algorithm.BBA2TrackSelection;
 import com.example.mislplayer.algorithm.DASHTrackSelection;
@@ -84,8 +85,9 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
         private long playbackBufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_MS;
         private long rebufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
+        private AdaptationAlgorithmType algorithmType;
 
-        @Override
+    @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 
@@ -138,10 +140,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             //Used to play media indefinitely (loop)
             LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
 
-            DefaultAllocator allocator = new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE);
-
-            loadControl = new DefaultLoadControl(allocator, minBufferMs,
-                    maxBufferMs, playbackBufferMs, rebufferMs);
+            loadControl = new MISLLoadControl(minBufferMs, maxBufferMs,
+                    playbackBufferMs, rebufferMs);
 
             player = ExoPlayerFactory.newSimpleInstance(
                     new DefaultRenderersFactory(this), trackSelector,
@@ -194,24 +194,24 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         }
 
         //Choose our algorithm given the button selected in the previous Activity
-        public TrackSelection.Factory chooseAlgorithm (String name){
-            switch (name){
-                case "BASIC_EXOPLAYER":
+        public TrackSelection.Factory chooseAlgorithm (AdaptationAlgorithmType algorithmType){
+            switch (algorithmType){
+                case BASIC_EXOPLAYER:
                     Log.d(TAG,"BASIC_EXOPLAYER has been chosen.");
                     return new AdaptiveTrackSelection.Factory(BANDWIDTH_METER);
-                case "BASIC_ADAPTIVE":
+                case BASIC_ADAPTIVE:
                     Log.d(TAG,"BASIC_ADAPTIVE has been chosen.");
                     return new DASHTrackSelection.Factory(BANDWIDTH_METER);
-                case "OSCAR-H":
+                case OSCAR_H:
                     Log.d(TAG,"OSCAR-H has been chosen.");
                     return new OscarHTrackSelection.Factory(algorithmListener);
-                case "ARBITER":
+                case ARBITER:
                     Log.d(TAG,"ARBITER has been chosen.");
                     return new ArbiterTrackSelection.Factory(algorithmListener);
-                case "BBA2":
+                case BBA2:
                     Log.d(TAG,"BBA2 has been chosen.");
                     return new BBA2TrackSelection.Factory(algorithmListener);
-                case "ELASTIC":
+                case ELASTIC:
                     Log.d(TAG, "ELASTIC has been chosen.");
                     return new ElasticTrackSelection.Factory(algorithmListener);
             }
