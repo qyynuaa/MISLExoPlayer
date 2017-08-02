@@ -3,7 +3,7 @@ package com.example.mislplayer.algorithm;
 import android.util.Log;
 import com.example.mislplayer.FutureSegmentInfos;
 import com.example.mislplayer.PlayerActivity;
-import com.example.mislplayer.TransitionalAlgorithmListener;
+import com.example.mislplayer.SampleProcessor;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -21,7 +21,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
      */
     public static final class Factory implements TrackSelection.Factory {
 
-        private TransitionalAlgorithmListener algorithmListener;
+        private SampleProcessor algorithmListener;
 
         /**
          * Creates a BBA2TrackSelection factory.
@@ -29,7 +29,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
          * @param algorithmListener Provides necessary information to the
          *                          algorithm.
          */
-        public Factory(TransitionalAlgorithmListener algorithmListener) {
+        public Factory(SampleProcessor algorithmListener) {
             this.algorithmListener = algorithmListener;
         }
 
@@ -39,7 +39,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         }
     }
 
-    private final TransitionalAlgorithmListener algorithmListener;
+    private final SampleProcessor algorithmListener;
 
     private int m_staticAlgPar = 0;
 
@@ -57,7 +57,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
      * Creates a BBA2TrackSelection.
      */
     public BBA2TrackSelection(TrackGroup group, int[] tracks,
-                              TransitionalAlgorithmListener algorithmListener) {
+                              SampleProcessor algorithmListener) {
         super(group, tracks);
         this.algorithmListener = algorithmListener;
 
@@ -71,7 +71,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         bufferedDurationMs = bufferedDurationUs / 1000;
 
         int currentSelectedIndex = selectedIndex;
-        if (algorithmListener.chunkDataNotAvailable()) {
+        if (algorithmListener.dataNotAvailable()) {
             selectedIndex = lowestBitrateIndex();
         } else {
             selectedIndex = dash_do_rate_adaptation_bba2();
@@ -104,7 +104,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         long total_size = algorithmListener.lastByteSize();
         lastChunkDurationMs = algorithmListener.lastChunkDurationMs();
         lastChunkIndex = algorithmListener.lastChunkIndex();
-        maxBufferMs = algorithmListener.getMaxBufferMs();
+        maxBufferMs = algorithmListener.maxBufferMs();
 
         // save the information about segment statistics (kbps)
         Log.d(TAG,"Segment index: " + lastChunkIndex);

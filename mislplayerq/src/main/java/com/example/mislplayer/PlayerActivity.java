@@ -310,7 +310,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         String bufferedPosition = "Buffer Level : " + player.getBufferedPosition() + "\n";
        // debugView.setText(videoInfo + buffer + trackgroups + period + videoID + videoBitrate + audioBitrate + bandwidth + bytesAllocated + bufferedPosition);
         */
-            if(!algorithmListener.chunkDataNotAvailable()) {
+            if(!algorithmListener.dataNotAvailable()) {
                 String test = "SEG NUMBER : " + algorithmListener.lastChunkIndex();
                 debugView.setText(test);
             }
