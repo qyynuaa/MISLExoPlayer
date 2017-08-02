@@ -3,7 +3,7 @@ package com.example.mislplayer.trackselection;
 import android.util.Log;
 import com.example.mislplayer.FutureSegmentInfos;
 import com.example.mislplayer.PlayerActivity;
-import com.example.mislplayer.SampleProcessor;
+import com.example.mislplayer.sampling.SampleProcessor;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
