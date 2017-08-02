@@ -1,7 +1,7 @@
 package com.example.mislplayer.algorithm;
 
 import com.example.mislplayer.ChunkListener;
-import com.example.mislplayer.TransitionalAlgorithmListener;
+import com.example.mislplayer.sampling.DefaultSampleProcessor;
 import com.example.mislplayer.trackselection.BBA2TrackSelection;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -13,11 +13,11 @@ import com.google.android.exoplayer2.upstream.TransferListener;
  */
 public class BBA2Algorithm implements AdaptationAlgorithm {
 
-    private TransitionalAlgorithmListener algorithmListener;
+    private DefaultSampleProcessor algorithmListener;
     private TrackSelection.Factory trackSelectionFactory;
 
     public BBA2Algorithm(int maxBufferMs) {
-        algorithmListener = new TransitionalAlgorithmListener(maxBufferMs);
+        algorithmListener = new DefaultSampleProcessor(maxBufferMs);
         trackSelectionFactory = new BBA2TrackSelection.Factory(algorithmListener);
     }
 

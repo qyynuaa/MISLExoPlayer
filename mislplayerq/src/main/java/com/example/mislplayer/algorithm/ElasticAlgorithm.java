@@ -1,7 +1,8 @@
 package com.example.mislplayer.algorithm;
 
 import com.example.mislplayer.ChunkListener;
-import com.example.mislplayer.TransitionalAlgorithmListener;
+import com.example.mislplayer.sampling.ChunkBasedSampler;
+import com.example.mislplayer.sampling.DefaultSampleProcessor;
 import com.example.mislplayer.trackselection.ElasticTrackSelection;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -13,12 +14,14 @@ import com.google.android.exoplayer2.upstream.TransferListener;
  */
 public class ElasticAlgorithm implements AdaptationAlgorithm {
 
-    private TransitionalAlgorithmListener algorithmListener;
+    private DefaultSampleProcessor sampleProcessor;
+    private ChunkBasedSampler chunkSampler;
     private TrackSelection.Factory trackSelectionFactory;
 
     public ElasticAlgorithm(int maxBufferMs) {
-        algorithmListener = new TransitionalAlgorithmListener(maxBufferMs);
-        trackSelectionFactory = new ElasticTrackSelection.Factory(algorithmListener);
+        sampleProcessor = new DefaultSampleProcessor(maxBufferMs);
+        chunkSampler = new ChunkBasedSampler(sampleProcessor, sampleProcessor);
+        trackSelectionFactory = new ElasticTrackSelection.Factory(sampleProcessor);
     }
 
     /**
@@ -26,7 +29,7 @@ public class ElasticAlgorithm implements AdaptationAlgorithm {
      */
     @Override
     public TransferListener<? super DataSource> transferListener() {
-        return algorithmListener;
+        return chunkSampler;
     }
 
     /**
@@ -34,7 +37,7 @@ public class ElasticAlgorithm implements AdaptationAlgorithm {
      */
     @Override
     public ChunkListener chunkListener() {
-        return algorithmListener;
+        return chunkSampler;
     }
 
     /**
@@ -42,7 +45,7 @@ public class ElasticAlgorithm implements AdaptationAlgorithm {
      */
     @Override
     public ExoPlayer.EventListener playerListener() {
-        return algorithmListener;
+        return null;
     }
 
     /**
@@ -58,11 +61,11 @@ public class ElasticAlgorithm implements AdaptationAlgorithm {
 
     @Override
     public void writeLogsToFile() {
-        algorithmListener.writeLogsToFile();
+        sampleProcessor.writeLogsToFile();
     }
 
     @Override
     public void clearChunkInformation() {
-        algorithmListener.clearChunkInformation();
+        sampleProcessor.clearChunkInformation();
     }
 }
