@@ -34,7 +34,7 @@ import static java.lang.Math.min;
  */
 
 public class TransitionalAlgorithmListener implements ChunkListener,
-        TransferListener<Object>, ExoPlayer.EventListener {
+        TransferListener<Object>, ExoPlayer.EventListener, SampleProcessor {
 
     private static final String TAG = "TransitionalAL";
     private static final String LOG_FILE_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
@@ -388,7 +388,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
     }
 
     /** Gives the current maximum buffer length the player is aiming for. */
-    public long getMaxBufferMs() {
+    public long maxBufferMs() {
         return maxBufferMs;
     }
 
@@ -398,7 +398,7 @@ public class TransitionalAlgorithmListener implements ChunkListener,
      * @return true if data on previous chunks is not available, false
      * otherwise.
      */
-    public boolean chunkDataNotAvailable() {return downloadedChunkInfo.size() == 0;}
+    public boolean dataNotAvailable() {return downloadedChunkInfo.size() == 0;}
 
     /** Returns the index of the most recently downloaded chunk. */
     public int lastChunkIndex(){
@@ -437,6 +437,31 @@ public class TransitionalAlgorithmListener implements ChunkListener,
 
     /** Returns the delivery rate of the most recently downloaded chunk, in kbps. */
     public double lastDeliveryRateKbps() {return lastChunkInfo().getDeliveryRate();}
+
+    /**
+     * Returns the most recent throughput sample in kbps.
+     */
+    @Override
+    public double lastSampleThroughputKbps() {
+        return lastDeliveryRateKbps();
+    }
+
+    /**
+     * Returns the duration of the most recent throughput sample, in ms.
+     */
+    @Override
+    public long lastSampleDurationMs() {
+        return lastLoadDurationMs();
+    }
+
+    /**
+     * Returns the number of bytes transferred in the last throughput
+     * sample.
+     */
+    @Override
+    public long lastSampleBytesTransferred() {
+        return lastByteSize();
+    }
 
     /** Returns the total amount of time the player has spent stalling, in ms. */
     public long stallDurationMs(){

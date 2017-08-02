@@ -2,7 +2,7 @@ package com.example.mislplayer.trackselection;
 
 import android.util.Log;
 
-import com.example.mislplayer.TransitionalAlgorithmListener;
+import com.example.mislplayer.SampleProcessor;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -18,7 +18,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      */
     public static final class Factory implements TrackSelection.Factory {
 
-        private final TransitionalAlgorithmListener algorithmListener;
+        private final SampleProcessor algorithmListener;
         private final int elasticAverageWindow;
         private final double k_p;
         private final double k_i;
@@ -26,7 +26,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
         /**
          * Creates an ElasticTrackSelection factory using default values.
          */
-        public Factory(TransitionalAlgorithmListener algorithmListener) {
+        public Factory(SampleProcessor algorithmListener) {
             this(algorithmListener, DEFAULT_ELASTIC_AVERAGE_WINDOW,
                     DEFAULT_K_P, DEFAULT_K_I);
         }
@@ -39,7 +39,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
          * @param k_p
          * @param k_i
          */
-        public Factory(TransitionalAlgorithmListener algorithmListener,
+        public Factory(SampleProcessor algorithmListener,
                        final int elasticAverageWindow, final double k_p,
                        final double k_i) {
             this.algorithmListener = algorithmListener;
@@ -70,7 +70,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
 
     private static final String TAG = "Elastic";
 
-    private TransitionalAlgorithmListener algorithmListener;
+    private SampleProcessor algorithmListener;
 
     private final int elasticAverageWindow;
     private final double k_p;
@@ -95,7 +95,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      * @param k_i
      */
     public ElasticTrackSelection(TrackGroup group, int[] tracks,
-                                 TransitionalAlgorithmListener
+                                 SampleProcessor
                                          algorithmListener,
                                  int elasticAverageWindow, double k_p,
                                  double k_i) {
@@ -141,7 +141,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      */
     @Override
     public void updateSelectedTrack(long bufferedDurationUs) {
-        if (algorithmListener.chunkDataNotAvailable()) {
+        if (algorithmListener.dataNotAvailable()) {
             selectedIndex = lowestBitrateIndex();
         } else {
             selectedIndex = doRateAdaptation(bufferedDurationUs);
@@ -161,7 +161,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
         double averageRateEstimate = algorithmListener.getSampleHarmonicAverage(elasticAverageWindow);
 
         final double downloadTimeS = algorithmListener.lastLoadDurationMs() / 1E3;
-        final double elasticTargetQueueS = algorithmListener.getMaxBufferMs() / 1E3;
+        final double elasticTargetQueueS = algorithmListener.maxBufferMs() / 1E3;
         final double queueLengthS = bufferedDurationUs / 1E6;
 
         staticAlgParameter += downloadTimeS * (queueLengthS - elasticTargetQueueS);
