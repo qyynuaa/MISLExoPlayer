@@ -13,6 +13,12 @@ import com.google.android.exoplayer2.upstream.TransferListener;
  */
 public class ChunkBasedSampler implements TransferListener<Object>, ChunkListener {
 
+    /**
+     * Creates a chunk-based sampler.
+     *
+     * @param sampleStore The store to send throughput samples to.
+     * @param chunkStore The store to send downloaded chunks to.
+     */
     public ChunkBasedSampler(SampleStore sampleStore, ChunkStore chunkStore) {
         this.sampleStore = sampleStore;
         this.chunkStore = chunkStore;
