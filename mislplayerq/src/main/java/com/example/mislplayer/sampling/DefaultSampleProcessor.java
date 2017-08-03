@@ -60,14 +60,123 @@ public class DefaultSampleProcessor implements SampleProcessor,
         }
     }
 
+    private static class LogEntry {
+        private int chunkIndex;
+        private long arrivalTimeMs;
+        private long loadDurationMs;
+        private long stallDurationMs;
+        private long repLevelKbps;
+        private double actualRateKbps;
+        private long byteSize;
+        private long bufferLevelUs;
+        private double deliveryRateKbps;
+        private long chunkDurationMs;
+
+        public LogEntry(int chunkIndex, long arrivalTimeMs, long loadDurationMs,
+                        long stallDurationMs, long repLevelKbps, double deliveryRateKbps,
+                        double actualRateKbps, long byteSize,
+                        long bufferLevelUs, long chunkDurationMs){
+            this.chunkIndex = chunkIndex;
+            this.arrivalTimeMs = arrivalTimeMs;
+            this.loadDurationMs = loadDurationMs;
+            this.stallDurationMs = stallDurationMs;
+            this.repLevelKbps = repLevelKbps;
+            this.deliveryRateKbps = deliveryRateKbps;
+            this.actualRateKbps = actualRateKbps;
+            this.byteSize = byteSize;
+            this.bufferLevelUs = bufferLevelUs;
+            this.chunkDurationMs = chunkDurationMs;
+        }
+
+        public int getChunkIndex(){
+            return chunkIndex;
+        }
+        public long getArrivalTimeMs(){
+            return arrivalTimeMs;
+        }
+        public long getLoadDurationMs(){
+            return loadDurationMs;
+        }
+        public long getStallDurationMs(){
+            return stallDurationMs;
+        }
+        public long getRepLevelKbps(){
+            return repLevelKbps;
+        }
+        public double getDeliveryRateKbps() {return deliveryRateKbps;}
+        public double getActualRateKbps(){
+            return actualRateKbps;
+        }
+        public long getByteSize(){
+            return byteSize;
+        }
+
+        public long getChunkDurationMs(){
+            return chunkDurationMs;
+        }
+
+        public void setByteSize(long byteSize){this.byteSize=byteSize;}
+        public void setDeliveryRateKbps(long deliveryRateKbps){this.deliveryRateKbps = deliveryRateKbps;}
+        public void setBufferLevelUs(long bufferLevelUs){this.bufferLevelUs = bufferLevelUs;}
+        public void setRepLevelKbps(int repLevelKbps){this.repLevelKbps = repLevelKbps;}
+        public void setActualRateKbps(long actualRateKbps){this.actualRateKbps = actualRateKbps;}
+
+        @Override
+        public String toString(){
+            String segNum= (getChunkIndex())+"";
+            String arrivalTime = getArrivalTimeMs()+"";
+            String deliveryTime = getLoadDurationMs()+"";
+            String stallDuration = getStallDurationMs()+"";
+            String repLevel = getRepLevelKbps()+"";
+            String deliveryRate = getDeliveryRateKbps()+"";
+            String actionRate = getActualRateKbps()+"";
+            String byteSize = getByteSize()+"";
+            String bufferLevel = Long.toString(bufferLevelUs / 1000);
+            while (segNum.length()!=5){
+                segNum = " "+segNum;
+            }
+            while(arrivalTime.length()!=8){
+                arrivalTime = " "+arrivalTime;
+            }
+            while(deliveryTime.length()!=9){
+                deliveryTime = " "+deliveryTime;
+            }
+            while(stallDuration.length()!=10){
+                stallDuration = " "+stallDuration;
+            }
+            while(repLevel.length()!=10){
+                repLevel = " "+repLevel;
+            }
+            while(deliveryRate.length()!=9){
+                deliveryRate = " "+deliveryRate;
+            }
+            while(actionRate.length()!=9){
+                actionRate = " "+actionRate;
+            }
+            while(byteSize.length()!=10){
+                byteSize = " "+byteSize;
+            }
+            while (bufferLevel.length() < 10) {
+                bufferLevel = " " + bufferLevel;
+            }
+            return segNum+" "+arrivalTime+"\t"+deliveryTime+"\t"
+                    +stallDuration+"\t"+repLevel+"\t"+deliveryRate+"\t"
+                    +actionRate+"\t"+byteSize+"\t"+ bufferLevel + "\n";
+        }
+    }
+
     private static final String TAG = "DefaultSampleProcessor";
     private static final String LOG_FILE_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
 
 
     private List<MediaChunk> chunkStore = new ArrayList<>();
     private List<ThroughputSample> samples = new ArrayList<>();
+    private List<LogEntry> log = new ArrayList<>();
     private int maxBufferMs;
     private long mpdDurationMs;
+
+    private long totalStallDurationMs;
+    private long currentBufferLevelMs;
 
     public DefaultSampleProcessor(int maxBufferMs) {
         this.maxBufferMs = maxBufferMs;
@@ -83,11 +192,24 @@ public class DefaultSampleProcessor implements SampleProcessor,
     /**
      * Adds a new chunk to the store.
      *
-     * @param lastChunk The chunk to store.
+     * @param chunk          A chunk that has been downloaded.
+     * @param arrivalTimeMs  The time at which the chunk finished downloading.
+     * @param loadDurationMs The length of time the chunk took to download,
+     *                       in ms.
      */
     @Override
-    public void add(MediaChunk lastChunk) {
-        chunkStore.add(lastChunk);
+    public void add(MediaChunk chunk, long arrivalTimeMs, long loadDurationMs) {
+        chunkStore.add(chunk);
+
+        long representationRateKbps = chunk.trackFormat.bitrate / 1000;
+        double deliveryRateKbps = chunk.bytesLoaded() * 8 / loadDurationMs;
+        double actualRateKbps = chunk.bytesLoaded() * 8000 / chunk.getDurationUs();
+        long chunkDurationMs = chunk.getDurationUs() / 1000;
+
+        log.add(new LogEntry(chunk.chunkIndex, arrivalTimeMs,
+                loadDurationMs, totalStallDurationMs,
+                representationRateKbps, deliveryRateKbps, actualRateKbps,
+                chunk.bytesLoaded(), currentBufferLevelMs, chunkDurationMs));
     }
 
     @Override
@@ -96,17 +218,12 @@ public class DefaultSampleProcessor implements SampleProcessor,
     }
 
     /** Logs to file data about all the chunks downloaded so far. */
+    @Override
     public void writeLogsToFile() {
         DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
         Date date = new Date();
         File directory = new File(LOG_FILE_PATH);
         File file = new File(directory, "/Log_Segments_ExoPlayer_" + dateFormat.format(date) + ".txt");
-        String logTemplate = "%11d %12d %13d %14d %20d %13,.0f %11d %9d %12d\n";
-        String headerTemplate = "%11s %12s %13s %14s %20s %13s %11s %9s %12s\n";
-        String headerString = String.format(headerTemplate, "Chunk_index",
-                "Arrival_time", "Load_duration", "Stall_duration",
-                "Representation_level", "Delivery_rate", "Actual_rate",
-                "Byte_size", "Buffer_level");
 
         try {
             if (!directory.exists()) {
@@ -114,18 +231,12 @@ public class DefaultSampleProcessor implements SampleProcessor,
             }
             file.createNewFile();
             FileOutputStream stream = new FileOutputStream(file);
-            stream.write(headerString.getBytes());
+            stream.write(("Seg_#\t\tArr_time\t\tDel_Time\t\tStall_Dur" +
+                    "\t\tRep_Level\t\tDel_Rate\t\tAct_Rate\t\tByte_Size" +
+                    "\t\tBuff_Level\n").getBytes());
             int index;
-            for (index = 0; index < chunkStore.size(); index++) {
-                MediaChunk thisChunk = chunkStore.get(index);
-                ThroughputSample thisSample = samples.get(index);
-
-                String logString = String.format(logTemplate,
-                        thisChunk.chunkIndex, 0, thisSample.durationMs(),
-                        0, thisChunk.trackFormat.bitrate,
-                        thisSample.bitsPerSecond(), 0, thisChunk.bytesLoaded(),
-                        0);
-                stream.write(logString.getBytes());
+            for (LogEntry log : this.log) {
+                stream.write(log.toString().getBytes());
             }
             stream.close();
         } catch (IOException e) {
@@ -136,8 +247,29 @@ public class DefaultSampleProcessor implements SampleProcessor,
     }
 
     /** Removes all stored chunk information. */
+    @Override
     public void clearChunkInformation() {
         this.chunkStore = new ArrayList<>();
+    }
+
+    /**
+     * Informs the chunk store of a new stall.
+     *
+     * @param stallDurationMs
+     */
+    @Override
+    public void newStall(long stallDurationMs) {
+        totalStallDurationMs += stallDurationMs;
+    }
+
+    /**
+     * Informs the chunk store of the current buffer estimate.
+     *
+     * @param bufferedDurationMs
+     */
+    @Override
+    public void updateBufferLevel(long bufferedDurationMs) {
+        currentBufferLevelMs = bufferedDurationMs;
     }
 
     /** Provides information on the most recently-downloaded chunk. */
