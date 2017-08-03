@@ -69,6 +69,9 @@ public class DefaultSampleProcessor implements SampleProcessor,
     private int maxBufferMs;
     private long mpdDurationMs;
 
+    private long totalStallDurationMs;
+    private long currentBufferLevelMs;
+
     public DefaultSampleProcessor(int maxBufferMs) {
         this.maxBufferMs = maxBufferMs;
     }
@@ -96,6 +99,7 @@ public class DefaultSampleProcessor implements SampleProcessor,
     }
 
     /** Logs to file data about all the chunks downloaded so far. */
+    @Override
     public void writeLogsToFile() {
         DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
         Date date = new Date();
@@ -136,8 +140,29 @@ public class DefaultSampleProcessor implements SampleProcessor,
     }
 
     /** Removes all stored chunk information. */
+    @Override
     public void clearChunkInformation() {
         this.chunkStore = new ArrayList<>();
+    }
+
+    /**
+     * Informs the chunk store of a new stall.
+     *
+     * @param stallDurationMs
+     */
+    @Override
+    public void newStall(long stallDurationMs) {
+        totalStallDurationMs += stallDurationMs;
+    }
+
+    /**
+     * Informs the chunk store of the current buffer estimate.
+     *
+     * @param bufferedDurationMs
+     */
+    @Override
+    public void updateBufferLevel(long bufferedDurationMs) {
+        currentBufferLevelMs = bufferedDurationMs;
     }
 
     /** Provides information on the most recently-downloaded chunk. */
