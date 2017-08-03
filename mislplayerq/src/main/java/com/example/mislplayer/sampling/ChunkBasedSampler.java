@@ -32,6 +32,7 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
 
     private long transferClockMs;
     private long loadDurationMs;
+    private long arrivalTimeMs;
 
     /**
      * Gives the listener the last chunk that was downloaded, to be passed to the
@@ -53,7 +54,7 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
         long chunkSizeBits = lastChunk.bytesLoaded() * 8;
 
         sampleStore.addSample(chunkSizeBits, loadDurationMs);
-        chunkStore.add(lastChunk);
+        chunkStore.add(lastChunk, arrivalTimeMs, loadDurationMs);
         this.lastChunk = lastChunk;
     }
 
@@ -96,7 +97,7 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
      */
     @Override
     public void onTransferEnd(Object source) {
-        long arrivalTimeMs = SystemClock.elapsedRealtime();
+        arrivalTimeMs = SystemClock.elapsedRealtime();
         loadDurationMs = arrivalTimeMs - transferClockMs;
     }
 }
