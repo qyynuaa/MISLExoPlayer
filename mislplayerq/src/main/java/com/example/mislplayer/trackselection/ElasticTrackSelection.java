@@ -160,7 +160,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
     private int doRateAdaptation(long bufferedDurationUs) {
         double averageRateEstimate = algorithmListener.getSampleHarmonicAverage(elasticAverageWindow);
 
-        final double downloadTimeS = algorithmListener.lastLoadDurationMs() / 1E3;
+        final double downloadTimeS = algorithmListener.lastSampleDurationMs() / 1E3;
         final double elasticTargetQueueS = algorithmListener.maxBufferMs() / 1E3;
         final double queueLengthS = bufferedDurationUs / 1E6;
 

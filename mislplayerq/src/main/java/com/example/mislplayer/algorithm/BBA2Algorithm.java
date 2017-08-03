@@ -1,6 +1,7 @@
 package com.example.mislplayer.algorithm;
 
 import com.example.mislplayer.ChunkListener;
+import com.example.mislplayer.sampling.ChunkBasedSampler;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
 import com.example.mislplayer.trackselection.BBA2TrackSelection;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -13,12 +14,14 @@ import com.google.android.exoplayer2.upstream.TransferListener;
  */
 public class BBA2Algorithm implements AdaptationAlgorithm {
 
-    private DefaultSampleProcessor algorithmListener;
+    private DefaultSampleProcessor sampleProcessor;
+    private ChunkBasedSampler chunkSampler;
     private TrackSelection.Factory trackSelectionFactory;
 
     public BBA2Algorithm(int maxBufferMs) {
-        algorithmListener = new DefaultSampleProcessor(maxBufferMs);
-        trackSelectionFactory = new BBA2TrackSelection.Factory(algorithmListener);
+        sampleProcessor = new DefaultSampleProcessor(maxBufferMs);
+        chunkSampler = new ChunkBasedSampler(sampleProcessor, sampleProcessor);
+        trackSelectionFactory = new BBA2TrackSelection.Factory(sampleProcessor);
     }
 
     /**
@@ -26,7 +29,7 @@ public class BBA2Algorithm implements AdaptationAlgorithm {
      */
     @Override
     public TransferListener<? super DataSource> transferListener() {
-        return algorithmListener;
+        return chunkSampler;
     }
 
     /**
@@ -34,7 +37,7 @@ public class BBA2Algorithm implements AdaptationAlgorithm {
      */
     @Override
     public ChunkListener chunkListener() {
-        return algorithmListener;
+        return chunkSampler;
     }
 
     /**
@@ -42,7 +45,7 @@ public class BBA2Algorithm implements AdaptationAlgorithm {
      */
     @Override
     public ExoPlayer.EventListener playerListener() {
-        return algorithmListener;
+        return null;
     }
 
     /**
@@ -58,11 +61,11 @@ public class BBA2Algorithm implements AdaptationAlgorithm {
 
     @Override
     public void writeLogsToFile() {
-        algorithmListener.writeLogsToFile();
+        sampleProcessor.writeLogsToFile();
     }
 
     @Override
     public void clearChunkInformation() {
-        algorithmListener.clearChunkInformation();
+        sampleProcessor.clearChunkInformation();
     }
 }

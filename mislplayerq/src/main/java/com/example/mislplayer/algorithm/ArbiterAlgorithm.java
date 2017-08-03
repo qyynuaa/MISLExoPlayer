@@ -1,7 +1,9 @@
 package com.example.mislplayer.algorithm;
 
 import com.example.mislplayer.ChunkListener;
+import com.example.mislplayer.sampling.ChunkBasedSampler;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
+import com.example.mislplayer.sampling.SampleProcessor;
 import com.example.mislplayer.trackselection.ArbiterTrackSelection;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -14,12 +16,14 @@ import com.google.android.exoplayer2.upstream.TransferListener;
 
 public class ArbiterAlgorithm implements AdaptationAlgorithm {
 
-    private DefaultSampleProcessor algorithmListener;
+    private DefaultSampleProcessor sampleProcessor;
+    private ChunkBasedSampler chunkSampler;
     private TrackSelection.Factory trackSelectionFactory;
 
     public ArbiterAlgorithm(int maxBufferMs) {
-        algorithmListener = new DefaultSampleProcessor(maxBufferMs);
-        trackSelectionFactory = new ArbiterTrackSelection.Factory(algorithmListener);
+        sampleProcessor = new DefaultSampleProcessor(maxBufferMs);
+        chunkSampler = new ChunkBasedSampler(sampleProcessor, sampleProcessor);
+        trackSelectionFactory = new ArbiterTrackSelection.Factory(sampleProcessor);
     }
 
     /**
@@ -27,7 +31,7 @@ public class ArbiterAlgorithm implements AdaptationAlgorithm {
      */
     @Override
     public TransferListener<? super DataSource> transferListener() {
-        return algorithmListener;
+        return chunkSampler;
     }
 
     /**
@@ -35,7 +39,7 @@ public class ArbiterAlgorithm implements AdaptationAlgorithm {
      */
     @Override
     public ChunkListener chunkListener() {
-        return algorithmListener;
+        return chunkSampler;
     }
 
     /**
@@ -43,7 +47,7 @@ public class ArbiterAlgorithm implements AdaptationAlgorithm {
      */
     @Override
     public ExoPlayer.EventListener playerListener() {
-        return algorithmListener;
+        return null;
     }
 
     /**
@@ -59,11 +63,11 @@ public class ArbiterAlgorithm implements AdaptationAlgorithm {
 
     @Override
     public void writeLogsToFile() {
-        algorithmListener.writeLogsToFile();
+        sampleProcessor.writeLogsToFile();
     }
 
     @Override
     public void clearChunkInformation() {
-        algorithmListener.clearChunkInformation();
+        sampleProcessor.clearChunkInformation();
     }
 }
