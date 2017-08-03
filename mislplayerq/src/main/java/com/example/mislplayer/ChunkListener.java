@@ -18,7 +18,7 @@ public interface ChunkListener {
     /**
      * Gives the listener the duration of the mpd.
      *
-     * @param duration The duration of the mpd.
+     * @param durationMs The duration of the mpd in ms.
      */
-    void giveMpdDuration(long duration);
+    void giveMpdDuration(long durationMs);
 }

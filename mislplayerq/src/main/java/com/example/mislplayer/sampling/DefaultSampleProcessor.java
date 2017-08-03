@@ -67,6 +67,7 @@ public class DefaultSampleProcessor implements SampleProcessor,
     private List<MediaChunk> chunkStore = new ArrayList<>();
     private List<ThroughputSample> samples = new ArrayList<>();
     private int maxBufferMs;
+    private long mpdDurationMs;
 
     public DefaultSampleProcessor(int maxBufferMs) {
         this.maxBufferMs = maxBufferMs;
@@ -87,6 +88,11 @@ public class DefaultSampleProcessor implements SampleProcessor,
     @Override
     public void add(MediaChunk lastChunk) {
         chunkStore.add(lastChunk);
+    }
+
+    @Override
+    public void giveMpdDuration(long durationMs) {
+        mpdDurationMs = durationMs;
     }
 
     /** Logs to file data about all the chunks downloaded so far. */
@@ -136,7 +142,7 @@ public class DefaultSampleProcessor implements SampleProcessor,
     /** Provides the duration of the current mpd. */
     @Override
     public long mpdDuration() {
-        return 0; //TODO: sort out mpd duration
+        return mpdDurationMs;
     }
 
     /** Gives the current maximum buffer length the player is aiming for. */

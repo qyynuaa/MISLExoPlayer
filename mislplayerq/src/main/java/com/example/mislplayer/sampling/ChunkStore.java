@@ -8,4 +8,6 @@ import com.google.android.exoplayer2.source.chunk.MediaChunk;
 public interface ChunkStore {
     /** Adds a new chunk to the store. */
     void add(MediaChunk lastChunk);
+
+    void giveMpdDuration(long durationMs);
 }

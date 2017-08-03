@@ -31,9 +31,6 @@ public class MISLDashChunkSource implements DashChunkSource {
         private final int maxSegmentsPerLoad;
         private final ChunkListener chunkListener;
 
-        // fields for transitional period
-        private long mpdDuration;
-
         public Factory(DataSource.Factory dataSourceFactory, ChunkListener chunkListener) {
             this(dataSourceFactory, DEFAULT_MAX_SEGMENTS_PER_LOAD, chunkListener);
         }
