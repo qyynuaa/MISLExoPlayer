@@ -171,8 +171,8 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
             targetRate = 0;
         }
 
-        Log.d(TAG, String.format("targetRate = %f kbps", targetRate));
+        Log.d(TAG, String.format("targetRate = %f kbps", targetRate / 1000));
 
-        return findBestRateIndex(targetRate * 1000);
+        return findBestRateIndex(targetRate);
     }
 }
