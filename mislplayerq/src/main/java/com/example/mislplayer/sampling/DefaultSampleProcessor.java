@@ -101,20 +101,31 @@ public class DefaultSampleProcessor implements SampleProcessor,
         Date date = new Date();
         File directory = new File(LOG_FILE_PATH);
         File file = new File(directory, "/Log_Segments_ExoPlayer_" + dateFormat.format(date) + ".txt");
+        String logTemplate = "%11d %12d %13d %14d %20d %13,.0f %11d %9d %12d\n";
+        String headerTemplate = "%11s %12s %13s %14s %20s %13s %11s %9s %12s\n";
+        String headerString = String.format(headerTemplate, "Chunk_index",
+                "Arrival_time", "Load_duration", "Stall_duration",
+                "Representation_level", "Delivery_rate", "Actual_rate",
+                "Byte_size", "Buffer_level");
+
         try {
             if (!directory.exists()) {
                 directory.mkdirs();
             }
             file.createNewFile();
             FileOutputStream stream = new FileOutputStream(file);
-            stream.write("Seg_#\t\tArr_time\t\tDel_Time\t\tStall_Dur\t\tRep_Level\t\tDel_Rate\t\tAct_Rate\t\tByte_Size\t\tBuff_Level\n".getBytes());
+            stream.write(headerString.getBytes());
             int index;
             for (index = 0; index < chunkStore.size(); index++) {
-                if (chunkStore.get(index) != null) {
-                    stream.write(chunkStore.get(index).toString().getBytes());
-                    stream.write("\n".getBytes());
-                }
+                MediaChunk thisChunk = chunkStore.get(index);
+                ThroughputSample thisSample = samples.get(index);
 
+                String logString = String.format(logTemplate,
+                        thisChunk.chunkIndex, 0, thisSample.durationMs(),
+                        0, thisChunk.trackFormat.bitrate,
+                        thisSample.bitsPerSecond(), 0, thisChunk.bytesLoaded(),
+                        0);
+                stream.write(logString.getBytes());
             }
             stream.close();
         } catch (IOException e) {
