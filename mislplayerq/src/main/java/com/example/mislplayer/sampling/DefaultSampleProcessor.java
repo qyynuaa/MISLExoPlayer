@@ -133,14 +133,14 @@ public class DefaultSampleProcessor implements SampleProcessor,
         return samples.get(samples.size() - 1);
     }
 
-    @Override
     /** Provides the duration of the current mpd. */
+    @Override
     public long mpdDuration() {
         return 0; //TODO: sort out mpd duration
     }
 
-    @Override
     /** Gives the current maximum buffer length the player is aiming for. */
+    @Override
     public long maxBufferMs() {
         return maxBufferMs;
     }
@@ -163,7 +163,7 @@ public class DefaultSampleProcessor implements SampleProcessor,
     /** Returns the representation level of the most recently downloaded chunk, in kbps. */
     @Override
     public int lastRepLevelKbps(){
-        return lastChunk().trackFormat.bitrate;
+        return lastChunk().trackFormat.bitrate / 1000;
     }
 
     /** Returns the size of the most recently downloaded chunk, in bytes. */
