@@ -6,7 +6,6 @@ import android.util.Log;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
-import com.google.android.exoplayer2.source.AdaptiveMediaSourceEventListener;
 import com.google.android.exoplayer2.source.SampleStream;
 import com.google.android.exoplayer2.upstream.DataSpec;
 
@@ -22,7 +21,7 @@ import java.util.List;
 /**
  * A default chunk store.
  */
-public class DefaultChunkStore implements ChunkStore, AdaptiveMediaSourceEventListener {
+public class DefaultChunkStore implements ChunkStore {
 
     private static class LogEntry {
         private int chunkIndex;

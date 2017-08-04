@@ -1,11 +1,11 @@
 package com.example.mislplayer.sampling;
 
-import com.google.android.exoplayer2.source.chunk.MediaChunk;
+import com.google.android.exoplayer2.source.AdaptiveMediaSourceEventListener;
 
 /**
  * Stores downloaded chunks.
  */
-public interface ChunkStore {
+public interface ChunkStore extends AdaptiveMediaSourceEventListener {
 
     /** Writes a log with details of all downloaded chunks. */
     void writeLogsToFile();
