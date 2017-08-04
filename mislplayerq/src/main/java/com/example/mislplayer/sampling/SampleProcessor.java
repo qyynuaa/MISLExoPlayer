@@ -1,6 +1,7 @@
 package com.example.mislplayer.sampling;
 
 import com.example.mislplayer.trackselection.AlgorithmTrackSelection;
+import com.google.android.exoplayer2.source.chunk.MediaChunk;
 
 import java.util.List;
 
@@ -21,6 +22,10 @@ public interface SampleProcessor {
         /** The throughput for the sample time period in bps. */
         double bitsPerSecond();
     }
+
+    void giveMpdDuration(long durationMs);
+
+    void giveChunk(MediaChunk chunk);
 
     /** Provides the duration of the current mpd. */
     long mpdDuration();
