@@ -123,45 +123,10 @@ public class DefaultSampleProcessor implements SampleProcessor,
 
         @Override
         public String toString(){
-            String segNum= (getChunkIndex())+"";
-            String arrivalTime = getArrivalTimeMs()+"";
-            String deliveryTime = getLoadDurationMs()+"";
-            String stallDuration = getStallDurationMs()+"";
-            String repLevel = getRepLevelKbps()+"";
-            String deliveryRate = getDeliveryRateKbps()+"";
-            String actionRate = getActualRateKbps()+"";
-            String byteSize = getByteSize()+"";
-            String bufferLevel = Long.toString(bufferLevelUs / 1000);
-            while (segNum.length()!=5){
-                segNum = " "+segNum;
-            }
-            while(arrivalTime.length()!=8){
-                arrivalTime = " "+arrivalTime;
-            }
-            while(deliveryTime.length()!=9){
-                deliveryTime = " "+deliveryTime;
-            }
-            while(stallDuration.length()!=10){
-                stallDuration = " "+stallDuration;
-            }
-            while(repLevel.length()!=10){
-                repLevel = " "+repLevel;
-            }
-            while(deliveryRate.length()!=9){
-                deliveryRate = " "+deliveryRate;
-            }
-            while(actionRate.length()!=9){
-                actionRate = " "+actionRate;
-            }
-            while(byteSize.length()!=10){
-                byteSize = " "+byteSize;
-            }
-            while (bufferLevel.length() < 10) {
-                bufferLevel = " " + bufferLevel;
-            }
-            return segNum+" "+arrivalTime+"\t"+deliveryTime+"\t"
-                    +stallDuration+"\t"+repLevel+"\t"+deliveryRate+"\t"
-                    +actionRate+"\t"+byteSize+"\t"+ bufferLevel + "\n";
+            String logLine = "%5d\t%8d\t%9d\t%10d\t%10d\t%9g\t%9g\t%10d\t%10d\n";
+            return String.format(logLine, chunkIndex, arrivalTimeMs, loadDurationMs,
+                    stallDurationMs, repLevelKbps, deliveryRateKbps,
+                    actualRateKbps, byteSize, bufferLevelUs / 1000);
         }
     }
 
