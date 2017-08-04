@@ -48,16 +48,7 @@
             android:visibility="visible">
 
             <RadioButton
-                android:id="@+id/button5"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.38"
-                android:checked="true"
-                android:text="BASIC_EXOPLAYER"
-                android:textColor="@android:color/white" />
-
-            <RadioButton
-                android:id="@+id/button4"
+                android:id="@+id/basic_adaptive"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.38"
@@ -66,7 +57,7 @@
                 android:textColor="@android:color/white" />
 
             <RadioButton
-                android:id="@+id/button3"
+                android:id="@+id/oscar_h"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.38"
@@ -74,7 +65,7 @@
                 android:textColor="@android:color/white" />
 
             <RadioButton
-                android:id="@+id/button"
+                android:id="@+id/arbiter"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.38"
@@ -82,7 +73,7 @@
                 android:textColor="@android:color/white" />
 
             <RadioButton
-                android:id="@+id/button2"
+                android:id="@+id/bba2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.38"

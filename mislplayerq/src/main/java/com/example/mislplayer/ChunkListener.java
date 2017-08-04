@@ -1,5 +1,6 @@
 package com.example.mislplayer;
 
+import com.example.mislplayer.algorithm.AdaptationAlgorithm;
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
 
 /**
@@ -17,7 +18,7 @@ public interface ChunkListener {
     /**
      * Gives the listener the duration of the mpd.
      *
-     * @param duration The duration of the mpd.
+     * @param durationMs The duration of the mpd in ms.
      */
-    void giveMpdDuration(long duration);
+    void giveMpdDuration(long durationMs);
 }

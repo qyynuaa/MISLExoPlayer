@@ -1,9 +1,9 @@
-package com.example.mislplayer.algorithm;
+package com.example.mislplayer.trackselection;
 
 import android.util.Log;
 import com.example.mislplayer.FutureSegmentInfos;
 import com.example.mislplayer.PlayerActivity;
-import com.example.mislplayer.SampleProcessor;
+import com.example.mislplayer.sampling.SampleProcessor;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -117,7 +117,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         // set to the lowest rate
         int qRateIndex= lowestBitrateIndex();
         int reservoir = bba1UpdateResevoir(lastRate, lastRateIndex);
-        double SFT = (8*total_size)/algorithmListener.lastDeliveryRateKbps();
+        double SFT = (8*total_size)/algorithmListener.lastSampleThroughputKbps();
         if (SFT > lastChunkDurationMs)
             m_staticAlgPar = 1; // switch to BBA1 if buffer is decreasing
         if (bufferedDurationMs < reservoir)               //CHECK BUFFER LEVEL

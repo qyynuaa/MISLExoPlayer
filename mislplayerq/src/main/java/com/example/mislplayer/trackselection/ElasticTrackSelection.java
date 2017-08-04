@@ -1,8 +1,8 @@
-package com.example.mislplayer.algorithm;
+package com.example.mislplayer.trackselection;
 
 import android.util.Log;
 
-import com.example.mislplayer.SampleProcessor;
+import com.example.mislplayer.sampling.SampleProcessor;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -160,7 +160,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
     private int doRateAdaptation(long bufferedDurationUs) {
         double averageRateEstimate = algorithmListener.getSampleHarmonicAverage(elasticAverageWindow);
 
-        final double downloadTimeS = algorithmListener.lastLoadDurationMs() / 1E3;
+        final double downloadTimeS = algorithmListener.lastSampleDurationMs() / 1E3;
         final double elasticTargetQueueS = algorithmListener.maxBufferMs() / 1E3;
         final double queueLengthS = bufferedDurationUs / 1E6;
 
@@ -171,8 +171,8 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
             targetRate = 0;
         }
 
-        Log.d(TAG, String.format("targetRate = %f kbps", targetRate));
+        Log.d(TAG, String.format("targetRate = %f kbps", targetRate / 1000));
 
-        return findBestRateIndex(targetRate * 1000);
+        return findBestRateIndex(targetRate);
     }
 }
