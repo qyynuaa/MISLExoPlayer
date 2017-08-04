@@ -118,6 +118,12 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         //You can only use another mpd file if you have ITS CSV in raw folder
         // Uri uri = Uri.parse("http://yt-dash-mse-test.commondatastorage.googleapis.com/media/oops-20120802-manifest.mpd");
 
+        //futur segment sizes obtained thanks to CSV file
+        futureSegmentInfos = getSegmentSizes();
+        if (futureSegmentInfos != null) {
+            Log.d(TAG, "" + FutureSegmentInfos.getByteSize(futureSegmentInfos, 3, getRepIndex(4310)));
+        }
+
         //Provides instances of DataSource from which streams of data can be read.
         DataSource.Factory dataSourceFactory = buildDataSourceFactory2(transferListener);
 
@@ -164,10 +170,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         //TextView to print out things under player
         TextView debugView = (TextView) findViewById(R.id.debug_text_view);
 
-        //futur segment sizes obtained thanks to CSV file
-        futureSegmentInfos = getSegmentSizes();
-        if (futureSegmentInfos != null)
-            Log.d(TAG, "" + FutureSegmentInfos.getByteSize(futureSegmentInfos, 3, getRepIndex(4310)));
         debugView.setTextColor(Color.WHITE);
         debugView.setTextSize(15);
 
@@ -301,10 +303,10 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     String bufferedPosition = "Buffer Level : " + player.getBufferedPosition() + "\n";
    // debugView.setText(videoInfo + buffer + trackgroups + period + videoID + videoBitrate + audioBitrate + bandwidth + bytesAllocated + bufferedPosition);
     */
-        if(!algorithmListener.dataNotAvailable()) {
-            String test = "SEG NUMBER : " + algorithmListener.lastChunkIndex();
-            debugView.setText(test);
-        }
+//        if(!algorithmListener.dataNotAvailable()) {
+//            String test = "SEG NUMBER : " + algorithmListener.lastChunkIndex();
+//            debugView.setText(test);
+//        }
     }
 
     //To get the index of a given representation Level for our media content.
