@@ -11,12 +11,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
-import com.example.mislplayer.algorithm.AdaptationAlgorithm;
-import com.example.mislplayer.algorithm.ArbiterAlgorithm;
-import com.example.mislplayer.algorithm.BBA2Algorithm;
-import com.example.mislplayer.algorithm.BasicAlgorithm;
-import com.example.mislplayer.algorithm.ElasticAlgorithm;
-import com.example.mislplayer.algorithm.OscarHAlgorithm;
+import com.example.mislplayer.sampling.ChunkBasedSampler;
+import com.example.mislplayer.sampling.ChunkStore;
+import com.example.mislplayer.sampling.DefaultSampleProcessor;
+import com.example.mislplayer.trackselection.ArbiterTrackSelection;
+import com.example.mislplayer.trackselection.BBA2TrackSelection;
+import com.example.mislplayer.trackselection.ElasticTrackSelection;
+import com.example.mislplayer.trackselection.OscarHTrackSelection;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -29,6 +30,7 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.LoopingMediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
+import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
@@ -66,8 +68,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         private int resumeWindow;
         private long resumePosition;
         private DefaultTrackSelector trackSelector;
-        private final DefaultBandwidthMeter2 BANDWIDTH_METER = new DefaultBandwidthMeter2(null, null);
-        // private final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter(mainHandler,bm);
         private LoadControl loadControl;
         private String videoInfo;
         private int segmentNumber = 0;
@@ -78,22 +78,24 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         public static int beginningIndex;
         private MISLDashChunkSource.Factory df;
 
+        private AdaptationAlgorithmType algorithmType;
+
+        private TransferListener<? super DataSource> transferListener;
+        private ChunkListener chunkListener;
+        private TrackSelection.Factory trackSelectionFactory;
+        private ExoPlayer.EventListener playerListener;
+        private ChunkStore chunkStore;
+
         private int minBufferMs = 26000;
         private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
         private long playbackBufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_MS;
         private long rebufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
-        private AdaptationAlgorithmType algorithmType;
-        private AdaptationAlgorithm algorithm;
 
     @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 
-            // To get parameters from previous activity (MainActivity)
-            Intent i=getIntent();
-
-            // To choose the right factory for TrackSelection (chooseAlgorithm)
-            // AND  useful later for downloaded segments, to know which parameters to store given a specific algorithm,
+            Intent i = getIntent();
             algorithmType = (AdaptationAlgorithmType) i.getSerializableExtra("com.example.misl.AlgorithmType");
 
             mainHandler = new Handler();
@@ -104,6 +106,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             playerView.setControllerVisibilityListener(this);
             playerView.requestFocus();
 
+            configureRun();
         }
 
 
@@ -114,23 +117,18 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             //You can only use another mpd file if you have ITS CSV in raw folder
             // Uri uri = Uri.parse("http://yt-dash-mse-test.commondatastorage.googleapis.com/media/oops-20120802-manifest.mpd");
 
-            algorithm = chooseAlgorithm(algorithmType);
-
             //Provides instances of DataSource from which streams of data can be read.
-            DataSource.Factory dataSourceFactory = buildDataSourceFactory2(algorithm.transferListener());
-
-            //Provides instances of TrackSelection, this will decide which segments we will download later
-            TrackSelection.Factory videoTrackSelectionFactory = algorithm.trackSelectionFactory();
+            DataSource.Factory dataSourceFactory = buildDataSourceFactory2(transferListener);
 
             //Will be responsible of choosing right TrackSelections
-            trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
+            trackSelector = new DefaultTrackSelector(trackSelectionFactory);
 
             eventLogger = new EventLogger(trackSelector);
 
             mainHandler = new Handler();
 
             //Provides instances of DashChunkSource
-            df = new MISLDashChunkSource.Factory(dataSourceFactory, algorithm.chunkListener());
+            df = new MISLDashChunkSource.Factory(dataSourceFactory, chunkListener);
 
             // Our video source media, we give it an URL, and all the stuff before
             videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, mainHandler, eventLogger);
@@ -145,8 +143,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                     new DefaultRenderersFactory(this), trackSelector,
                     loadControl);
 
-            if (algorithm.playerListener() != null) {
-                player.addListener(algorithm.playerListener());
+            if (playerListener != null) {
+                player.addListener(playerListener);
             }
 
             //bind the player to a view
@@ -194,25 +192,39 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         }
 
         //Choose our algorithm given the button selected in the previous Activity
-        private AdaptationAlgorithm chooseAlgorithm (
-                AdaptationAlgorithmType algorithmType) {
-            switch (algorithmType){
-                case OSCAR_H:
-                    Log.d(TAG,"OSCAR-H has been chosen.");
-                    return new OscarHAlgorithm(maxBufferMs);
-                case ARBITER:
-                    Log.d(TAG,"ARBITER has been chosen.");
-                    return new ArbiterAlgorithm(maxBufferMs);
-                case BBA2:
-                    Log.d(TAG,"BBA2 has been chosen.");
-                    return new BBA2Algorithm(maxBufferMs);
-                case ELASTIC:
-                    Log.d(TAG, "ELASTIC has been chosen.");
-                    return new ElasticAlgorithm(maxBufferMs);
-                case BASIC_ADAPTIVE:
-                    Log.d(TAG,"BASIC_ADAPTIVE has been chosen.");
-                default:
-                    return new BasicAlgorithm();
+        private void configureRun() {
+            DefaultSampleProcessor sampleProcessor = new DefaultSampleProcessor(maxBufferMs);
+            chunkStore = sampleProcessor;
+
+            if (algorithmType == AdaptationAlgorithmType.BASIC_ADAPTIVE) {
+                DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
+                transferListener = bandwidthMeter;
+                trackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
+            } else {
+                ChunkBasedSampler chunkSampler = new ChunkBasedSampler(sampleProcessor, sampleProcessor);
+                transferListener = chunkSampler;
+                chunkListener = chunkSampler;
+
+                switch (algorithmType) {
+                    case OSCAR_H:
+                        Log.d(TAG, "OSCAR-H has been chosen.");
+                        trackSelectionFactory = new OscarHTrackSelection.Factory(sampleProcessor);
+                        break;
+                    case ARBITER:
+                        Log.d(TAG, "ARBITER has been chosen.");
+                        trackSelectionFactory = new ArbiterTrackSelection.Factory(sampleProcessor, sampleProcessor);
+                        break;
+                    case BBA2:
+                        Log.d(TAG, "BBA2 has been chosen.");
+                        trackSelectionFactory = new BBA2TrackSelection.Factory(sampleProcessor);
+                        break;
+                    case ELASTIC:
+                        Log.d(TAG, "ELASTIC has been chosen.");
+                        trackSelectionFactory = new ElasticTrackSelection.Factory(sampleProcessor);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unrecognised algorithm type");
+                }
             }
         }
 
@@ -346,8 +358,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 player.release();
                 player = null;
                 eventLogger = null;
-                algorithm.writeLogsToFile();
-                algorithm.clearChunkInformation();
+                chunkStore.writeLogsToFile();
+                chunkStore.clearChunkInformation();
             }
         }
 
