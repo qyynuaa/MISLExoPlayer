@@ -85,7 +85,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private TransferListener<? super DataSource> transferListener;
     private ChunkListener chunkListener;
     private TrackSelection.Factory trackSelectionFactory;
-    private ExoPlayer.EventListener playerListener;
     private ChunkStore chunkStore = new DefaultChunkStore();
 
     private int minBufferMs = 26000;
@@ -151,9 +150,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 new DefaultRenderersFactory(this), trackSelector,
                 loadControl);
 
-        if (playerListener != null) {
-            player.addListener(playerListener);
-        }
+        player.addListener(chunkStore);
 
         //bind the player to a view
         playerView.setPlayer(player);
