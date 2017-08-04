@@ -1,6 +1,6 @@
 package com.example.mislplayer;
 
-import com.example.mislplayer.algorithm.AlgorithmTrackSelection;
+import com.example.mislplayer.trackselection.AlgorithmTrackSelection;
 
 /**
  * Provides necessary information to

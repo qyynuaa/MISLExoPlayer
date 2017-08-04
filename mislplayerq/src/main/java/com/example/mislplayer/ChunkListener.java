@@ -1,10 +1,9 @@
 package com.example.mislplayer;
 
-import com.example.mislplayer.algorithm.AdaptationAlgorithm;
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
 
 /**
- * Receives {@link MediaChunk}s and passes the info to an {@link AdaptationAlgorithm}.
+ * Receives {@link MediaChunk}s and passes the info to an AdaptationAlgorithm.
  */
 public interface ChunkListener {
     /**
