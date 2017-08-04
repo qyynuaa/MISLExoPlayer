@@ -5,8 +5,15 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Renderer;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.SampleStream;
+import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSpec;
 
 import java.io.File;
@@ -101,6 +108,9 @@ public class DefaultChunkStore implements ChunkStore {
     private long totalStallDurationMs;
     private long currentBufferLevelMs;
 
+    private long stallClockMs;
+    private int lastState;
+
     /** Logs to file data about all the chunks downloaded so far. */
     @Override
     public void writeLogsToFile() {
@@ -134,16 +144,6 @@ public class DefaultChunkStore implements ChunkStore {
     @Override
     public void clearChunkInformation() {
         this.log = new ArrayList<>();
-    }
-
-    /**
-     * Informs the chunk store of a new stall.
-     *
-     * @param stallDurationMs
-     */
-    @Override
-    public void newStall(long stallDurationMs) {
-        totalStallDurationMs += stallDurationMs;
     }
 
     /**
@@ -317,6 +317,102 @@ public class DefaultChunkStore implements ChunkStore {
      */
     @Override
     public void onDownstreamFormatChanged(int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaTimeMs) {
+
+    }
+
+    /**
+     * Called when the timeline and/or manifest has been refreshed.
+     * <p>
+     * Note that if the timeline has changed then a position discontinuity may also have occurred.
+     * For example, the current period index may have changed as a result of periods being added or
+     * removed from the timeline. This will <em>not</em> be reported via a separate call to
+     * {@link #onPositionDiscontinuity()}.
+     *
+     * @param timeline The latest timeline. Never null, but may be empty.
+     * @param manifest The latest manifest. May be null.
+     */
+    @Override
+    public void onTimelineChanged(Timeline timeline, Object manifest) {
+
+    }
+
+    /**
+     * Called when the available or selected tracks change.
+     *
+     * @param trackGroups     The available tracks. Never null, but may be of length zero.
+     * @param trackSelections The track selections for each {@link Renderer}. Never null and always
+     *                        of length {@link ExoPlayer#getRendererCount()}, but may contain null elements.
+     */
+    @Override
+    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+
+    }
+
+    /**
+     * Called when the player starts or stops loading the source.
+     *
+     * @param isLoading Whether the source is currently being loaded.
+     */
+    @Override
+    public void onLoadingChanged(boolean isLoading) {
+
+    }
+
+    /**
+     * Called when the value returned from either {@link ExoPlayer#getPlayWhenReady()} or
+     * {@link ExoPlayer#getPlaybackState()} changes.
+     *
+     * @param playWhenReady Whether playback will proceed when ready.
+     * @param playbackState One of the {@code STATE} constants defined in the {@link ExoPlayer}
+     */
+    @Override
+    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+        if (lastState == ExoPlayer.STATE_READY && playbackState == ExoPlayer.STATE_BUFFERING) {
+            stallClockMs = SystemClock.elapsedRealtime();
+        } else if (lastState == ExoPlayer.STATE_BUFFERING && playbackState == ExoPlayer.STATE_READY) {
+            long nowMs = SystemClock.elapsedRealtime();
+            totalStallDurationMs += nowMs - stallClockMs;
+        }
+        lastState = playbackState;
+    }
+
+    /**
+     * Called when an error occurs. The playback state will transition to {@link ExoPlayer#STATE_IDLE}
+     * immediately after this method is called. The player instance can still be used, and
+     * {@link ExoPlayer#release()} must still be called on the player should it no longer be required.
+     *
+     * @param error The error.
+     */
+    @Override
+    public void onPlayerError(ExoPlaybackException error) {
+
+    }
+
+    /**
+     * Called when a position discontinuity occurs without a change to the timeline. A position
+     * discontinuity occurs when the current window or period index changes (as a result of playback
+     * transitioning from one period in the timeline to the next), or when the playback position
+     * jumps within the period currently being played (as a result of a seek being performed, or
+     * when the source introduces a discontinuity internally).
+     * <p>
+     * When a position discontinuity occurs as a result of a change to the timeline this method is
+     * <em>not</em> called. {@link #onTimelineChanged(Timeline, Object)} is called in this case.
+     */
+    @Override
+    public void onPositionDiscontinuity() {
+
+    }
+
+    /**
+     * Called when the current playback parameters change. The playback parameters may change due to
+     * a call to {@link ExoPlayer#setPlaybackParameters(PlaybackParameters)}, or the player itself
+     * may change them (for example, if audio playback switches to passthrough mode, where speed
+     * adjustment is no longer possible).
+     *
+     * @param playbackParameters The playback parameters.
+     */
+    @Override
+    public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
 
     }
 }
