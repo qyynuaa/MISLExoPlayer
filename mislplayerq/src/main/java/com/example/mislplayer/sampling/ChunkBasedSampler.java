@@ -15,24 +15,22 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
 
     /**
      * Creates a chunk-based sampler.
-     *
-     * @param sampleStore The store to send throughput samples to.
-     * @param chunkStore The store to send downloaded chunks to.
+     *  @param sampleStore The store to send throughput samples to.
+     * @param sampleProcessor The processor to send chunks to.
      */
-    public ChunkBasedSampler(SampleStore sampleStore, ChunkStore chunkStore) {
+    public ChunkBasedSampler(SampleStore sampleStore, SampleProcessor sampleProcessor) {
         this.sampleStore = sampleStore;
-        this.chunkStore = chunkStore;
+        this.sampleProcessor = sampleProcessor;
     }
 
     private static final String TAG = "ChunkBasedSampler";
 
     private SampleStore sampleStore;
-    private ChunkStore chunkStore;
+    private SampleProcessor sampleProcessor;
     private MediaChunk lastChunk;
 
     private long transferClockMs;
     private long loadDurationMs;
-    private long arrivalTimeMs;
 
     /**
      * Gives the listener the last chunk that was downloaded, to be passed to the
@@ -54,7 +52,7 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
         long chunkSizeBits = lastChunk.bytesLoaded() * 8;
 
         sampleStore.addSample(chunkSizeBits, loadDurationMs);
-        chunkStore.add(lastChunk, arrivalTimeMs, loadDurationMs);
+        sampleProcessor.giveChunk(lastChunk);
         this.lastChunk = lastChunk;
     }
 
@@ -65,7 +63,7 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
      */
     @Override
     public void giveMpdDuration(long durationMs) {
-        chunkStore.giveMpdDuration(durationMs);
+        sampleProcessor.giveMpdDuration(durationMs);
     }
 
     /**
@@ -97,7 +95,7 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
      */
     @Override
     public void onTransferEnd(Object source) {
-        arrivalTimeMs = SystemClock.elapsedRealtime();
+        long arrivalTimeMs = SystemClock.elapsedRealtime();
         loadDurationMs = arrivalTimeMs - transferClockMs;
     }
 }

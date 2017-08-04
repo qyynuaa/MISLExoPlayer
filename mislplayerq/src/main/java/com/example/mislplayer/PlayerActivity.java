@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.example.mislplayer.sampling.ChunkBasedSampler;
 import com.example.mislplayer.sampling.ChunkStore;
+import com.example.mislplayer.sampling.DefaultChunkStore;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
 import com.example.mislplayer.trackselection.ArbiterTrackSelection;
 import com.example.mislplayer.trackselection.BBA2TrackSelection;
@@ -85,7 +86,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private ChunkListener chunkListener;
     private TrackSelection.Factory trackSelectionFactory;
     private ExoPlayer.EventListener playerListener;
-    private ChunkStore chunkStore;
+    private ChunkStore chunkStore = new DefaultChunkStore();
 
     private int minBufferMs = 26000;
     private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
@@ -138,7 +139,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         df = new MISLDashChunkSource.Factory(dataSourceFactory, chunkListener);
 
         // Our video source media, we give it an URL, and all the stuff before
-        videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, mainHandler, eventLogger);
+        videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, mainHandler, chunkStore);
 
         //Used to play media indefinitely (loop)
         LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
@@ -197,7 +198,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     //Choose our algorithm given the button selected in the previous Activity
     private void configureRun() {
         DefaultSampleProcessor sampleProcessor = new DefaultSampleProcessor(maxBufferMs);
-        chunkStore = sampleProcessor;
 
         if (algorithmType == AdaptationAlgorithmType.BASIC_ADAPTIVE) {
             DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
@@ -215,7 +215,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                     break;
                 case ARBITER:
                     Log.d(TAG, "ARBITER has been chosen.");
-                    trackSelectionFactory = new ArbiterTrackSelection.Factory(sampleProcessor, sampleProcessor);
+                    trackSelectionFactory = new ArbiterTrackSelection.Factory(sampleProcessor, chunkStore);
                     break;
                 case BBA2:
                     Log.d(TAG, "BBA2 has been chosen.");
