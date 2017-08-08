@@ -23,8 +23,6 @@ public interface SampleProcessor {
         double bitsPerSecond();
     }
 
-    void giveMpdDuration(long durationMs);
-
     void giveChunk(MediaChunk chunk);
 
     /** Provides the duration of the current mpd. */

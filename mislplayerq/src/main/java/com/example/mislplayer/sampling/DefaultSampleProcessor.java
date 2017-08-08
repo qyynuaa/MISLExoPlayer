@@ -3,7 +3,9 @@ package com.example.mislplayer.sampling;
 import android.os.Environment;
 import android.util.Log;
 
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
+import com.google.android.exoplayer2.source.dash.manifest.DashManifest;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -63,12 +65,16 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore {
 
     private List<ThroughputSample> samples = new ArrayList<>();
     private int maxBufferMs;
-    private long mpdDurationMs;
 
     private MediaChunk lastChunk;
+    private ExoPlayer player;
 
     public DefaultSampleProcessor(int maxBufferMs) {
         this.maxBufferMs = maxBufferMs;
+    }
+
+    public void setPlayer(ExoPlayer player) {
+        this.player = player;
     }
 
     /** Adds a new throughput sample to the store. */
@@ -87,11 +93,6 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore {
         this.lastChunk = chunk;
     }
 
-    @Override
-    public void giveMpdDuration(long durationMs) {
-        mpdDurationMs = durationMs;
-    }
-
     /** Returns the most recent throughput sample. */
     private ThroughputSample lastSample() {
         return samples.get(samples.size() - 1);
@@ -100,7 +101,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore {
     /** Provides the duration of the current mpd. */
     @Override
     public long mpdDuration() {
-        return mpdDurationMs;
+        return player.getDuration();
     }
 
     /** Gives the current maximum buffer length the player is aiming for. */

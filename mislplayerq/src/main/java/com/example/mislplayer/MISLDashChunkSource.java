@@ -87,18 +87,11 @@ public class MISLDashChunkSource implements DashChunkSource {
                 enableEventMessageTrack, enableCea608Track);
         this.chunkListener = chunkListener;
         this.chunkLogger = chunkLogger;
-
-        if (chunkListener != null){
-            chunkListener.giveMpdDuration(manifest.duration);
-        }
     }
 
     /** Delegates to the {@link DefaultDashChunkSource} */
     @Override
     public void updateManifest(DashManifest newManifest, int periodIndex) {
-        if (chunkListener != null) {
-            chunkListener.giveMpdDuration(newManifest.duration);
-        }
         dashChunkSource.updateManifest(newManifest, periodIndex);
     }
 
