@@ -220,10 +220,12 @@ public class DefaultChunkLogger implements ChunkLogger {
             long chunkDurationMs = mediaEndTimeMs - mediaStartTimeMs;
             double actualRateKbps = (double) bytesLoaded * 8000 / chunkDurationMs;
 
-            log.add(new LogEntry(mediaStartTimeMs, elapsedRealtimeMs,
-                    loadDurationMs, totalStallDurationMs,
-                    representationRateKbps, deliveryRateKbps, actualRateKbps,
-                    bytesLoaded, currentBufferLevelMs, chunkDurationMs));
+            LogEntry logEntry = new LogEntry(mediaStartTimeMs,
+                    elapsedRealtimeMs, loadDurationMs,
+                    totalStallDurationMs, representationRateKbps,
+                    deliveryRateKbps, actualRateKbps, bytesLoaded,
+                    currentBufferLevelMs, chunkDurationMs);
+            log.add(logEntry.getChunkIndex() - 1, logEntry);
         }
     }
 
