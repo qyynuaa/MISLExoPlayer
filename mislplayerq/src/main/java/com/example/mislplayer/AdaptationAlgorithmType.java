@@ -5,5 +5,5 @@ package com.example.mislplayer;
  */
 
 public enum AdaptationAlgorithmType {
-    BBA2, ARBITER, ELASTIC, OSCAR_H, BASIC_ADAPTIVE
+    BBA2, ARBITER, ELASTIC, OSCAR_H, BASIC_ADAPTIVE, BASIC_SIZE
 }

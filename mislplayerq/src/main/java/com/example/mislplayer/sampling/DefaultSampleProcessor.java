@@ -76,6 +76,10 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore {
     public void addSample(long bitsTransferred, long durationMs) {
         samples.add(new DefaultThroughputSample(bitsTransferred,
                 durationMs));
+        Log.d(TAG,
+                String.format("New sample (index: %d, bits: %d, duration (ms): %d, throughput (kbps): %g)",
+                        samples.size() - 1, bitsTransferred, durationMs,
+                        lastSampleThroughputKbps()));
     }
 
     @Override

@@ -15,8 +15,10 @@ import com.example.mislplayer.sampling.ChunkBasedSampler;
 import com.example.mislplayer.sampling.ChunkLogger;
 import com.example.mislplayer.sampling.DefaultChunkLogger;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
+import com.example.mislplayer.sampling.SizeBasedSampler;
 import com.example.mislplayer.trackselection.ArbiterTrackSelection;
 import com.example.mislplayer.trackselection.BBA2TrackSelection;
+import com.example.mislplayer.trackselection.BasicTrackSelection;
 import com.example.mislplayer.trackselection.ElasticTrackSelection;
 import com.example.mislplayer.trackselection.OscarHTrackSelection;
 import com.google.android.exoplayer2.C;
@@ -86,6 +88,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private ChunkListener chunkListener;
     private TrackSelection.Factory trackSelectionFactory;
     private ChunkLogger chunkLogger = new DefaultChunkLogger();
+    private ExoPlayer.EventListener playerListener = null;
 
     private int minBufferMs = 26000;
     private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
@@ -152,6 +155,9 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 loadControl);
 
         player.addListener(chunkLogger);
+        if (playerListener != null) {
+            player.addListener(playerListener);
+        }
 
         //bind the player to a view
         playerView.setPlayer(player);
@@ -201,6 +207,11 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
             transferListener = bandwidthMeter;
             trackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
+        } else if (algorithmType == AdaptationAlgorithmType.BASIC_SIZE) {
+            SizeBasedSampler sizeSampler = new SizeBasedSampler(sampleProcessor, 100_000);
+            transferListener = sizeSampler;
+            trackSelectionFactory = new BasicTrackSelection.Factory(sampleProcessor);
+            playerListener = sizeSampler;
         } else {
             ChunkBasedSampler chunkSampler = new ChunkBasedSampler(sampleProcessor, sampleProcessor);
             transferListener = chunkSampler;
