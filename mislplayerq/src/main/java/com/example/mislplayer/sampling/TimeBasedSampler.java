@@ -69,6 +69,7 @@ public class TimeBasedSampler implements TransferListener<Object>,
         } else {
             startSampling();
         }
+        Log.d(TAG, "Transfer started");
     }
 
     /**
@@ -89,7 +90,7 @@ public class TimeBasedSampler implements TransferListener<Object>,
      */
     @Override
     public void onTransferEnd(Object source) {
-
+        Log.d(TAG, "Transfer ended");
     }
 
     /**
