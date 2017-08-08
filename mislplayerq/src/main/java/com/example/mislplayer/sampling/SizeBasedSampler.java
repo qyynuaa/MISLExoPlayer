@@ -112,7 +112,7 @@ public class SizeBasedSampler implements TransferListener<Object> {
     }
 
     private boolean sampleIsReady() {
-        return byteClock > sampleThresholdBytes;
+        return byteClock >= sampleThresholdBytes;
     }
 
     private boolean startedSampling() {
