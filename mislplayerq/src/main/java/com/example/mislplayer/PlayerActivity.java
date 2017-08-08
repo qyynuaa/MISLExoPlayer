@@ -88,6 +88,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private ChunkListener chunkListener;
     private TrackSelection.Factory trackSelectionFactory;
     private ChunkLogger chunkLogger = new DefaultChunkLogger();
+    private ExoPlayer.EventListener playerListener = null;
 
     private int minBufferMs = 26000;
     private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
@@ -154,6 +155,9 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 loadControl);
 
         player.addListener(chunkLogger);
+        if (playerListener != null) {
+            player.addListener(playerListener);
+        }
 
         //bind the player to a view
         playerView.setPlayer(player);
@@ -204,8 +208,10 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             transferListener = bandwidthMeter;
             trackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
         } else if (algorithmType == AdaptationAlgorithmType.BASIC_SIZE) {
-            transferListener = new SizeBasedSampler(sampleProcessor, 100_000);
+            SizeBasedSampler sizeSampler = new SizeBasedSampler(sampleProcessor, 100_000);
+            transferListener = sizeSampler;
             trackSelectionFactory = new BasicTrackSelection.Factory(sampleProcessor);
+            playerListener = sizeSampler;
         } else {
             ChunkBasedSampler chunkSampler = new ChunkBasedSampler(sampleProcessor, sampleProcessor);
             transferListener = chunkSampler;
