@@ -45,14 +45,16 @@ public class SizeBasedSampler implements TransferListener<Object>,
         this.sampleStore = sampleStore;
     }
 
-    private static final long DEFAULT_SAMPLE_THRESHOLD = 20_000;
+    private static final long DEFAULT_SAMPLE_THRESHOLD = 100_000;
+
+    private static final int TIME_UNSET = -1;
 
     private SampleStore sampleStore;
 
     private long sampleThresholdBytes;
 
     private long sampleBytesTransferred = 0;
-    private long sampleClockMs = 0;
+    private long sampleClockMs = TIME_UNSET;
     private long sampleDurationMs = 0;
 
     /**
@@ -104,10 +106,10 @@ public class SizeBasedSampler implements TransferListener<Object>,
      * Finish a throughput sample and send it to the sample store.
      */
     private void finishSampling() {
-        sampleClockMs = 0;
         if (sampleDurationMs > 0) {
             sampleStore.addSample(sampleBytesTransferred * 8, sampleDurationMs);
         }
+        sampleClockMs = TIME_UNSET;
     }
 
     /**
@@ -150,7 +152,7 @@ public class SizeBasedSampler implements TransferListener<Object>,
      * @return true if we are in the middle of sampling, false otherwise.
      */
     private boolean currentlySampling() {
-        return sampleClockMs != 0;
+        return sampleClockMs != TIME_UNSET;
     }
 
     /**
