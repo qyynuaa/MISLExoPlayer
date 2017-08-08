@@ -104,8 +104,10 @@ public class SizeBasedSampler implements TransferListener<Object>,
      * Finish a throughput sample and send it to the sample store.
      */
     private void finishSampling() {
-        sampleStore.addSample(sampleBytesTransferred * 8, sampleDurationMs);
         sampleClockMs = 0;
+        if (sampleDurationMs > 0) {
+            sampleStore.addSample(sampleBytesTransferred * 8, sampleDurationMs);
+        }
     }
 
     /**
