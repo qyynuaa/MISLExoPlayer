@@ -4,9 +4,9 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.source.AdaptiveMediaSourceEventListener;
 
 /**
- * Stores downloaded chunks.
+ * Logs information about a run, on a chunk-by-chunk basis.
  */
-public interface ChunkStore extends AdaptiveMediaSourceEventListener, ExoPlayer.EventListener {
+public interface ChunkLogger extends AdaptiveMediaSourceEventListener, ExoPlayer.EventListener {
 
     /** Writes a log with details of all downloaded chunks. */
     void writeLogsToFile();
@@ -14,6 +14,6 @@ public interface ChunkStore extends AdaptiveMediaSourceEventListener, ExoPlayer.
     /** Clears the store of downloaded chunks. */
     void clearChunkInformation();
 
-    /** Informs the chunk store of the current buffer estimate. */
+    /** Informs the logger of the current buffer estimate. */
     void updateBufferLevel(long bufferedDurationUs);
 }

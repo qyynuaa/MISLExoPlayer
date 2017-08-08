@@ -26,9 +26,9 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * A default chunk store.
+ * A default ChunkLogger implementation.
  */
-public class DefaultChunkStore implements ChunkStore {
+public class DefaultChunkLogger implements ChunkLogger {
 
     private static class LogEntry {
         private int chunkIndex;
@@ -100,7 +100,7 @@ public class DefaultChunkStore implements ChunkStore {
         }
     }
 
-    private static final String TAG = "DefaultChunkStore";
+    private static final String TAG = "DefaultChunkLogger";
     private static final String LOG_FILE_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
 
     private List<LogEntry> log = new ArrayList<>();

@@ -12,8 +12,8 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.example.mislplayer.sampling.ChunkBasedSampler;
-import com.example.mislplayer.sampling.ChunkStore;
-import com.example.mislplayer.sampling.DefaultChunkStore;
+import com.example.mislplayer.sampling.ChunkLogger;
+import com.example.mislplayer.sampling.DefaultChunkLogger;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
 import com.example.mislplayer.trackselection.ArbiterTrackSelection;
 import com.example.mislplayer.trackselection.BBA2TrackSelection;
@@ -85,7 +85,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private TransferListener<? super DataSource> transferListener;
     private ChunkListener chunkListener;
     private TrackSelection.Factory trackSelectionFactory;
-    private ChunkStore chunkStore = new DefaultChunkStore();
+    private ChunkLogger chunkLogger = new DefaultChunkLogger();
 
     private int minBufferMs = 26000;
     private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
@@ -136,10 +136,10 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
         //Provides instances of DashChunkSource
         df = new MISLDashChunkSource.Factory(dataSourceFactory,
-                chunkListener, chunkStore);
+                chunkListener, chunkLogger);
 
         // Our video source media, we give it an URL, and all the stuff before
-        videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, mainHandler, chunkStore);
+        videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, mainHandler, chunkLogger);
 
         //Used to play media indefinitely (loop)
         LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
@@ -151,7 +151,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 new DefaultRenderersFactory(this), trackSelector,
                 loadControl);
 
-        player.addListener(chunkStore);
+        player.addListener(chunkLogger);
 
         //bind the player to a view
         playerView.setPlayer(player);
@@ -385,8 +385,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             player.release();
             player = null;
             eventLogger = null;
-            chunkStore.writeLogsToFile();
-            chunkStore.clearChunkInformation();
+            chunkLogger.writeLogsToFile();
+            chunkLogger.clearChunkInformation();
         }
     }
 
