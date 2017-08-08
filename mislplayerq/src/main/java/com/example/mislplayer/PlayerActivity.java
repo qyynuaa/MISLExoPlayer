@@ -135,7 +135,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         mainHandler = new Handler();
 
         //Provides instances of DashChunkSource
-        df = new MISLDashChunkSource.Factory(dataSourceFactory, chunkListener);
+        df = new MISLDashChunkSource.Factory(dataSourceFactory,
+                chunkListener, chunkStore);
 
         // Our video source media, we give it an URL, and all the stuff before
         videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, mainHandler, chunkStore);
@@ -212,7 +213,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                     break;
                 case ARBITER:
                     Log.d(TAG, "ARBITER has been chosen.");
-                    trackSelectionFactory = new ArbiterTrackSelection.Factory(sampleProcessor, chunkStore);
+                    trackSelectionFactory = new ArbiterTrackSelection.Factory(sampleProcessor);
                     break;
                 case BBA2:
                     Log.d(TAG, "BBA2 has been chosen.");

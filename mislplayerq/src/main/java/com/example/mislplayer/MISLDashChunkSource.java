@@ -2,6 +2,7 @@ package com.example.mislplayer;
 
 import android.util.Log;
 
+import com.example.mislplayer.sampling.ChunkStore;
 import com.google.android.exoplayer2.source.chunk.Chunk;
 import com.google.android.exoplayer2.source.chunk.ChunkHolder;
 import com.google.android.exoplayer2.source.chunk.ChunkSampleStream;
@@ -17,8 +18,10 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * A DashChunkSource which passes chunk information to a {@link ChunkListener} to assist in
- * adaptive track selection.}.
+ * A replacement for {@link DashChunkSource}.
+ *
+ * <p>Passes chunks to a ChunkListener for chunk-based throughput sampling,
+ * and gives buffer estimates to a ChunkStore for logging.
  */
 
 public class MISLDashChunkSource implements DashChunkSource {
@@ -30,15 +33,30 @@ public class MISLDashChunkSource implements DashChunkSource {
         private final DataSource.Factory dataSourceFactory;
         private final int maxSegmentsPerLoad;
         private final ChunkListener chunkListener;
+        private final ChunkStore chunkStore;
 
-        public Factory(DataSource.Factory dataSourceFactory, ChunkListener chunkListener) {
-            this(dataSourceFactory, DEFAULT_MAX_SEGMENTS_PER_LOAD, chunkListener);
+        /**
+         * Creates a MISLDashChunkSource factory with default values.
+         *
+         * @param dataSourceFactory
+         * @param chunkListener Can be given chunks for chunk-based
+         *                      throughput sampling.
+         * @param chunkStore Can be given buffer level estimates for
+         *                   logging.
+         */
+        public Factory(DataSource.Factory dataSourceFactory,
+                       ChunkListener chunkListener, ChunkStore chunkStore) {
+            this(dataSourceFactory, DEFAULT_MAX_SEGMENTS_PER_LOAD,
+                    chunkListener, chunkStore);
         }
 
-        public Factory(DataSource.Factory dataSourceFactory, int maxSegmentsPerLoad, ChunkListener chunkListener) {
+        public Factory(DataSource.Factory dataSourceFactory,
+                       int maxSegmentsPerLoad, ChunkListener chunkListener,
+                       ChunkStore chunkStore) {
             this.dataSourceFactory = dataSourceFactory;
             this.maxSegmentsPerLoad = maxSegmentsPerLoad;
             this.chunkListener = chunkListener;
+            this.chunkStore = chunkStore;
         }
 
         @Override
@@ -50,7 +68,8 @@ public class MISLDashChunkSource implements DashChunkSource {
 
             return new MISLDashChunkSource(manifestLoaderErrorThrower, manifest, periodIndex,
                     adaptationSetIndex, trackSelection, dataSource, elapsedRealtimeOffsetMs,
-                    maxSegmentsPerLoad, enableEventMessageTrack, enableCea608Track, chunkListener);
+                    maxSegmentsPerLoad, enableEventMessageTrack,
+                    enableCea608Track, chunkListener, chunkStore);
         }
     }
 
@@ -58,15 +77,18 @@ public class MISLDashChunkSource implements DashChunkSource {
 
     private DashChunkSource dashChunkSource;
     private ChunkListener chunkListener;
+    private ChunkStore chunkStore;
 
     public MISLDashChunkSource(LoaderErrorThrower manifestLoaderErrorThrower, DashManifest manifest,
                                int periodIndex, int adaptationSetIndex, TrackSelection trackSelection,
                                DataSource dataSource, long elapsedRealtimeOffsetMs, int maxSegmentsPerLoad,
-                               boolean enableEventMessageTrack, boolean enableCea608Track, ChunkListener chunkListener) {
+                               boolean enableEventMessageTrack, boolean enableCea608Track, ChunkListener chunkListener,
+                               ChunkStore chunkStore) {
         this.dashChunkSource = new DefaultDashChunkSource(manifestLoaderErrorThrower, manifest, periodIndex,
                 adaptationSetIndex, trackSelection, dataSource, elapsedRealtimeOffsetMs, maxSegmentsPerLoad,
                 enableEventMessageTrack, enableCea608Track);
         this.chunkListener = chunkListener;
+        this.chunkStore = chunkStore;
 
         if (chunkListener != null){
             chunkListener.giveMpdDuration(manifest.duration);
@@ -129,6 +151,9 @@ public class MISLDashChunkSource implements DashChunkSource {
         if (chunkListener != null) {
             chunkListener.giveLastChunk(previous);
         }
+        long bufferedDurationUs = previous != null ? (previous.endTimeUs - playbackPositionUs) : 0;
+        chunkStore.updateBufferLevel(bufferedDurationUs);
+
         dashChunkSource.getNextChunk(previous, playbackPositionUs, out);
     }
 
