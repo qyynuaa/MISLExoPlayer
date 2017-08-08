@@ -26,7 +26,7 @@ public class SizeBasedSampler implements TransferListener<Object> {
      * transferred.
      *
      * @param sampleStore The store to send the throughput samples to.
-     * @param sampleThresholdBytes The threshold for threshold sampling.
+     * @param sampleThresholdBytes The threshold for throughput sampling.
      */
     public SizeBasedSampler(SampleStore sampleStore,
                             long sampleThresholdBytes) {
@@ -39,8 +39,10 @@ public class SizeBasedSampler implements TransferListener<Object> {
     private SampleStore sampleStore;
 
     private long sampleThresholdBytes;
+
     private long byteClock = 0;
-    private long sampleStartMs;
+    private long sampleStartMs = 0;
+    private long sampleDurationMs = 0;
 
     /**
      * Called when a transfer starts.
@@ -50,8 +52,10 @@ public class SizeBasedSampler implements TransferListener<Object> {
      */
     @Override
     public void onTransferStart(Object source, DataSpec dataSpec) {
-        if (byteClock == 0) {
-            sampleStartMs = SystemClock.elapsedRealtime();
+        if (startedSampling()) {
+            resumeSampling();
+        } else {
+            startSampling();
         }
     }
 
@@ -63,16 +67,7 @@ public class SizeBasedSampler implements TransferListener<Object> {
      */
     @Override
     public void onBytesTransferred(Object source, int bytesTransferred) {
-        byteClock += bytesTransferred;
-
-        if (byteClock > sampleThresholdBytes) {
-            long nowMs = SystemClock.elapsedRealtime();
-            sampleStore.addSample(bytesTransferred * 8,
-                    nowMs - sampleStartMs);
-
-            sampleStartMs = nowMs;
-            byteClock = 0;
-        }
+        updateSample(bytesTransferred);
     }
 
     /**
@@ -82,6 +77,45 @@ public class SizeBasedSampler implements TransferListener<Object> {
      */
     @Override
     public void onTransferEnd(Object source) {
+        pauseSampling();
+    }
 
+    private void startSampling() {
+        sampleStartMs = SystemClock.elapsedRealtime();
+        byteClock = 0;
+        sampleDurationMs = 0;
+    }
+
+    private void finishSampling() {
+        long nowMs = SystemClock.elapsedRealtime();
+        sampleDurationMs += nowMs - sampleStartMs;
+        sampleStore.addSample(byteClock * 8, sampleDurationMs);
+        sampleStartMs = 0;
+    }
+
+    private void pauseSampling() {
+        long nowMs = SystemClock.elapsedRealtime();
+        sampleDurationMs += nowMs - sampleStartMs;
+    }
+
+    private void resumeSampling() {
+        sampleStartMs = SystemClock.elapsedRealtime();
+    }
+
+    private void updateSample(int bytesTransferred) {
+        byteClock += bytesTransferred;
+
+        if (sampleIsReady()) {
+            finishSampling();
+            startSampling();
+        }
+    }
+
+    private boolean sampleIsReady() {
+        return byteClock > sampleThresholdBytes;
+    }
+
+    private boolean startedSampling() {
+        return sampleStartMs != 0;
     }
 }
