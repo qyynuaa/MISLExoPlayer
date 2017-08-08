@@ -22,14 +22,15 @@ public class SizeBasedSampler implements TransferListener<Object> {
     /**
      * Constructs a size-based sampler by specifying a sampling threshold.
      *
+     * <p>A sample will be finished each time this many bytes have been
+     * transferred.
+     *
      * @param sampleStore The store to send the throughput samples to.
-     * @param sampleThreshold The threshold for threshold sampling. Sampling
-     *                        will occur when at least this many bytes
-     *                        have been transferred since the last sample.
+     * @param sampleThresholdBytes The threshold for threshold sampling.
      */
     public SizeBasedSampler(SampleStore sampleStore,
-                            long sampleThreshold) {
-        sampleThresholdBits = sampleThreshold;
+                            long sampleThresholdBytes) {
+        this.sampleThresholdBytes = sampleThresholdBytes;
         this.sampleStore = sampleStore;
     }
 
@@ -37,7 +38,7 @@ public class SizeBasedSampler implements TransferListener<Object> {
 
     private SampleStore sampleStore;
 
-    private long sampleThresholdBits;
+    private long sampleThresholdBytes;
     private long byteClock = 0;
     private long sampleStartMs;
 
@@ -64,7 +65,7 @@ public class SizeBasedSampler implements TransferListener<Object> {
     public void onBytesTransferred(Object source, int bytesTransferred) {
         byteClock += bytesTransferred;
 
-        if (byteClock > sampleThresholdBits) {
+        if (byteClock > sampleThresholdBytes) {
             long nowMs = SystemClock.elapsedRealtime();
             sampleStore.addSample(bytesTransferred * 8,
                     nowMs - sampleStartMs);
