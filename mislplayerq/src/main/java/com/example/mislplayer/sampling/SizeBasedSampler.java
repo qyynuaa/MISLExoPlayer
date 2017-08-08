@@ -80,12 +80,18 @@ public class SizeBasedSampler implements TransferListener<Object> {
         pauseSampling();
     }
 
+    /**
+     * Begin a throughput sample.
+     */
     private void startSampling() {
         sampleStartMs = SystemClock.elapsedRealtime();
         byteClock = 0;
         sampleDurationMs = 0;
     }
 
+    /**
+     * Finish a throughput sample and send it to the sample store.
+     */
     private void finishSampling() {
         long nowMs = SystemClock.elapsedRealtime();
         sampleDurationMs += nowMs - sampleStartMs;
@@ -93,15 +99,27 @@ public class SizeBasedSampler implements TransferListener<Object> {
         sampleStartMs = 0;
     }
 
+    /**
+     * Pause sampling, to be resumed later.
+     */
     private void pauseSampling() {
         long nowMs = SystemClock.elapsedRealtime();
         sampleDurationMs += nowMs - sampleStartMs;
     }
 
+    /**
+     * Resume sampling after pausing it.
+     */
     private void resumeSampling() {
         sampleStartMs = SystemClock.elapsedRealtime();
     }
 
+    /**
+     * Update the current sample.
+     *
+     * @param bytesTransferred The number of bytes transferred since the
+     *                         last update.
+     */
     private void updateSample(int bytesTransferred) {
         byteClock += bytesTransferred;
 
@@ -111,10 +129,20 @@ public class SizeBasedSampler implements TransferListener<Object> {
         }
     }
 
+    /**
+     * Indicates whether the sample has overcome the threshold.
+     *
+     * @return true if the sample is ready, false otherwise.
+     */
     private boolean sampleIsReady() {
         return byteClock >= sampleThresholdBytes;
     }
 
+    /**
+     * Indicates whether there is an ongoing sample.
+     *
+     * @return true if we are in the middle of sampling, false otherwise.
+     */
     private boolean startedSampling() {
         return sampleStartMs != 0;
     }
