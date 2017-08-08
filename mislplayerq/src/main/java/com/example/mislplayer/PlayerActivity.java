@@ -15,8 +15,10 @@ import com.example.mislplayer.sampling.ChunkBasedSampler;
 import com.example.mislplayer.sampling.ChunkLogger;
 import com.example.mislplayer.sampling.DefaultChunkLogger;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
+import com.example.mislplayer.sampling.SizeBasedSampler;
 import com.example.mislplayer.trackselection.ArbiterTrackSelection;
 import com.example.mislplayer.trackselection.BBA2TrackSelection;
+import com.example.mislplayer.trackselection.BasicTrackSelection;
 import com.example.mislplayer.trackselection.ElasticTrackSelection;
 import com.example.mislplayer.trackselection.OscarHTrackSelection;
 import com.google.android.exoplayer2.C;
@@ -201,6 +203,9 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
             transferListener = bandwidthMeter;
             trackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
+        } else if (algorithmType == AdaptationAlgorithmType.BASIC_SIZE) {
+            transferListener = new SizeBasedSampler(sampleProcessor, 100_000);
+            trackSelectionFactory = new BasicTrackSelection.Factory(sampleProcessor);
         } else {
             ChunkBasedSampler chunkSampler = new ChunkBasedSampler(sampleProcessor, sampleProcessor);
             transferListener = chunkSampler;
