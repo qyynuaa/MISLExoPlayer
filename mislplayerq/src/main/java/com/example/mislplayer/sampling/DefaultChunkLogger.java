@@ -46,7 +46,7 @@ public class DefaultChunkLogger implements ChunkLogger {
                         long stallDurationMs, long repLevelKbps, double deliveryRateKbps,
                         double actualRateKbps, long byteSize,
                         long bufferLevelUs, long chunkDurationMs){
-            this.chunkIndex = (int) (chunkStartTimeMs / 4000) + 1;
+            this.chunkIndex = (int) (chunkStartTimeMs / chunkDurationMs) + 1;
             this.arrivalTimeMs = arrivalTimeMs;
             this.loadDurationMs = loadDurationMs;
             this.stallDurationMs = stallDurationMs;
