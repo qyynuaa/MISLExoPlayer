@@ -110,6 +110,7 @@ public class DefaultChunkLogger implements ChunkLogger {
 
     private long stallClockMs;
     private int lastState;
+    private boolean currentlyStalling = false;
 
     /** Logs to file data about all the chunks downloaded so far. */
     @Override
@@ -371,9 +372,11 @@ public class DefaultChunkLogger implements ChunkLogger {
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
         if (lastState == ExoPlayer.STATE_READY && playbackState == ExoPlayer.STATE_BUFFERING) {
             stallClockMs = SystemClock.elapsedRealtime();
-        } else if (lastState == ExoPlayer.STATE_BUFFERING && playbackState == ExoPlayer.STATE_READY) {
+            currentlyStalling = true;
+        } else if (currentlyStalling && playbackState == ExoPlayer.STATE_READY) {
             long nowMs = SystemClock.elapsedRealtime();
             totalStallDurationMs += nowMs - stallClockMs;
+            currentlyStalling = false;
         }
         lastState = playbackState;
     }
