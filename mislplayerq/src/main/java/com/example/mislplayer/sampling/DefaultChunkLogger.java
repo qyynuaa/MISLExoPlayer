@@ -124,6 +124,8 @@ public class DefaultChunkLogger implements ChunkLogger {
     private long lastBytesLoaded;
     private Format lastTrackFormat;
 
+    private long manifestRequestTime = 0;
+
     /** Logs to file data about all the chunks downloaded so far. */
     @Override
     public void writeLogsToFile() {
@@ -189,7 +191,7 @@ public class DefaultChunkLogger implements ChunkLogger {
         long actualRateKbps = Math.round((double) lastBytesLoaded * 8 / chunkDurationMs);
 
         LogEntry logEntry = new LogEntry(lastMediaStartTimeMs,
-                lastElapsedRealtimeMs, lastLoadDurationMs,
+                lastElapsedRealtimeMs - manifestRequestTime, lastLoadDurationMs,
                 totalStallDurationMs, representationRateKbps,
                 deliveryRateKbps, actualRateKbps, lastBytesLoaded,
                 lastBufferLevelMs, chunkDurationMs);
@@ -458,5 +460,42 @@ public class DefaultChunkLogger implements ChunkLogger {
     @Override
     public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
 
+    }
+
+    /**
+     * Called when a transfer starts.
+     *
+     * @param source   The source performing the transfer.
+     * @param dataSpec Describes the data being transferred.
+     */
+    @Override
+    public void onTransferStart(Object source, DataSpec dataSpec) {
+        Log.d(TAG, "onTransferStart() called");
+
+        if (manifestRequestTime == 0) {
+            manifestRequestTime = SystemClock.elapsedRealtime();
+            Log.d(TAG, String.format("Updated manifest request time to %d.", manifestRequestTime));
+        }
+    }
+
+    /**
+     * Called incrementally during a transfer.
+     *
+     * @param source           The source performing the transfer.
+     * @param bytesTransferred The number of bytes transferred since the previous call to this
+     */
+    @Override
+    public void onBytesTransferred(Object source, int bytesTransferred) {
+        Log.d(TAG, "onBytesTransferred() called");
+    }
+
+    /**
+     * Called when a transfer ends.
+     *
+     * @param source The source performing the transfer.
+     */
+    @Override
+    public void onTransferEnd(Object source) {
+        Log.d(TAG, "onTransferEnd() called");
     }
 }
