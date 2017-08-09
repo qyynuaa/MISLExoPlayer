@@ -113,7 +113,16 @@ public class DefaultChunkLogger implements ChunkLogger {
     private int lastState;
     private boolean currentlyStalling = false;
 
+    private boolean newBufferLevel = false;
+    private boolean newChunkData = false;
+
     private MediaChunk lastBufferChunk;
+    private long lastMediaStartTimeMs;
+    private long lastElapsedRealtimeMs;
+    private long lastLoadDurationMs;
+    private long lastMediaEndTimeMs;
+    private long lastBytesLoaded;
+    private Format lastTrackFormat;
 
     /** Logs to file data about all the chunks downloaded so far. */
     @Override
@@ -162,7 +171,29 @@ public class DefaultChunkLogger implements ChunkLogger {
             lastBufferChunk = previous;
             lastBufferLevelMs = bufferedDurationMs;
             Log.d(TAG, String.format("Buffer level updated to %d", lastBufferLevelMs));
+
+            if (newChunkData) {
+                makeNewLogEntry();
+                newChunkData = false;
+            } else {
+                // mark that there's a new buffer level value
+                newBufferLevel = true;
+            }
         }
+    }
+
+    private void makeNewLogEntry() {
+        long representationRateKbps = lastTrackFormat.bitrate / 1000;
+        long deliveryRateKbps = Math.round((double) lastBytesLoaded * 8 / lastLoadDurationMs);
+        long chunkDurationMs = lastMediaEndTimeMs - lastMediaStartTimeMs;
+        long actualRateKbps = Math.round((double) lastBytesLoaded * 8 / chunkDurationMs);
+
+        LogEntry logEntry = new LogEntry(lastMediaStartTimeMs,
+                lastElapsedRealtimeMs, lastLoadDurationMs,
+                totalStallDurationMs, representationRateKbps,
+                deliveryRateKbps, actualRateKbps, lastBytesLoaded,
+                lastBufferLevelMs, chunkDurationMs);
+        log.add(logEntry.getChunkIndex() - 1, logEntry);
     }
 
     /**
@@ -221,21 +252,20 @@ public class DefaultChunkLogger implements ChunkLogger {
                                 long elapsedRealtimeMs, long loadDurationMs,
                                 long bytesLoaded) {
         if (trackType == C.TRACK_TYPE_VIDEO && mediaStartTimeMs != C.TIME_UNSET) {
-            Log.d(TAG, String.format("Media start time: %d", mediaStartTimeMs));
-            Log.d(TAG, String.format("Media end time: %d", mediaEndTimeMs));
-            Log.d(TAG, String.format("Media load duration: %d", loadDurationMs));
-            long representationRateKbps = trackFormat.bitrate / 1000;
-            long deliveryRateKbps = Math.round((double)bytesLoaded * 8 / loadDurationMs);
-            long chunkDurationMs = mediaEndTimeMs - mediaStartTimeMs;
-            long actualRateKbps = Math.round((double)bytesLoaded * 8 / chunkDurationMs);
+            this.lastTrackFormat = trackFormat;
+            this.lastMediaStartTimeMs = mediaStartTimeMs;
+            this.lastMediaEndTimeMs = mediaEndTimeMs;
+            this.lastLoadDurationMs = loadDurationMs;
+            this.lastElapsedRealtimeMs = elapsedRealtimeMs;
+            this.lastBytesLoaded = bytesLoaded;
 
-            LogEntry logEntry = new LogEntry(mediaStartTimeMs,
-                    elapsedRealtimeMs, loadDurationMs,
-                    totalStallDurationMs, representationRateKbps,
-                    deliveryRateKbps, actualRateKbps, bytesLoaded,
-                    lastBufferLevelMs, chunkDurationMs);
-            log.add(logEntry.getChunkIndex() - 1, logEntry);
-            Log.d(TAG, String.format("Buffer level of %d used.", lastBufferLevelMs));
+            if (newBufferLevel) {
+                makeNewLogEntry();
+                newBufferLevel = false;
+            } else {
+                // mark that there's new chunk data
+                newChunkData = true;
+            }
         }
     }
 
