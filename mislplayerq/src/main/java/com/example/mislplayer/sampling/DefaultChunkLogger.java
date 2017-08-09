@@ -13,6 +13,7 @@ import com.google.android.exoplayer2.Renderer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.SampleStream;
 import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.source.chunk.MediaChunk;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSpec;
 
@@ -106,11 +107,13 @@ public class DefaultChunkLogger implements ChunkLogger {
     private List<LogEntry> log = new ArrayList<>();
 
     private long totalStallDurationMs;
-    private long currentBufferLevelMs;
+    private long lastBufferLevelMs;
 
     private long stallClockMs;
     private int lastState;
     private boolean currentlyStalling = false;
+
+    private MediaChunk lastBufferChunk;
 
     /** Logs to file data about all the chunks downloaded so far. */
     @Override
@@ -150,12 +153,16 @@ public class DefaultChunkLogger implements ChunkLogger {
     /**
      * Informs the chunk store of the current buffer estimate.
      *
+     * @param previous
      * @param bufferedDurationMs
      */
     @Override
-    public void updateBufferLevel(long bufferedDurationMs) {
-        currentBufferLevelMs = bufferedDurationMs;
-        Log.d(TAG, String.format("Buffer level updated to %d", currentBufferLevelMs));
+    public void updateBufferLevel(MediaChunk previous, long bufferedDurationMs) {
+        if (previous != lastBufferChunk) {
+            lastBufferChunk = previous;
+            lastBufferLevelMs = bufferedDurationMs;
+            Log.d(TAG, String.format("Buffer level updated to %d", lastBufferLevelMs));
+        }
     }
 
     /**
@@ -226,9 +233,9 @@ public class DefaultChunkLogger implements ChunkLogger {
                     elapsedRealtimeMs, loadDurationMs,
                     totalStallDurationMs, representationRateKbps,
                     deliveryRateKbps, actualRateKbps, bytesLoaded,
-                    currentBufferLevelMs, chunkDurationMs);
+                    lastBufferLevelMs, chunkDurationMs);
             log.add(logEntry.getChunkIndex() - 1, logEntry);
-            Log.d(TAG, String.format("Buffer level of %d used.", currentBufferLevelMs));
+            Log.d(TAG, String.format("Buffer level of %d used.", lastBufferLevelMs));
         }
     }
 

@@ -143,7 +143,7 @@ public class MISLDashChunkSource implements DashChunkSource {
             chunkListener.giveLastChunk(previous);
         }
         long bufferedDurationUs = previous != null ? (previous.endTimeUs - playbackPositionUs) : 0;
-        chunkLogger.updateBufferLevel(bufferedDurationUs);
+        chunkLogger.updateBufferLevel(previous, bufferedDurationUs);
 
         dashChunkSource.getNextChunk(previous, playbackPositionUs, out);
     }

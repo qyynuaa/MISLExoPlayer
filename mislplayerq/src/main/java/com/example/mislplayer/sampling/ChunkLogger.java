@@ -2,6 +2,7 @@ package com.example.mislplayer.sampling;
 
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.source.AdaptiveMediaSourceEventListener;
+import com.google.android.exoplayer2.source.chunk.MediaChunk;
 
 /**
  * Logs information about a run, on a chunk-by-chunk basis.
@@ -15,5 +16,5 @@ public interface ChunkLogger extends AdaptiveMediaSourceEventListener, ExoPlayer
     void clearChunkInformation();
 
     /** Informs the logger of the current buffer estimate. */
-    void updateBufferLevel(long bufferedDurationUs);
+    void updateBufferLevel(MediaChunk previous, long bufferedDurationUs);
 }
