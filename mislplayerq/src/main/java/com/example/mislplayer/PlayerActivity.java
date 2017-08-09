@@ -90,6 +90,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private TrackSelection.Factory trackSelectionFactory;
     private ChunkLogger chunkLogger = new DefaultChunkLogger();
     private ExoPlayer.EventListener playerListener = null;
+    private DefaultSampleProcessor sampleProcessor;
 
     private int minBufferMs = 26000;
     private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
@@ -155,6 +156,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 new DefaultRenderersFactory(this), trackSelector,
                 loadControl);
 
+        player.addListener(sampleProcessor);
+
         player.addListener(chunkLogger);
         if (playerListener != null) {
             player.addListener(playerListener);
@@ -202,7 +205,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
     //Choose our algorithm given the button selected in the previous Activity
     private void configureRun() {
-        DefaultSampleProcessor sampleProcessor = new DefaultSampleProcessor(maxBufferMs);
+        sampleProcessor = new DefaultSampleProcessor(maxBufferMs);
 
         if (algorithmType == AdaptationAlgorithmType.BASIC_ADAPTIVE) {
             DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();

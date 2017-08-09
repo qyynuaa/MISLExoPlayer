@@ -3,7 +3,15 @@ package com.example.mislplayer.sampling;
 import android.os.Environment;
 import android.util.Log;
 
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Renderer;
+import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
+import com.google.android.exoplayer2.source.dash.manifest.DashManifest;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,7 +27,8 @@ import static java.lang.Math.min;
 /**
  * A default sample processor.
  */
-public class DefaultSampleProcessor implements SampleProcessor, SampleStore {
+public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
+        ExoPlayer.EventListener {
 
     /** A default throughput sample implementation. */
     public static class DefaultThroughputSample implements ThroughputSample {
@@ -60,10 +69,11 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore {
     }
 
     private static final String TAG = "DefaultSampleProcessor";
+    private static final int DATA_NOT_AVAILABLE = -1;
 
     private List<ThroughputSample> samples = new ArrayList<>();
     private int maxBufferMs;
-    private long mpdDurationMs;
+    private long mpdDurationMs = DATA_NOT_AVAILABLE;
 
     private MediaChunk lastChunk;
 
@@ -87,17 +97,17 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore {
         this.lastChunk = chunk;
     }
 
-    @Override
-    public void giveMpdDuration(long durationMs) {
-        mpdDurationMs = durationMs;
-    }
-
     /** Returns the most recent throughput sample. */
     private ThroughputSample lastSample() {
         return samples.get(samples.size() - 1);
     }
 
-    /** Provides the duration of the current mpd. */
+    /**
+     * Provides the duration of the current mpd, in ms.
+     *
+     * @return the mpd duration in ms if it's available,
+     * {@link #DATA_NOT_AVAILABLE} otherwise
+     */
     @Override
     public long mpdDuration() {
         return mpdDurationMs;
@@ -384,5 +394,100 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore {
         }
 
         return (1 + T1 + T2 / T3);
+    }
+
+    // ExoPlayer EventListener implementation
+
+    /**
+     * Called when the timeline and/or manifest has been refreshed.
+     * <p>
+     * Note that if the timeline has changed then a position discontinuity may also have occurred.
+     * For example, the current period index may have changed as a result of periods being added or
+     * removed from the timeline. This will <em>not</em> be reported via a separate call to
+     * {@link #onPositionDiscontinuity()}.
+     *
+     * @param timeline The latest timeline. Never null, but may be empty.
+     * @param manifest The latest manifest. May be null.
+     */
+    @Override
+    public void onTimelineChanged(Timeline timeline, Object manifest) {
+        if (manifest != null) {
+            DashManifest dashManifest = (DashManifest)manifest;
+            mpdDurationMs = dashManifest.duration;
+        }
+    }
+
+    /**
+     * Called when the available or selected tracks change.
+     *
+     * @param trackGroups     The available tracks. Never null, but may be of length zero.
+     * @param trackSelections The track selections for each {@link Renderer}. Never null and always
+     *                        of length {@link ExoPlayer#getRendererCount()}, but may contain null elements.
+     */
+    @Override
+    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+
+    }
+
+    /**
+     * Called when the player starts or stops loading the source.
+     *
+     * @param isLoading Whether the source is currently being loaded.
+     */
+    @Override
+    public void onLoadingChanged(boolean isLoading) {
+
+    }
+
+    /**
+     * Called when the value returned from either {@link ExoPlayer#getPlayWhenReady()} or
+     * {@link ExoPlayer#getPlaybackState()} changes.
+     *
+     * @param playWhenReady Whether playback will proceed when ready.
+     * @param playbackState One of the {@code STATE} constants defined in the {@link ExoPlayer}
+     */
+    @Override
+    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+
+    }
+
+    /**
+     * Called when an error occurs. The playback state will transition to {@link ExoPlayer#STATE_IDLE}
+     * immediately after this method is called. The player instance can still be used, and
+     * {@link ExoPlayer#release()} must still be called on the player should it no longer be required.
+     *
+     * @param error The error.
+     */
+    @Override
+    public void onPlayerError(ExoPlaybackException error) {
+
+    }
+
+    /**
+     * Called when a position discontinuity occurs without a change to the timeline. A position
+     * discontinuity occurs when the current window or period index changes (as a result of playback
+     * transitioning from one period in the timeline to the next), or when the playback position
+     * jumps within the period currently being played (as a result of a seek being performed, or
+     * when the source introduces a discontinuity internally).
+     * <p>
+     * When a position discontinuity occurs as a result of a change to the timeline this method is
+     * <em>not</em> called. {@link #onTimelineChanged(Timeline, Object)} is called in this case.
+     */
+    @Override
+    public void onPositionDiscontinuity() {
+
+    }
+
+    /**
+     * Called when the current playback parameters change. The playback parameters may change due to
+     * a call to {@link ExoPlayer#setPlaybackParameters(PlaybackParameters)}, or the player itself
+     * may change them (for example, if audio playback switches to passthrough mode, where speed
+     * adjustment is no longer possible).
+     *
+     * @param playbackParameters The playback parameters.
+     */
+    @Override
+    public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
+
     }
 }

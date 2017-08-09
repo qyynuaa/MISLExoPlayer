@@ -57,16 +57,6 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
     }
 
     /**
-     * Gives the listener the duration of the mpd.
-     *
-     * @param durationMs The duration of the mpd in ms.
-     */
-    @Override
-    public void giveMpdDuration(long durationMs) {
-        sampleProcessor.giveMpdDuration(durationMs);
-    }
-
-    /**
      * Called when a transfer starts.
      *
      * @param source   The source performing the transfer.
