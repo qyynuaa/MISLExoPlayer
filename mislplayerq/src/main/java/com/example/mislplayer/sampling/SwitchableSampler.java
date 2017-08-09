@@ -21,6 +21,12 @@ public class SwitchableSampler implements TransferListener<Object>,
         ExoPlayer.EventListener {
 
     public enum SampleMode {
+        /**
+         * Time-based sampling.
+         *
+         * <p>Once a threshold of time spent downloading has been exceeded,
+         * a sample is finished.
+         */
         TIME {
             @Override
             public boolean sampleIsReady(long durationMs,
@@ -30,6 +36,12 @@ public class SwitchableSampler implements TransferListener<Object>,
                 return durationMs >= thresholdMs;
             }
         },
+        /**
+         * Size-based sampling.
+         *
+         * <p>Once a threshold of bytes downloaded has been exceeded, a
+         * sample is finished.
+         */
         SIZE {
             @Override
             public boolean sampleIsReady(long durationMs,
@@ -39,6 +51,10 @@ public class SwitchableSampler implements TransferListener<Object>,
                 return bytesTransferred >= thresholdBytes;
             }
         },
+        /**
+         * Uses size-based and time-based sampling, and finishes a sample
+         * according to whichever threshold is exceeded first.
+         */
         SIZE_OR_TIME {
             @Override
             public boolean sampleIsReady(long durationMs,
@@ -49,6 +65,10 @@ public class SwitchableSampler implements TransferListener<Object>,
                         || durationMs >= thresholdMs;
             }
         },
+        /**
+         * Uses size-based and time-based sampling, and finished a sample
+         * according to whichever threshold is exceeded last.
+         */
         SIZE_AND_TIME {
             @Override
             public boolean sampleIsReady(long durationMs,
@@ -60,6 +80,18 @@ public class SwitchableSampler implements TransferListener<Object>,
             }
         };
 
+        /**
+         * Reports whether a sample is finished (ready to be delivered to
+         * the sample store).
+         *
+         * @param durationMs The amount of time spent downloading during
+         *                   the sample period, in ms.
+         * @param bytesTransferred The number of bytes transferred during
+         *                         the sample period.
+         * @param thresholdMs The time-threshold for the sample, in ms.
+         * @param thresholdBytes The size-threshold for the sample, in bytes.
+         * @return true if the sample is finished, false otherwise
+         */
         public abstract boolean sampleIsReady(long durationMs,
                                               long bytesTransferred,
                                               long thresholdMs,
@@ -82,6 +114,32 @@ public class SwitchableSampler implements TransferListener<Object>,
     private long sampleClockMs = TIME_UNSET;
     private long sampleDurationMs = 0;
 
+    /**
+     * Creates a switchable sampler with specified mode and default
+     * threshold values.
+     *
+     * @param sampleStore The store to deliver throughput samples to.
+     * @param mode The sampling mode to use.
+     */
+    public SwitchableSampler(SampleStore sampleStore, SampleMode mode) {
+        this(sampleStore, mode, DEFAULT_THRESHOLD_MS,
+                DEFAULT_THRESHOLD_BYTES);
+    }
+
+    /**
+     * Creates a switchable sampler with specified mode and threshold.
+     *
+     * <p>The threshold determines when samples are considered "ready",
+     * e.g. a threshold of 10 kB will mean any sample of 10 kB or more will
+     * be considered ready.
+     *
+     * <p>For time-based estimation, the threshold is in ms. For size-based
+     * estimation, it's in bytes.
+     *
+     * @param sampleStore The store to deliver throughput samples to.
+     * @param mode The sampling mode to use.
+     * @param sampleThreshold The sampling threshold to use.
+     */
     public SwitchableSampler(SampleStore sampleStore, SampleMode mode,
                              long sampleThreshold) {
                 this(sampleStore, mode,
@@ -89,6 +147,16 @@ public class SwitchableSampler implements TransferListener<Object>,
                         mode == SampleMode.SIZE ? sampleThreshold : DEFAULT_THRESHOLD_BYTES);
     }
 
+    /**
+     * Creates a switchable sampler with specified mode and thresholds.
+     *
+     * <p>Depending on the mode, the thresholds may be ignored.
+     *
+     * @param sampleStore The store to deliver throughput samples to.
+     * @param mode The sampling mode to use.
+     * @param sampleThresholdMs The time threshold to use (in ms).
+     * @param sampleThresholdBytes The size threshold to use (in bytes).
+     */
     public SwitchableSampler(SampleStore sampleStore, SampleMode mode,
                              long sampleThresholdMs,
                              long sampleThresholdBytes) {
@@ -98,6 +166,7 @@ public class SwitchableSampler implements TransferListener<Object>,
         this.sampleThresholdBytes = sampleThresholdBytes;
     }
 
+    /** Change to a new sampling mode. */
     public void changeMode(SampleMode mode) {
         this.mode = mode;
     }
