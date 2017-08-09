@@ -14,6 +14,6 @@ public interface ChunkLogger extends AdaptiveMediaSourceEventListener, ExoPlayer
     /** Clears the store of downloaded chunks. */
     void clearChunkInformation();
 
-    /** Gives the logger a reference to the current player instance. */
-    void setPlayer(ExoPlayer player);
+    /** Informs the logger of the current buffer estimate. */
+    void updateBufferLevel(long bufferedDurationUs);
 }

@@ -38,14 +38,14 @@ public class DefaultChunkLogger implements ChunkLogger {
         private long repLevelKbps;
         private long actualRateKbps;
         private long byteSize;
-        private long bufferLevelMs;
+        private long bufferLevelUs;
         private long deliveryRateKbps;
         private long chunkDurationMs;
 
         public LogEntry(long chunkStartTimeMs, long arrivalTimeMs, long loadDurationMs,
-                        long stallDurationMs, long repLevelKbps, long deliveryRateKbps,
-                        long actualRateKbps, long byteSize,
-                        long bufferLevelMs, long chunkDurationMs){
+                        long stallDurationMs, long repLevelKbps, double deliveryRateKbps,
+                        double actualRateKbps, long byteSize,
+                        long bufferLevelUs, long chunkDurationMs){
             this.chunkIndex = (int) (chunkStartTimeMs / chunkDurationMs) + 1;
             this.arrivalTimeMs = arrivalTimeMs;
             this.loadDurationMs = loadDurationMs;
@@ -54,7 +54,7 @@ public class DefaultChunkLogger implements ChunkLogger {
             this.deliveryRateKbps = Math.round(deliveryRateKbps);
             this.actualRateKbps = Math.round(actualRateKbps);
             this.byteSize = byteSize;
-            this.bufferLevelMs = bufferLevelMs;
+            this.bufferLevelUs = bufferLevelUs;
             this.chunkDurationMs = chunkDurationMs;
         }
 
@@ -80,9 +80,6 @@ public class DefaultChunkLogger implements ChunkLogger {
         public long getByteSize(){
             return byteSize;
         }
-        public long getBufferLevelMs() {
-            return bufferLevelMs;
-        }
 
         public long getChunkDurationMs(){
             return chunkDurationMs;
@@ -90,7 +87,7 @@ public class DefaultChunkLogger implements ChunkLogger {
 
         public void setByteSize(long byteSize){this.byteSize=byteSize;}
         public void setDeliveryRateKbps(long deliveryRateKbps){this.deliveryRateKbps = deliveryRateKbps;}
-        public void setBufferLevelMs(long bufferLevelMs){this.bufferLevelMs = bufferLevelMs;}
+        public void setBufferLevelUs(long bufferLevelUs){this.bufferLevelUs = bufferLevelUs;}
         public void setRepLevelKbps(int repLevelKbps){this.repLevelKbps = repLevelKbps;}
         public void setActualRateKbps(long actualRateKbps){this.actualRateKbps = actualRateKbps;}
 
@@ -99,7 +96,7 @@ public class DefaultChunkLogger implements ChunkLogger {
             String logLine = "%5d\t%8d\t%9d\t%10d\t%10d\t%9d\t%9d\t%10d\t%10d\n";
             return String.format(logLine, chunkIndex, arrivalTimeMs, loadDurationMs,
                     stallDurationMs, repLevelKbps, deliveryRateKbps,
-                    actualRateKbps, byteSize, bufferLevelMs);
+                    actualRateKbps, byteSize, bufferLevelUs / 1000);
         }
     }
 
@@ -108,17 +105,12 @@ public class DefaultChunkLogger implements ChunkLogger {
 
     private List<LogEntry> log = new ArrayList<>();
 
-    private ExoPlayer player;
-
     private long totalStallDurationMs;
+    private long currentBufferLevelMs;
 
     private long stallClockMs;
     private int lastState;
     private boolean currentlyStalling = false;
-
-    public void setPlayer(ExoPlayer player) {
-        this.player = player;
-    }
 
     /** Logs to file data about all the chunks downloaded so far. */
     @Override
@@ -153,6 +145,17 @@ public class DefaultChunkLogger implements ChunkLogger {
     @Override
     public void clearChunkInformation() {
         this.log = new ArrayList<>();
+    }
+
+    /**
+     * Informs the chunk store of the current buffer estimate.
+     *
+     * @param bufferedDurationMs
+     */
+    @Override
+    public void updateBufferLevel(long bufferedDurationMs) {
+        currentBufferLevelMs = bufferedDurationMs;
+        Log.d(TAG, String.format("Buffer level updated to %d", currentBufferLevelMs));
     }
 
     /**
@@ -218,7 +221,6 @@ public class DefaultChunkLogger implements ChunkLogger {
             long deliveryRateKbps = Math.round((double)bytesLoaded * 8 / loadDurationMs);
             long chunkDurationMs = mediaEndTimeMs - mediaStartTimeMs;
             long actualRateKbps = Math.round((double)bytesLoaded * 8 / chunkDurationMs);
-            long currentBufferLevelMs = player.getBufferedPosition() - player.getCurrentPosition();
 
             LogEntry logEntry = new LogEntry(mediaStartTimeMs,
                     elapsedRealtimeMs, loadDurationMs,
@@ -226,6 +228,7 @@ public class DefaultChunkLogger implements ChunkLogger {
                     deliveryRateKbps, actualRateKbps, bytesLoaded,
                     currentBufferLevelMs, chunkDurationMs);
             log.add(logEntry.getChunkIndex() - 1, logEntry);
+            Log.d(TAG, String.format("Buffer level of %d used.", currentBufferLevelMs));
         }
     }
 

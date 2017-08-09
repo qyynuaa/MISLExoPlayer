@@ -155,8 +155,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 new DefaultRenderersFactory(this), trackSelector,
                 loadControl);
 
-        chunkLogger.setPlayer(player);
-
         player.addListener(sampleProcessor);
 
         player.addListener(chunkLogger);
