@@ -36,23 +36,23 @@ public class DefaultChunkLogger implements ChunkLogger {
         private long loadDurationMs;
         private long stallDurationMs;
         private long repLevelKbps;
-        private double actualRateKbps;
+        private long actualRateKbps;
         private long byteSize;
         private long bufferLevelMs;
-        private double deliveryRateKbps;
+        private long deliveryRateKbps;
         private long chunkDurationMs;
 
         public LogEntry(long chunkStartTimeMs, long arrivalTimeMs, long loadDurationMs,
-                        long stallDurationMs, long repLevelKbps, double deliveryRateKbps,
-                        double actualRateKbps, long byteSize,
+                        long stallDurationMs, long repLevelKbps, long deliveryRateKbps,
+                        long actualRateKbps, long byteSize,
                         long bufferLevelMs, long chunkDurationMs){
             this.chunkIndex = (int) (chunkStartTimeMs / chunkDurationMs) + 1;
             this.arrivalTimeMs = arrivalTimeMs;
             this.loadDurationMs = loadDurationMs;
             this.stallDurationMs = stallDurationMs;
             this.repLevelKbps = repLevelKbps;
-            this.deliveryRateKbps = deliveryRateKbps;
-            this.actualRateKbps = actualRateKbps;
+            this.deliveryRateKbps = Math.round(deliveryRateKbps);
+            this.actualRateKbps = Math.round(actualRateKbps);
             this.byteSize = byteSize;
             this.bufferLevelMs = bufferLevelMs;
             this.chunkDurationMs = chunkDurationMs;
@@ -96,7 +96,7 @@ public class DefaultChunkLogger implements ChunkLogger {
 
         @Override
         public String toString(){
-            String logLine = "%5d\t%8d\t%9d\t%10d\t%10d\t%9g\t%9g\t%10d\t%10d\n";
+            String logLine = "%5d\t%8d\t%9d\t%10d\t%10d\t%9d\t%9d\t%10d\t%10d\n";
             return String.format(logLine, chunkIndex, arrivalTimeMs, loadDurationMs,
                     stallDurationMs, repLevelKbps, deliveryRateKbps,
                     actualRateKbps, byteSize, bufferLevelMs);
@@ -215,9 +215,9 @@ public class DefaultChunkLogger implements ChunkLogger {
             Log.d(TAG, String.format("Media end time: %d", mediaEndTimeMs));
             Log.d(TAG, String.format("Media load duration: %d", loadDurationMs));
             long representationRateKbps = trackFormat.bitrate / 1000;
-            double deliveryRateKbps = bytesLoaded * 8 / loadDurationMs;
+            long deliveryRateKbps = Math.round((double)bytesLoaded * 8 / loadDurationMs);
             long chunkDurationMs = mediaEndTimeMs - mediaStartTimeMs;
-            double actualRateKbps = (double) bytesLoaded * 8000 / chunkDurationMs;
+            long actualRateKbps = Math.round((double)bytesLoaded * 8 / chunkDurationMs);
             long currentBufferLevelMs = player.getBufferedPosition() - player.getCurrentPosition();
 
             LogEntry logEntry = new LogEntry(mediaStartTimeMs,
