@@ -225,7 +225,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             trackSelectionFactory = new BasicTrackSelection.Factory(sampleProcessor);
             playerListener = sizeSampler;
         } else if (algorithmType == AdaptationAlgorithmType.BASIC_TIME) {
-            transferListener = new TimeBasedSampler(sampleProcessor, 500);
+            transferListener = new TimeBasedSampler(sampleProcessor, 4000);
             trackSelectionFactory = new BasicTrackSelection.Factory(sampleProcessor);
         } else {
             ChunkBasedSampler chunkSampler = new ChunkBasedSampler(sampleProcessor, sampleProcessor);

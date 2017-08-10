@@ -38,6 +38,7 @@ public class TimeBasedSampler implements TransferListener<Object> {
     }
 
     private static final long DEFAULT_SAMPLE_THRESHOLD = 500;
+    private static final long TIME_UNSET = -1;
 
     private SampleStore sampleStore;
 
@@ -45,8 +46,7 @@ public class TimeBasedSampler implements TransferListener<Object> {
     private Runnable sampleRunnable = new Runnable() {
         @Override
         public void run() {
-            deliverSample();
-            Log.d(TAG, "Time-based sample delivered.");
+            deliverTimeSample();
 
             sampleHandler.postDelayed(sampleRunnable, sampleThresholdMs);
         }
@@ -57,6 +57,9 @@ public class TimeBasedSampler implements TransferListener<Object> {
     private long sampleBytesTransferred;
     private long sampleStartMs;
 
+    private long chunkBytesTransferred;
+    private long chunkStartMs;
+
     /**
      * Called when a transfer starts.
      *
@@ -66,7 +69,11 @@ public class TimeBasedSampler implements TransferListener<Object> {
     @Override
     public void onTransferStart(Object source, DataSpec dataSpec) {
         sampleHandler.postDelayed(sampleRunnable, sampleThresholdMs);
-        sampleStartMs = SystemClock.elapsedRealtime();
+
+        chunkStartMs = SystemClock.elapsedRealtime();
+        chunkBytesTransferred = 0;
+
+        sampleStartMs = chunkStartMs;
         sampleBytesTransferred = 0;
     }
 
@@ -78,6 +85,7 @@ public class TimeBasedSampler implements TransferListener<Object> {
      */
     @Override
     public void onBytesTransferred(Object source, int bytesTransferred) {
+        this.chunkBytesTransferred += bytesTransferred;
         this.sampleBytesTransferred += bytesTransferred;
     }
 
@@ -89,13 +97,14 @@ public class TimeBasedSampler implements TransferListener<Object> {
     @Override
     public void onTransferEnd(Object source) {
         sampleHandler.removeCallbacks(sampleRunnable);
-        deliverSample();
+        deliverChunkSample();
     }
 
     /**
-     * Finish a throughput sample and send it to the sample store.
+     * Finish a time-based throughput sample and send it to the sample
+     * store.
      */
-    private void deliverSample() {
+    private void deliverTimeSample() {
         long nowMs = SystemClock.elapsedRealtime();
         long sampleDurationMs = nowMs - sampleStartMs;
 
@@ -103,6 +112,23 @@ public class TimeBasedSampler implements TransferListener<Object> {
             sampleStore.addSample(sampleBytesTransferred * 8, sampleDurationMs);
             sampleStartMs = nowMs;
             sampleBytesTransferred = 0;
+            Log.d(TAG, "Time sample delivered.");
+        }
+    }
+
+    /**
+     * Finish a chunk-based throughput sample and send it to the sample
+     * store.
+     */
+    private void deliverChunkSample() {
+        long nowMs = SystemClock.elapsedRealtime();
+        long sampleDurationMs = nowMs - chunkStartMs;
+
+        if (sampleDurationMs > 0) {
+            sampleStore.addSample(chunkBytesTransferred * 8, sampleDurationMs);
+            chunkStartMs = TIME_UNSET;
+            chunkBytesTransferred = 0;
+            Log.d(TAG, "Chunk sample delivered.");
         }
     }
 }
