@@ -4,43 +4,23 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.example.mislplayer.ChunkListener;
+import com.google.android.exoplayer2.source.chunk.MediaChunk;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.TransferListener;
 
 /**
  * Samples the available throughput every x ms while a chunk is downloading.
  */
-public class TimeBasedSampler implements TransferListener<Object> {
+public class TimeBasedSampler implements TransferListener<Object>,
+        SampleStore, ChunkListener {
 
     private static final String TAG = "TimeBasedSampler";
 
-    /**
-     * Constructs a time-based sampler with a default sampling threshold.
-     *
-     * @param sampleStore The store to send the throughput samples to.
-     */
-    public TimeBasedSampler(SampleStore sampleStore) {
-        this(sampleStore, DEFAULT_SAMPLE_THRESHOLD);
-    }
-
-    /**
-     * Constructs a time-based sampler by specifying a sampling threshold.
-     *
-     * <p>A sample will be finished each time this many ms have elapsed.
-     *
-     * @param sampleStore The store to send the throughput samples to.
-     * @param sampleThresholdMs The threshold for throughput sampling.
-     */
-    public TimeBasedSampler(SampleStore sampleStore,
-                            long sampleThresholdMs) {
-        this.sampleThresholdMs = sampleThresholdMs;
-        this.sampleStore = sampleStore;
-    }
-
-    private static final long DEFAULT_SAMPLE_THRESHOLD = 500;
-    private static final long TIME_UNSET = -1;
+    private static final long DEFAULT_SAMPLE_THRESHOLD = 4000;
 
     private SampleStore sampleStore;
+    private ChunkBasedSampler chunkSampler;
 
     private Handler sampleHandler = new Handler();
     private Runnable sampleRunnable = new Runnable() {
@@ -57,8 +37,31 @@ public class TimeBasedSampler implements TransferListener<Object> {
     private long sampleBytesTransferred;
     private long sampleStartMs;
 
-    private long chunkBytesTransferred;
-    private long chunkStartMs;
+    /**
+     * Constructs a time-based sampler with a default sampling threshold.
+     *
+     * @param sampleStore The store to send the throughput samples to.
+     * @param sampleProcessor The processor to send downloaded chunks to.
+     */
+    public TimeBasedSampler(SampleStore sampleStore,
+                            SampleProcessor sampleProcessor) {
+        this(sampleStore, sampleProcessor, DEFAULT_SAMPLE_THRESHOLD);
+    }
+
+    /**
+     * Constructs a time-based sampler by specifying a sampling threshold.
+     *
+     *  @param sampleStore The store to send the throughput samples to.
+     * @param sampleProcessor The sample processor to send chunks to.
+     * @param sampleThresholdMs The threshold for throughput sampling.
+     */
+    public TimeBasedSampler(SampleStore sampleStore,
+                            SampleProcessor sampleProcessor,
+                            long sampleThresholdMs) {
+        this.sampleThresholdMs = sampleThresholdMs;
+        this.sampleStore = sampleStore;
+        this.chunkSampler = new ChunkBasedSampler(sampleStore, sampleProcessor);
+    }
 
     /**
      * Called when a transfer starts.
@@ -70,11 +73,10 @@ public class TimeBasedSampler implements TransferListener<Object> {
     public void onTransferStart(Object source, DataSpec dataSpec) {
         sampleHandler.postDelayed(sampleRunnable, sampleThresholdMs);
 
-        chunkStartMs = SystemClock.elapsedRealtime();
-        chunkBytesTransferred = 0;
-
-        sampleStartMs = chunkStartMs;
+        sampleStartMs = SystemClock.elapsedRealtime();
         sampleBytesTransferred = 0;
+
+        chunkSampler.onTransferStart(source, dataSpec);
     }
 
     /**
@@ -85,8 +87,9 @@ public class TimeBasedSampler implements TransferListener<Object> {
      */
     @Override
     public void onBytesTransferred(Object source, int bytesTransferred) {
-        this.chunkBytesTransferred += bytesTransferred;
         this.sampleBytesTransferred += bytesTransferred;
+
+        chunkSampler.onBytesTransferred(source, bytesTransferred);
     }
 
     /**
@@ -96,8 +99,8 @@ public class TimeBasedSampler implements TransferListener<Object> {
      */
     @Override
     public void onTransferEnd(Object source) {
+        chunkSampler.onTransferEnd(source);
         sampleHandler.removeCallbacks(sampleRunnable);
-        deliverChunkSample();
     }
 
     /**
@@ -116,19 +119,26 @@ public class TimeBasedSampler implements TransferListener<Object> {
         }
     }
 
-    /**
-     * Finish a chunk-based throughput sample and send it to the sample
-     * store.
-     */
-    private void deliverChunkSample() {
-        long nowMs = SystemClock.elapsedRealtime();
-        long sampleDurationMs = nowMs - chunkStartMs;
+    // SampleStore implementation
 
-        if (sampleDurationMs > 0) {
-            sampleStore.addSample(chunkBytesTransferred * 8, sampleDurationMs);
-            chunkStartMs = TIME_UNSET;
-            chunkBytesTransferred = 0;
-            Log.d(TAG, "Chunk sample delivered.");
-        }
+    /** Adds a new throughput sample to the store. */
+    @Override
+    public void addSample(long bitsTransferred, long durationMs) {
+        sampleStore.addSample(bitsTransferred, durationMs);
+        sampleHandler.removeCallbacks(sampleRunnable);
+        Log.d(TAG, "Chunk sample delivered.");
+    }
+
+    // ChunkListener implementation
+
+    /**
+     * Gives the listener the last chunk that was downloaded, to be passed to the
+     * adaptation algorithm.
+     *
+     * @param lastChunk The last chunk that was downloaded.
+     */
+    @Override
+    public void giveLastChunk(MediaChunk lastChunk) {
+        chunkSampler.giveLastChunk(lastChunk);
     }
 }
