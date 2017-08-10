@@ -13,6 +13,7 @@ import com.google.android.exoplayer2.Renderer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.SampleStream;
 import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.source.chunk.MediaChunk;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSpec;
 
@@ -36,25 +37,25 @@ public class DefaultChunkLogger implements ChunkLogger {
         private long loadDurationMs;
         private long stallDurationMs;
         private long repLevelKbps;
-        private double actualRateKbps;
+        private long actualRateKbps;
         private long byteSize;
-        private long bufferLevelMs;
-        private double deliveryRateKbps;
+        private long bufferLevelUs;
+        private long deliveryRateKbps;
         private long chunkDurationMs;
 
         public LogEntry(long chunkStartTimeMs, long arrivalTimeMs, long loadDurationMs,
                         long stallDurationMs, long repLevelKbps, double deliveryRateKbps,
                         double actualRateKbps, long byteSize,
-                        long bufferLevelMs, long chunkDurationMs){
+                        long bufferLevelUs, long chunkDurationMs){
             this.chunkIndex = (int) (chunkStartTimeMs / chunkDurationMs) + 1;
             this.arrivalTimeMs = arrivalTimeMs;
             this.loadDurationMs = loadDurationMs;
             this.stallDurationMs = stallDurationMs;
             this.repLevelKbps = repLevelKbps;
-            this.deliveryRateKbps = deliveryRateKbps;
-            this.actualRateKbps = actualRateKbps;
+            this.deliveryRateKbps = Math.round(deliveryRateKbps);
+            this.actualRateKbps = Math.round(actualRateKbps);
             this.byteSize = byteSize;
-            this.bufferLevelMs = bufferLevelMs;
+            this.bufferLevelUs = bufferLevelUs;
             this.chunkDurationMs = chunkDurationMs;
         }
 
@@ -80,9 +81,6 @@ public class DefaultChunkLogger implements ChunkLogger {
         public long getByteSize(){
             return byteSize;
         }
-        public long getBufferLevelMs() {
-            return bufferLevelMs;
-        }
 
         public long getChunkDurationMs(){
             return chunkDurationMs;
@@ -90,16 +88,16 @@ public class DefaultChunkLogger implements ChunkLogger {
 
         public void setByteSize(long byteSize){this.byteSize=byteSize;}
         public void setDeliveryRateKbps(long deliveryRateKbps){this.deliveryRateKbps = deliveryRateKbps;}
-        public void setBufferLevelMs(long bufferLevelMs){this.bufferLevelMs = bufferLevelMs;}
+        public void setBufferLevelUs(long bufferLevelUs){this.bufferLevelUs = bufferLevelUs;}
         public void setRepLevelKbps(int repLevelKbps){this.repLevelKbps = repLevelKbps;}
         public void setActualRateKbps(long actualRateKbps){this.actualRateKbps = actualRateKbps;}
 
         @Override
         public String toString(){
-            String logLine = "%5d\t%8d\t%9d\t%10d\t%10d\t%9g\t%9g\t%10d\t%10d\n";
+            String logLine = "%5d\t%8d\t%9d\t%10d\t%10d\t%9d\t%9d\t%10d\t%10d\n";
             return String.format(logLine, chunkIndex, arrivalTimeMs, loadDurationMs,
                     stallDurationMs, repLevelKbps, deliveryRateKbps,
-                    actualRateKbps, byteSize, bufferLevelMs);
+                    actualRateKbps, byteSize, bufferLevelUs / 1000);
         }
     }
 
@@ -108,17 +106,25 @@ public class DefaultChunkLogger implements ChunkLogger {
 
     private List<LogEntry> log = new ArrayList<>();
 
-    private ExoPlayer player;
+    private long stallDurationMs;
+    private long lastBufferLevelMs;
 
-    private long totalStallDurationMs;
-
-    private long stallClockMs;
+    private long stallStartMs;
     private int lastState;
     private boolean currentlyStalling = false;
 
-    public void setPlayer(ExoPlayer player) {
-        this.player = player;
-    }
+    private boolean newBufferLevel = false;
+    private boolean newChunkData = false;
+
+    private MediaChunk lastBufferChunk;
+    private long lastMediaStartTimeMs;
+    private long lastElapsedRealtimeMs;
+    private long lastLoadDurationMs;
+    private long lastMediaEndTimeMs;
+    private long lastBytesLoaded;
+    private Format lastTrackFormat;
+
+    private long manifestRequestTime = 0;
 
     /** Logs to file data about all the chunks downloaded so far. */
     @Override
@@ -153,6 +159,44 @@ public class DefaultChunkLogger implements ChunkLogger {
     @Override
     public void clearChunkInformation() {
         this.log = new ArrayList<>();
+    }
+
+    /**
+     * Informs the chunk store of the current buffer estimate.
+     *
+     * @param previous
+     * @param bufferedDurationMs
+     */
+    @Override
+    public void updateBufferLevel(MediaChunk previous, long bufferedDurationMs) {
+        if (previous != lastBufferChunk) {
+            lastBufferChunk = previous;
+            lastBufferLevelMs = bufferedDurationMs;
+            Log.d(TAG, String.format("Buffer level updated to %d", lastBufferLevelMs));
+
+            if (newChunkData && !currentlyStalling) {
+                makeNewLogEntry();
+                newChunkData = false;
+                stallDurationMs = 0;
+            } else {
+                // mark that there's a new buffer level value
+                newBufferLevel = true;
+            }
+        }
+    }
+
+    private void makeNewLogEntry() {
+        long representationRateKbps = lastTrackFormat.bitrate / 1000;
+        long deliveryRateKbps = Math.round((double) lastBytesLoaded * 8 / lastLoadDurationMs);
+        long chunkDurationMs = lastMediaEndTimeMs - lastMediaStartTimeMs;
+        long actualRateKbps = Math.round((double) lastBytesLoaded * 8 / chunkDurationMs);
+
+        LogEntry logEntry = new LogEntry(lastMediaStartTimeMs,
+                lastElapsedRealtimeMs - manifestRequestTime, lastLoadDurationMs,
+                stallDurationMs, representationRateKbps,
+                deliveryRateKbps, actualRateKbps, lastBytesLoaded,
+                lastBufferLevelMs, chunkDurationMs);
+        log.add(logEntry.getChunkIndex() - 1, logEntry);
     }
 
     /**
@@ -211,21 +255,21 @@ public class DefaultChunkLogger implements ChunkLogger {
                                 long elapsedRealtimeMs, long loadDurationMs,
                                 long bytesLoaded) {
         if (trackType == C.TRACK_TYPE_VIDEO && mediaStartTimeMs != C.TIME_UNSET) {
-            Log.d(TAG, String.format("Media start time: %d", mediaStartTimeMs));
-            Log.d(TAG, String.format("Media end time: %d", mediaEndTimeMs));
-            Log.d(TAG, String.format("Media load duration: %d", loadDurationMs));
-            long representationRateKbps = trackFormat.bitrate / 1000;
-            double deliveryRateKbps = bytesLoaded * 8 / loadDurationMs;
-            long chunkDurationMs = mediaEndTimeMs - mediaStartTimeMs;
-            double actualRateKbps = (double) bytesLoaded * 8000 / chunkDurationMs;
-            long currentBufferLevelMs = player.getBufferedPosition() - player.getCurrentPosition();
+            this.lastTrackFormat = trackFormat;
+            this.lastMediaStartTimeMs = mediaStartTimeMs;
+            this.lastMediaEndTimeMs = mediaEndTimeMs;
+            this.lastLoadDurationMs = loadDurationMs;
+            this.lastElapsedRealtimeMs = elapsedRealtimeMs;
+            this.lastBytesLoaded = bytesLoaded;
 
-            LogEntry logEntry = new LogEntry(mediaStartTimeMs,
-                    elapsedRealtimeMs, loadDurationMs,
-                    totalStallDurationMs, representationRateKbps,
-                    deliveryRateKbps, actualRateKbps, bytesLoaded,
-                    currentBufferLevelMs, chunkDurationMs);
-            log.add(logEntry.getChunkIndex() - 1, logEntry);
+            if (newBufferLevel && !currentlyStalling) {
+                makeNewLogEntry();
+                newBufferLevel = false;
+                stallDurationMs = 0;
+            } else {
+                // mark that there's new chunk data
+                newChunkData = true;
+            }
         }
     }
 
@@ -370,12 +414,20 @@ public class DefaultChunkLogger implements ChunkLogger {
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
         if (lastState == ExoPlayer.STATE_READY && playbackState == ExoPlayer.STATE_BUFFERING) {
-            stallClockMs = SystemClock.elapsedRealtime();
+            stallStartMs = SystemClock.elapsedRealtime();
             currentlyStalling = true;
         } else if (currentlyStalling && playbackState == ExoPlayer.STATE_READY) {
             long nowMs = SystemClock.elapsedRealtime();
-            totalStallDurationMs += nowMs - stallClockMs;
+            stallDurationMs += nowMs - stallStartMs;
             currentlyStalling = false;
+
+            if (newBufferLevel && newChunkData) {
+                // we were waiting on stall data
+                makeNewLogEntry();
+                newBufferLevel = false;
+                newChunkData = false;
+                stallDurationMs = 0;
+            }
         }
         lastState = playbackState;
     }
@@ -418,5 +470,38 @@ public class DefaultChunkLogger implements ChunkLogger {
     @Override
     public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
 
+    }
+
+    /**
+     * Called when a transfer starts.
+     *
+     * @param source   The source performing the transfer.
+     * @param dataSpec Describes the data being transferred.
+     */
+    @Override
+    public void onTransferStart(Object source, DataSpec dataSpec) {
+        if (manifestRequestTime == 0) {
+            manifestRequestTime = SystemClock.elapsedRealtime();
+            Log.d(TAG, String.format("Updated manifest request time to %d.", manifestRequestTime));
+        }
+    }
+
+    /**
+     * Called incrementally during a transfer.
+     *
+     * @param source           The source performing the transfer.
+     * @param bytesTransferred The number of bytes transferred since the previous call to this
+     */
+    @Override
+    public void onBytesTransferred(Object source, int bytesTransferred) {
+    }
+
+    /**
+     * Called when a transfer ends.
+     *
+     * @param source The source performing the transfer.
+     */
+    @Override
+    public void onTransferEnd(Object source) {
     }
 }

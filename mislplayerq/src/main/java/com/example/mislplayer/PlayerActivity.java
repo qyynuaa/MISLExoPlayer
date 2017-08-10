@@ -143,7 +143,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 chunkListener, chunkLogger);
 
         // Our video source media, we give it an URL, and all the stuff before
-        videoSource = new DashMediaSource(uri, buildDataSourceFactory2(null), df, mainHandler, chunkLogger);
+        videoSource = new DashMediaSource(uri, buildDataSourceFactory2(chunkLogger), df, mainHandler, chunkLogger);
 
         //Used to play media indefinitely (loop)
         LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
@@ -154,8 +154,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         player = ExoPlayerFactory.newSimpleInstance(
                 new DefaultRenderersFactory(this), trackSelector,
                 loadControl);
-
-        chunkLogger.setPlayer(player);
 
         player.addListener(sampleProcessor);
 

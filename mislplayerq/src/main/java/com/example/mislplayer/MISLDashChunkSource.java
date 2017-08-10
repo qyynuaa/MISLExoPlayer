@@ -31,6 +31,7 @@ public class MISLDashChunkSource implements DashChunkSource {
         private final DataSource.Factory dataSourceFactory;
         private final int maxSegmentsPerLoad;
         private final ChunkListener chunkListener;
+        private final ChunkLogger chunkLogger;
 
         /**
          * Creates a MISLDashChunkSource factory with default values.
@@ -38,18 +39,22 @@ public class MISLDashChunkSource implements DashChunkSource {
          * @param dataSourceFactory
          * @param chunkListener Can be given chunks for chunk-based
          *                      throughput sampling.
+         * @param chunkLogger Can be given buffer level estimates for
+         *                   logging.
          */
         public Factory(DataSource.Factory dataSourceFactory,
                        ChunkListener chunkListener, ChunkLogger chunkLogger) {
             this(dataSourceFactory, DEFAULT_MAX_SEGMENTS_PER_LOAD,
-                    chunkListener);
+                    chunkListener, chunkLogger);
         }
 
         public Factory(DataSource.Factory dataSourceFactory,
-                       int maxSegmentsPerLoad, ChunkListener chunkListener) {
+                       int maxSegmentsPerLoad, ChunkListener chunkListener,
+                       ChunkLogger chunkLogger) {
             this.dataSourceFactory = dataSourceFactory;
             this.maxSegmentsPerLoad = maxSegmentsPerLoad;
             this.chunkListener = chunkListener;
+            this.chunkLogger = chunkLogger;
         }
 
         @Override
@@ -62,7 +67,7 @@ public class MISLDashChunkSource implements DashChunkSource {
             return new MISLDashChunkSource(manifestLoaderErrorThrower, manifest, periodIndex,
                     adaptationSetIndex, trackSelection, dataSource, elapsedRealtimeOffsetMs,
                     maxSegmentsPerLoad, enableEventMessageTrack,
-                    enableCea608Track, chunkListener);
+                    enableCea608Track, chunkListener, chunkLogger);
         }
     }
 
@@ -70,15 +75,18 @@ public class MISLDashChunkSource implements DashChunkSource {
 
     private DashChunkSource dashChunkSource;
     private ChunkListener chunkListener;
+    private ChunkLogger chunkLogger;
 
     public MISLDashChunkSource(LoaderErrorThrower manifestLoaderErrorThrower, DashManifest manifest,
                                int periodIndex, int adaptationSetIndex, TrackSelection trackSelection,
                                DataSource dataSource, long elapsedRealtimeOffsetMs, int maxSegmentsPerLoad,
-                               boolean enableEventMessageTrack, boolean enableCea608Track, ChunkListener chunkListener) {
+                               boolean enableEventMessageTrack, boolean enableCea608Track, ChunkListener chunkListener,
+                               ChunkLogger chunkLogger) {
         this.dashChunkSource = new DefaultDashChunkSource(manifestLoaderErrorThrower, manifest, periodIndex,
                 adaptationSetIndex, trackSelection, dataSource, elapsedRealtimeOffsetMs, maxSegmentsPerLoad,
                 enableEventMessageTrack, enableCea608Track);
         this.chunkListener = chunkListener;
+        this.chunkLogger = chunkLogger;
     }
 
     /** Delegates to the {@link DefaultDashChunkSource} */
@@ -134,6 +142,8 @@ public class MISLDashChunkSource implements DashChunkSource {
         if (chunkListener != null) {
             chunkListener.giveLastChunk(previous);
         }
+        long bufferedDurationUs = previous != null ? (previous.endTimeUs - playbackPositionUs) : 0;
+        chunkLogger.updateBufferLevel(previous, bufferedDurationUs);
 
         dashChunkSource.getNextChunk(previous, playbackPositionUs, out);
     }

@@ -2,11 +2,14 @@ package com.example.mislplayer.sampling;
 
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.source.AdaptiveMediaSourceEventListener;
+import com.google.android.exoplayer2.source.chunk.MediaChunk;
+import com.google.android.exoplayer2.upstream.TransferListener;
 
 /**
  * Logs information about a run, on a chunk-by-chunk basis.
  */
-public interface ChunkLogger extends AdaptiveMediaSourceEventListener, ExoPlayer.EventListener {
+public interface ChunkLogger extends AdaptiveMediaSourceEventListener,
+        ExoPlayer.EventListener, TransferListener<Object> {
 
     /** Writes a log with details of all downloaded chunks. */
     void writeLogsToFile();
@@ -14,6 +17,6 @@ public interface ChunkLogger extends AdaptiveMediaSourceEventListener, ExoPlayer
     /** Clears the store of downloaded chunks. */
     void clearChunkInformation();
 
-    /** Gives the logger a reference to the current player instance. */
-    void setPlayer(ExoPlayer player);
+    /** Informs the logger of the current buffer estimate. */
+    void updateBufferLevel(MediaChunk previous, long bufferedDurationUs);
 }
