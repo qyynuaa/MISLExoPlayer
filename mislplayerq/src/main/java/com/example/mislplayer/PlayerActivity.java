@@ -191,7 +191,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                //getInfosVideo();
+                                getInfosVideo();
                             }
                         });
                     }
@@ -305,28 +305,18 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
     private void getInfosVideo() {
         TextView debugView = (TextView) findViewById(R.id.debug_text_view);
-    /*String videoInfo2 = "";
-    if (player.getVideoFormat() != null)
-        videoInfo2 = "Segment " + segmentNumber + " -> Height : " + player.getVideoFormat().height + " Width : " + player.getVideoFormat().width + "\n";
-    if (!videoInfo2.equals(videoInfo))
-        segmentNumber++;
-    videoInfo = "Segment " + segmentNumber + " -> Height : " + player.getVideoFormat().height + " Width : " + player.getVideoFormat().width + "\n";
-    String buffer = "Buffer percentage : " + player.getBufferedPercentage() + "% \n";
-    String trackgroups = "Number of Trackgroups : " + player.getCurrentTrackGroups().length + "\n";
-    String period = "Period index : " + player.getCurrentPeriodIndex() + "\n";
-    String videoID = "Representation ID : " + player.getVideoFormat().id + "\n";
-    String videoBitrate = "Video bitrate : " + player.getVideoFormat().bitrate;
-    String audioBitrate = " Audio bitrate : " + player.getAudioFormat().bitrate + "\n";
-    //String sth = "\nMapped Track Info : "+trackSelector.getCurrentMappedTrackInfo().getTrackGroups(0).get(0).getFormat(0).toString();
-    String bandwidth = "Bandwidth : " + (BANDWIDTH_METER.getBitrateEstimate()) / 8000 + " ko/s \n";
-    String bytesAllocated = "Total bytes allocated : " + loadControl.getAllocator().getTotalBytesAllocated() + "\n";
-    String bufferedPosition = "Buffer Level : " + player.getBufferedPosition() + "\n";
-   // debugView.setText(videoInfo + buffer + trackgroups + period + videoID + videoBitrate + audioBitrate + bandwidth + bytesAllocated + bufferedPosition);
-    */
-//        if(!algorithmListener.dataNotAvailable()) {
-//            String test = "SEG NUMBER : " + algorithmListener.lastChunkIndex();
-//            debugView.setText(test);
-//        }
+        String videoID = "";
+        String videoBitrate = "";
+        if (player.getVideoFormat() != null) {
+            videoID = "Representation ID: " + player.getVideoFormat().id + "\n";
+            videoBitrate = "Video bitrate (bps): " + player.getVideoFormat().bitrate + "\n";
+        }
+        String audioBitrate = "";
+        if (player.getAudioFormat() != null) {
+            audioBitrate = " Audio bitrate (bps): " + player.getAudioFormat().bitrate + "\n";
+        }
+        String bufferedPosition = "Buffer level (ms): " + (player.getBufferedPosition() - player.getCurrentPosition()) + "\n";
+        debugView.setText(videoID + videoBitrate + audioBitrate + bufferedPosition);
     }
 
     //To get the index of a given representation Level for our media content.
