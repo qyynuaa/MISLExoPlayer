@@ -106,10 +106,10 @@ public class DefaultChunkLogger implements ChunkLogger {
 
     private List<LogEntry> log = new ArrayList<>();
 
-    private long totalStallDurationMs;
+    private long stallDurationMs;
     private long lastBufferLevelMs;
 
-    private long stallClockMs;
+    private long stallStartMs;
     private int lastState;
     private boolean currentlyStalling = false;
 
@@ -174,9 +174,10 @@ public class DefaultChunkLogger implements ChunkLogger {
             lastBufferLevelMs = bufferedDurationMs;
             Log.d(TAG, String.format("Buffer level updated to %d", lastBufferLevelMs));
 
-            if (newChunkData) {
+            if (newChunkData && !currentlyStalling) {
                 makeNewLogEntry();
                 newChunkData = false;
+                stallDurationMs = 0;
             } else {
                 // mark that there's a new buffer level value
                 newBufferLevel = true;
@@ -192,7 +193,7 @@ public class DefaultChunkLogger implements ChunkLogger {
 
         LogEntry logEntry = new LogEntry(lastMediaStartTimeMs,
                 lastElapsedRealtimeMs - manifestRequestTime, lastLoadDurationMs,
-                totalStallDurationMs, representationRateKbps,
+                stallDurationMs, representationRateKbps,
                 deliveryRateKbps, actualRateKbps, lastBytesLoaded,
                 lastBufferLevelMs, chunkDurationMs);
         log.add(logEntry.getChunkIndex() - 1, logEntry);
@@ -261,9 +262,10 @@ public class DefaultChunkLogger implements ChunkLogger {
             this.lastElapsedRealtimeMs = elapsedRealtimeMs;
             this.lastBytesLoaded = bytesLoaded;
 
-            if (newBufferLevel) {
+            if (newBufferLevel && !currentlyStalling) {
                 makeNewLogEntry();
                 newBufferLevel = false;
+                stallDurationMs = 0;
             } else {
                 // mark that there's new chunk data
                 newChunkData = true;
@@ -412,12 +414,20 @@ public class DefaultChunkLogger implements ChunkLogger {
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
         if (lastState == ExoPlayer.STATE_READY && playbackState == ExoPlayer.STATE_BUFFERING) {
-            stallClockMs = SystemClock.elapsedRealtime();
+            stallStartMs = SystemClock.elapsedRealtime();
             currentlyStalling = true;
         } else if (currentlyStalling && playbackState == ExoPlayer.STATE_READY) {
             long nowMs = SystemClock.elapsedRealtime();
-            totalStallDurationMs += nowMs - stallClockMs;
+            stallDurationMs += nowMs - stallStartMs;
             currentlyStalling = false;
+
+            if (newBufferLevel && newChunkData) {
+                // we were waiting on stall data
+                makeNewLogEntry();
+                newBufferLevel = false;
+                newChunkData = false;
+                stallDurationMs = 0;
+            }
         }
         lastState = playbackState;
     }
@@ -470,8 +480,6 @@ public class DefaultChunkLogger implements ChunkLogger {
      */
     @Override
     public void onTransferStart(Object source, DataSpec dataSpec) {
-        Log.d(TAG, "onTransferStart() called");
-
         if (manifestRequestTime == 0) {
             manifestRequestTime = SystemClock.elapsedRealtime();
             Log.d(TAG, String.format("Updated manifest request time to %d.", manifestRequestTime));
@@ -486,7 +494,6 @@ public class DefaultChunkLogger implements ChunkLogger {
      */
     @Override
     public void onBytesTransferred(Object source, int bytesTransferred) {
-        Log.d(TAG, "onBytesTransferred() called");
     }
 
     /**
@@ -496,6 +503,5 @@ public class DefaultChunkLogger implements ChunkLogger {
      */
     @Override
     public void onTransferEnd(Object source) {
-        Log.d(TAG, "onTransferEnd() called");
     }
 }
