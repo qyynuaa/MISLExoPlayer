@@ -16,6 +16,7 @@ import com.example.mislplayer.sampling.ChunkLogger;
 import com.example.mislplayer.sampling.DefaultChunkLogger;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
 import com.example.mislplayer.sampling.SwitchableSampler;
+import com.example.mislplayer.sampling.TimeBasedSampler;
 import com.example.mislplayer.trackselection.ArbiterTrackSelection;
 import com.example.mislplayer.trackselection.BBA2TrackSelection;
 import com.example.mislplayer.trackselection.BasicTrackSelection;
@@ -224,11 +225,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             trackSelectionFactory = new BasicTrackSelection.Factory(sampleProcessor);
             playerListener = sizeSampler;
         } else if (algorithmType == AdaptationAlgorithmType.BASIC_TIME) {
-            SwitchableSampler timeSampler = new SwitchableSampler(
-                    sampleProcessor, SwitchableSampler.SampleMode.TIME, 20);
-            transferListener = timeSampler;
+            transferListener = new TimeBasedSampler(sampleProcessor, 4000);
             trackSelectionFactory = new BasicTrackSelection.Factory(sampleProcessor);
-            playerListener = timeSampler;
         } else {
             ChunkBasedSampler chunkSampler = new ChunkBasedSampler(sampleProcessor, sampleProcessor);
             transferListener = chunkSampler;
