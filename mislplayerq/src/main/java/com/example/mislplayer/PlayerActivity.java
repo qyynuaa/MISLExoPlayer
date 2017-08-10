@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Formatter;
 
 import com.opencsv.CSVReader;
 
@@ -95,6 +96,9 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
     private long playbackBufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_MS;
     private long rebufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
+    private TextView debugView;
+    private final StringBuilder debugBuilder = new StringBuilder();
+    private final Formatter debugFormatter = new Formatter(debugBuilder);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +114,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         playerView = (SimpleExoPlayerView) findViewById(R.id.player_view);
         playerView.setControllerVisibilityListener(this);
         playerView.requestFocus();
+
+        debugView = (TextView) findViewById(R.id.debug_text_view);
 
         configureRun();
     }
@@ -191,7 +197,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                getInfosVideo();
+                                updateDebugView();
                             }
                         });
                     }
@@ -303,20 +309,23 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         return maxBufferMs;
     }
 
-    private void getInfosVideo() {
-        TextView debugView = (TextView) findViewById(R.id.debug_text_view);
-        String videoID = "";
-        String videoBitrate = "";
-        if (player.getVideoFormat() != null) {
-            videoID = "Representation ID: " + player.getVideoFormat().id + "\n";
-            videoBitrate = "Video bitrate (bps): " + player.getVideoFormat().bitrate + "\n";
+    /**
+     * Updates a helper display which displays information about the
+     * current state of the player.
+     */
+    private void updateDebugView() {
+        if (player != null) {
+            if (player.getVideoFormat() != null) {
+                debugFormatter.format("Representation ID: %s\n", player.getVideoFormat().id);
+                debugFormatter.format("Video bitrate (bps): %d\n", player.getVideoFormat().bitrate);
+            }
+            if (player.getAudioFormat() != null) {
+                debugFormatter.format(" Audio bitrate (bps): %d\n", player.getAudioFormat().bitrate);
+            }
+            debugFormatter.format("Buffer level (ms): %d\n", player.getBufferedPosition() - player.getCurrentPosition());
+
+            debugView.setText(debugBuilder);
         }
-        String audioBitrate = "";
-        if (player.getAudioFormat() != null) {
-            audioBitrate = " Audio bitrate (bps): " + player.getAudioFormat().bitrate + "\n";
-        }
-        String bufferedPosition = "Buffer level (ms): " + (player.getBufferedPosition() - player.getCurrentPosition()) + "\n";
-        debugView.setText(videoID + videoBitrate + audioBitrate + bufferedPosition);
     }
 
     //To get the index of a given representation Level for our media content.
