@@ -313,6 +313,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
      */
     private void updateDebugView() {
         if (player != null) {
+            debugBuilder.delete(0, debugBuilder.length());
             if (player.getVideoFormat() != null) {
                 debugFormatter.format("Representation ID: %s\n", player.getVideoFormat().id);
                 debugFormatter.format("Video bitrate (bps): %d\n", player.getVideoFormat().bitrate);
