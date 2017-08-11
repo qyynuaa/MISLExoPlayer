@@ -97,8 +97,9 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
 
     /** Adds a new throughput sample to the store. */
     @Override
-    public void addSample(long bitsTransferred, long durationMs) {
-        long arrivalTime = SystemClock.elapsedRealtime() - manifestRequestTime;
+    public void addSample(long elapsedRealtimeMs, long bitsTransferred,
+                          long durationMs) {
+        long arrivalTime = elapsedRealtimeMs - manifestRequestTime;
         samples.add(
                 new DefaultThroughputSample(arrivalTime, bitsTransferred,
                         durationMs)

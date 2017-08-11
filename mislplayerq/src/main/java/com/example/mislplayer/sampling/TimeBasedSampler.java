@@ -112,7 +112,7 @@ public class TimeBasedSampler implements TransferListener<Object>,
         long sampleDurationMs = nowMs - sampleStartMs;
 
         if (sampleDurationMs > 0) {
-            sampleStore.addSample(sampleBytesTransferred * 8, sampleDurationMs);
+            sampleStore.addSample(nowMs, sampleBytesTransferred * 8, sampleDurationMs);
             sampleStartMs = nowMs;
             sampleBytesTransferred = 0;
             Log.d(TAG, "Time sample delivered.");
@@ -123,8 +123,8 @@ public class TimeBasedSampler implements TransferListener<Object>,
 
     /** Adds a new throughput sample to the store. */
     @Override
-    public void addSample(long bitsTransferred, long durationMs) {
-        sampleStore.addSample(bitsTransferred, durationMs);
+    public void addSample(long elapsedRealtimeMs, long bitsTransferred, long durationMs) {
+        sampleStore.addSample(elapsedRealtimeMs, bitsTransferred, durationMs);
         sampleHandler.removeCallbacks(sampleRunnable);
         Log.d(TAG, "Chunk sample delivered.");
     }
