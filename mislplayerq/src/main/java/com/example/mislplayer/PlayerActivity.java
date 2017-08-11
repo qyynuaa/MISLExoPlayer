@@ -1,7 +1,6 @@
 package com.example.mislplayer;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -66,7 +65,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
     private static final String TAG = "PlayerActivity";
 
-    private Context userAgent = this;
     private SimpleExoPlayerView playerView;
     private Handler mainHandler;
     private EventLogger eventLogger;
@@ -75,8 +73,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private long resumePosition;
     private DefaultTrackSelector trackSelector;
     private LoadControl loadControl;
-    private String videoInfo;
-    private int segmentNumber = 0;
     private DashMediaSource videoSource;
     public Thread t;
     public static ArrayList<FutureSegmentInfos> futureSegmentInfos;
@@ -136,7 +132,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         }
 
         //Provides instances of DataSource from which streams of data can be read.
-        DataSource.Factory dataSourceFactory = buildDataSourceFactory2(transferListener);
+        DataSource.Factory dataSourceFactory = buildDataSourceFactory(transferListener);
 
         //Will be responsible of choosing right TrackSelections
         trackSelector = new DefaultTrackSelector(trackSelectionFactory);
@@ -150,7 +146,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 chunkListener, chunkLogger);
 
         // Our video source media, we give it an URL, and all the stuff before
-        videoSource = new DashMediaSource(uri, buildDataSourceFactory2(chunkLogger), df, mainHandler, chunkLogger);
+        videoSource = new DashMediaSource(uri, buildDataSourceFactory(chunkLogger), df, mainHandler, chunkLogger);
 
         //Used to play media indefinitely (loop)
         LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
@@ -340,11 +336,11 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         return -1;
     }
 
-    private DataSource.Factory buildDataSourceFactory2(TransferListener<? super DataSource> transferListener) {
-        return new DefaultDataSourceFactory(this, transferListener, buildHttpDataSourceFactory2(transferListener));
+    private DataSource.Factory buildDataSourceFactory(TransferListener<? super DataSource> transferListener) {
+        return new DefaultDataSourceFactory(this, transferListener, buildHttpDataSourceFactory(transferListener));
     }
 
-    private HttpDataSource.Factory buildHttpDataSourceFactory2(TransferListener<? super DataSource> transferListener) {
+    private HttpDataSource.Factory buildHttpDataSourceFactory(TransferListener<? super DataSource> transferListener) {
         return new DefaultHttpDataSourceFactory("MyPlayer", transferListener);
     }
 
@@ -396,10 +392,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         if (Util.SDK_INT > 23) {
             releasePlayer();
         }
-    }
-
-    private HttpDataSource.Factory buildHttpDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
-        return new DefaultHttpDataSourceFactory(userAgent.toString(), bandwidthMeter); // là aussi jouer avec ça
     }
 
     private void releasePlayer() {
