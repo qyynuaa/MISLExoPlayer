@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
@@ -61,6 +62,8 @@ import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_MAX_BUFFE
 public class PlayerActivity extends Activity implements View.OnClickListener,
         ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
 
+    public static final String LOG_DIRECTORY_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
+
     private static final String TAG = "PlayerActivity";
 
     private SimpleExoPlayerView playerView;
@@ -86,6 +89,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private DefaultChunkLogger chunkLogger = new DefaultChunkLogger();
     private ExoPlayer.EventListener playerListener = null;
     private DefaultSampleProcessor sampleProcessor;
+    private ManifestListener manifestListener = new ManifestListener();
 
     private int minBufferMs = 26000;
     private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
@@ -131,7 +135,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         }
 
         //Provides instances of DataSource from which streams of data can be read.
-        DataSource.Factory dataSourceFactory = buildDataSourceFactory(transferListener);
+        DataSource.Factory mediaDataSourceFactory = buildDataSourceFactory(transferListener);
 
         //Will be responsible of choosing right TrackSelections
         trackSelector = new DefaultTrackSelector(trackSelectionFactory);
@@ -140,12 +144,15 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
         mainHandler = new Handler();
 
+        manifestListener.addListener(chunkLogger);
+        manifestListener.addListener(sampleProcessor);
+
         //Provides instances of DashChunkSource
-        df = new MISLDashChunkSource.Factory(dataSourceFactory,
+        df = new MISLDashChunkSource.Factory(mediaDataSourceFactory,
                 chunkListener, chunkLogger);
 
         // Our video source media, we give it an URL, and all the stuff before
-        videoSource = new DashMediaSource(uri, buildDataSourceFactory(chunkLogger), df, mainHandler, chunkLogger);
+        videoSource = new DashMediaSource(uri, buildDataSourceFactory(manifestListener), df, mainHandler, chunkLogger);
 
         //Used to play media indefinitely (loop)
         LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
@@ -399,8 +406,11 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             player.release();
             player = null;
             eventLogger = null;
+
             chunkLogger.writeLogsToFile();
             chunkLogger.clearChunkInformation();
+            sampleProcessor.writeSampleLog();
+            sampleProcessor.clearSamples();
         }
     }
 

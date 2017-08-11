@@ -1,7 +1,6 @@
 package com.example.mislplayer.sampling;
 
 import android.os.SystemClock;
-import android.util.Log;
 
 import com.example.mislplayer.ChunkListener;
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
@@ -13,6 +12,16 @@ import com.google.android.exoplayer2.upstream.TransferListener;
  */
 public class ChunkBasedSampler implements TransferListener<Object>, ChunkListener {
 
+    private static final String TAG = "ChunkBasedSampler";
+
+    private SampleStore sampleStore;
+    private SampleProcessor sampleProcessor;
+    private MediaChunk lastChunk;
+
+    private long transferClockMs;
+    private long loadDurationMs;
+    private long elapsedRealtimeMs;
+
     /**
      * Creates a chunk-based sampler.
      *  @param sampleStore The store to send throughput samples to.
@@ -23,14 +32,7 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
         this.sampleProcessor = sampleProcessor;
     }
 
-    private static final String TAG = "ChunkBasedSampler";
-
-    private SampleStore sampleStore;
-    private SampleProcessor sampleProcessor;
-    private MediaChunk lastChunk;
-
-    private long transferClockMs;
-    private long loadDurationMs;
+    // ChunkListener implementation
 
     /**
      * Gives the listener the last chunk that was downloaded, to be passed to the
@@ -41,20 +43,19 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
     @Override
     public void giveLastChunk(MediaChunk lastChunk) {
         if (lastChunk == null) {
-            Log.d(TAG, "null chunk received");
             return;
         } else if (lastChunk == this.lastChunk) {
-            Log.d(TAG, "duplicate chunk received");
             return;
         }
-        Log.d(TAG, "non-null chunk received:");
 
         long chunkSizeBits = lastChunk.bytesLoaded() * 8;
 
-        sampleStore.addSample(chunkSizeBits, loadDurationMs);
+        sampleStore.addSample(elapsedRealtimeMs, chunkSizeBits, loadDurationMs);
         sampleProcessor.giveChunk(lastChunk);
         this.lastChunk = lastChunk;
     }
+
+    // TransferListener implementation
 
     /**
      * Called when a transfer starts.
@@ -85,7 +86,7 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
      */
     @Override
     public void onTransferEnd(Object source) {
-        long arrivalTimeMs = SystemClock.elapsedRealtime();
-        loadDurationMs = arrivalTimeMs - transferClockMs;
+        elapsedRealtimeMs = SystemClock.elapsedRealtime();
+        loadDurationMs = elapsedRealtimeMs - transferClockMs;
     }
 }

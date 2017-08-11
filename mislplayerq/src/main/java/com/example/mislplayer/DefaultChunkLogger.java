@@ -4,6 +4,7 @@ import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.example.mislplayer.ManifestListener;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -32,7 +33,7 @@ import java.util.List;
  * A default ChunkLogger implementation.
  */
 public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEventListener,
-        ExoPlayer.EventListener, TransferListener<Object> {
+        ExoPlayer.EventListener, TransferListener<Object>, ManifestListener.ManifestRequestTimeReceiver {
 
     private static class LogEntry {
         private int chunkIndex;
@@ -135,7 +136,7 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
         DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
         Date date = new Date();
         File directory = new File(LOG_FILE_PATH);
-        File file = new File(directory, "/Log_Segments_ExoPlayer_" + dateFormat.format(date) + ".txt");
+        File file = new File(directory, "/" + dateFormat.format(date) + "_Chunk_Log.txt");
 
         try {
             if (!directory.exists()) {
@@ -154,8 +155,6 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
         } catch (IOException e) {
             Log.e("Exception", "File write failed: " + e.toString());
         }
-
-
     }
 
     /** Removes all stored chunk information. */
@@ -200,6 +199,11 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
                 deliveryRateKbps, actualRateKbps, lastBytesLoaded,
                 lastBufferLevelMs, chunkDurationMs);
         log.add(logEntry.getChunkIndex() - 1, logEntry);
+    }
+
+    @Override
+    public void giveManifestRequestTime(long manifestRequestTime) {
+        this.manifestRequestTime = manifestRequestTime;
     }
 
     /**

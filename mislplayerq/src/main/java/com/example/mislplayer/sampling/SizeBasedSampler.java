@@ -107,7 +107,8 @@ public class SizeBasedSampler implements TransferListener<Object>,
      */
     private void finishSampling() {
         if (sampleDurationMs > 0) {
-            sampleStore.addSample(sampleBytesTransferred * 8, sampleDurationMs);
+            sampleStore.addSample(SystemClock.elapsedRealtime(),
+                    sampleBytesTransferred * 8, sampleDurationMs);
         }
         sampleClockMs = TIME_UNSET;
     }
