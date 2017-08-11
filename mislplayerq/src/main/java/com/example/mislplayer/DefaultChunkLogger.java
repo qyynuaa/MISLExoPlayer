@@ -1,4 +1,4 @@
-package com.example.mislplayer.sampling;
+package com.example.mislplayer;
 
 import android.os.Environment;
 import android.os.SystemClock;
@@ -12,11 +12,13 @@ import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Renderer;
 import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.source.AdaptiveMediaSourceEventListener;
 import com.google.android.exoplayer2.source.SampleStream;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.TransferListener;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -30,7 +32,8 @@ import java.util.List;
 /**
  * A default ChunkLogger implementation.
  */
-public class DefaultChunkLogger implements ChunkLogger, ManifestListener.ManifestRequestTimeReceiver {
+public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEventListener,
+        ExoPlayer.EventListener, TransferListener<Object>, ManifestListener.ManifestRequestTimeReceiver {
 
     private static class LogEntry {
         private int chunkIndex;

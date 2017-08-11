@@ -12,8 +12,6 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.example.mislplayer.sampling.ChunkBasedSampler;
-import com.example.mislplayer.sampling.ChunkLogger;
-import com.example.mislplayer.sampling.DefaultChunkLogger;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
 import com.example.mislplayer.sampling.SwitchableSampler;
 import com.example.mislplayer.sampling.TimeBasedSampler;
@@ -97,6 +95,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
     private long playbackBufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_MS;
     private long rebufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
+
     private TextView debugView;
     private final StringBuilder debugBuilder = new StringBuilder();
     private final Formatter debugFormatter = new Formatter(debugBuilder);
