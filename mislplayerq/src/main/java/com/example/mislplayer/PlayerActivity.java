@@ -92,9 +92,10 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private TransferListener<? super DataSource> transferListener;
     private ChunkListener chunkListener;
     private TrackSelection.Factory trackSelectionFactory;
-    private ChunkLogger chunkLogger = new DefaultChunkLogger();
+    private DefaultChunkLogger chunkLogger = new DefaultChunkLogger();
     private ExoPlayer.EventListener playerListener = null;
     private DefaultSampleProcessor sampleProcessor;
+    private ManifestListener manifestListener = new ManifestListener();
 
     private int minBufferMs = 26000;
     private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
@@ -139,7 +140,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         }
 
         //Provides instances of DataSource from which streams of data can be read.
-        DataSource.Factory dataSourceFactory = buildDataSourceFactory2(transferListener);
+        DataSource.Factory mediaDataSourceFactory = buildDataSourceFactory2(transferListener);
 
         //Will be responsible of choosing right TrackSelections
         trackSelector = new DefaultTrackSelector(trackSelectionFactory);
@@ -148,12 +149,15 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
         mainHandler = new Handler();
 
+        manifestListener.addListener(chunkLogger);
+        manifestListener.addListener(sampleProcessor);
+
         //Provides instances of DashChunkSource
-        df = new MISLDashChunkSource.Factory(dataSourceFactory,
+        df = new MISLDashChunkSource.Factory(mediaDataSourceFactory,
                 chunkListener, chunkLogger);
 
         // Our video source media, we give it an URL, and all the stuff before
-        videoSource = new DashMediaSource(uri, buildDataSourceFactory2(chunkLogger), df, mainHandler, chunkLogger);
+        videoSource = new DashMediaSource(uri, buildDataSourceFactory2(manifestListener), df, mainHandler, chunkLogger);
 
         //Used to play media indefinitely (loop)
         LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);

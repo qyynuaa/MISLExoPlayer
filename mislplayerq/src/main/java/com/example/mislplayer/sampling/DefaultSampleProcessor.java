@@ -1,8 +1,8 @@
 package com.example.mislplayer.sampling;
 
-import android.os.Environment;
 import android.util.Log;
 
+import com.example.mislplayer.ManifestListener;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackParameters;
@@ -23,14 +23,13 @@ import java.util.Date;
 import java.util.List;
 
 import static com.example.mislplayer.PlayerActivity.LOG_DIRECTORY_PATH;
-import static java.lang.Math.atan;
 import static java.lang.Math.min;
 
 /**
  * A default sample processor.
  */
 public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
-        ExoPlayer.EventListener {
+        ExoPlayer.EventListener, ManifestListener.ManifestRequestTimeReceiver {
 
     /** A default throughput sample implementation. */
     public static class DefaultThroughputSample implements ThroughputSample {
@@ -76,6 +75,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     private List<ThroughputSample> samples = new ArrayList<>();
     private int maxBufferMs;
     private long mpdDurationMs = DATA_NOT_AVAILABLE;
+    private long manifestRequestTime;
 
     private MediaChunk lastChunk;
 
@@ -435,6 +435,13 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
         }
 
         return (1 + T1 + T2 / T3);
+    }
+
+    // ManifestRequestTimeReceiver implementation
+
+    @Override
+    public void giveManifestRequestTime(long manifestRequestTime) {
+        this.manifestRequestTime = manifestRequestTime;
     }
 
     // ExoPlayer EventListener implementation

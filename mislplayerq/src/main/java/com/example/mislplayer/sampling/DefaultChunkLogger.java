@@ -4,6 +4,7 @@ import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.example.mislplayer.ManifestListener;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -29,7 +30,7 @@ import java.util.List;
 /**
  * A default ChunkLogger implementation.
  */
-public class DefaultChunkLogger implements ChunkLogger {
+public class DefaultChunkLogger implements ChunkLogger, ManifestListener.ManifestRequestTimeReceiver {
 
     private static class LogEntry {
         private int chunkIndex;
@@ -195,6 +196,11 @@ public class DefaultChunkLogger implements ChunkLogger {
                 deliveryRateKbps, actualRateKbps, lastBytesLoaded,
                 lastBufferLevelMs, chunkDurationMs);
         log.add(logEntry.getChunkIndex() - 1, logEntry);
+    }
+
+    @Override
+    public void giveManifestRequestTime(long manifestRequestTime) {
+        this.manifestRequestTime = manifestRequestTime;
     }
 
     /**
