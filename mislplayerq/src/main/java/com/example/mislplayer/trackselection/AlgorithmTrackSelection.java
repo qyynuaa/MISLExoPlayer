@@ -71,4 +71,20 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
         }
         return length - 1;
     }
+
+    /**
+     * Finds the index of the track with a given bitrate.
+     *
+     * @param bitrate The bitrate of the desired track.
+     * @return The index of the track with the given bitrate.
+     */
+    public int getRepIndex(int bitrate) {
+        for (int i = 0; i < length; i++) {
+            if (getFormat(i).bitrate == bitrate) {
+                return i;
+            }
+        }
+        throw new IllegalArgumentException(
+                "No track exists with that bitrate");
+    }
 }

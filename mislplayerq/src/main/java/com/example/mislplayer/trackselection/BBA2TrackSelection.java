@@ -112,7 +112,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
         // take the last rate and find its index
         int lastRate = algorithmListener.lastRepLevelKbps();
-        int lastRateIndex = PlayerActivity.getRepIndex(lastRate);
+        int lastRateIndex = getRepIndex(lastRate);
         int retVal;
         // set to the lowest rate
         int qRateIndex= lowestBitrateIndex();

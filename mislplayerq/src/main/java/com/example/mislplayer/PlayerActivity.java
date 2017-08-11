@@ -130,9 +130,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
         //futur segment sizes obtained thanks to CSV file
         futureSegmentInfos = getSegmentSizes();
-        if (futureSegmentInfos != null) {
-            Log.d(TAG, "" + FutureSegmentInfos.getByteSize(futureSegmentInfos, 3, getRepIndex(4310)));
-        }
 
         //Provides instances of DataSource from which streams of data can be read.
         DataSource.Factory mediaDataSourceFactory = buildDataSourceFactory(transferListener);
@@ -330,16 +327,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
             debugView.setText(debugBuilder);
         }
-    }
-
-    //To get the index of a given representation Level for our media content.
-    public static int getRepIndex(int repLevel) {
-        for (int i = 0; i < reprLevel.size(); i++) {
-            if (reprLevel.get(i) == repLevel) {
-                return i; // the first representation level is not stored in the first column of our first line but at 0+beginningIndex
-            }
-        }
-        return -1;
     }
 
     private DataSource.Factory buildDataSourceFactory(TransferListener<? super DataSource> transferListener) {
