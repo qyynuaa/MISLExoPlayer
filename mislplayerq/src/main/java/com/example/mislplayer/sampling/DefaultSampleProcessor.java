@@ -1,5 +1,6 @@
 package com.example.mislplayer.sampling;
 
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.example.mislplayer.ManifestListener;
@@ -34,14 +35,25 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     /** A default throughput sample implementation. */
     public static class DefaultThroughputSample implements ThroughputSample {
 
+        private long arrivalTimeMs;
         private long bitsTransferred;
         private long durationMs;
         private double throughputBitsPerSecond;
 
-        public DefaultThroughputSample(long bitsTransferred, long durationMs) {
+        public DefaultThroughputSample(long arrivalTimeMs,
+                                       long bitsTransferred, long durationMs) {
+            this.arrivalTimeMs = arrivalTimeMs;
             this.bitsTransferred = bitsTransferred;
             this.durationMs = durationMs;
             this.throughputBitsPerSecond = (double)bitsTransferred * 1000 / durationMs;
+        }
+
+        /**
+         * The arrival time for the sample, in ms.
+         */
+        @Override
+        public long arrivalTimeMs() {
+            return arrivalTimeMs;
         }
 
         /**
@@ -86,8 +98,11 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     /** Adds a new throughput sample to the store. */
     @Override
     public void addSample(long bitsTransferred, long durationMs) {
-        samples.add(new DefaultThroughputSample(bitsTransferred,
-                durationMs));
+        long arrivalTime = SystemClock.elapsedRealtime() - manifestRequestTime;
+        samples.add(
+                new DefaultThroughputSample(arrivalTime, bitsTransferred,
+                        durationMs)
+        );
         Log.d(TAG,
                 String.format("New sample (index: %d, bits: %d, duration (ms): %d, throughput (kbps): %g)",
                         samples.size() - 1, bitsTransferred, durationMs,
@@ -110,10 +125,11 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
             }
             file.createNewFile();
             FileOutputStream stream = new FileOutputStream(file);
-            stream.write(("Bytes_Transferred\t\tDuration\t\tThroughput\n").getBytes());
+            stream.write(("Arrival_Time\t\tBytes_Transferred\t\tDuration\t\tThroughput\n").getBytes());
 
             for (ThroughputSample sample : samples) {
-                String logLine = String.format("%17d\t\t%8d\t\t%10d\n",
+                String logLine = String.format("%12d\t\t%17d\t\t%8d\t\t%10d\n",
+                        sample.arrivalTimeMs(),
                         sample.bitsTransferred() * 8,
                         sample.durationMs(),
                         Math.round(sample.bitsPerSecond() / 1000));

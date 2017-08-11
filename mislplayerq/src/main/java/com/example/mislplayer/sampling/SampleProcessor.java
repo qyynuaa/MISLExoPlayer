@@ -13,6 +13,10 @@ public interface SampleProcessor {
 
     /** A sample of the available throughput. */
     interface ThroughputSample {
+
+        /** The arrival time for the sample, in ms. */
+        long arrivalTimeMs();
+
         /** The number of bits transferred during the sample time period. */
         long bitsTransferred();
 
