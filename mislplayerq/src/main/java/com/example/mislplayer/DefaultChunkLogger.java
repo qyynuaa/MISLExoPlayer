@@ -1,4 +1,4 @@
-package com.example.mislplayer.sampling;
+package com.example.mislplayer;
 
 import android.os.Environment;
 import android.os.SystemClock;

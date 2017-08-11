@@ -11,7 +11,6 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.example.mislplayer.sampling.ChunkBasedSampler;
-import com.example.mislplayer.sampling.DefaultChunkLogger;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
 import com.example.mislplayer.sampling.SwitchableSampler;
 import com.example.mislplayer.sampling.TimeBasedSampler;
