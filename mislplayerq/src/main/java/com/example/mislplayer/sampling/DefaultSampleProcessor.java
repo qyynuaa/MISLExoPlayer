@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static com.example.mislplayer.PlayerActivity.LOG_DIRECTORY_PATH;
+import static java.lang.Math.atan;
 import static java.lang.Math.min;
 
 /**
@@ -90,6 +92,45 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
                 String.format("New sample (index: %d, bits: %d, duration (ms): %d, throughput (kbps): %g)",
                         samples.size() - 1, bitsTransferred, durationMs,
                         lastSampleThroughputKbps()));
+    }
+
+    /**
+     * Writes a log of the samples so far to file.
+     */
+    @Override
+    public void writeSampleLog() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
+        Date date = new Date();
+        File directory = new File(LOG_DIRECTORY_PATH);
+        File file = new File(directory, "/" + dateFormat.format(date) + "_Sample_Log.txt");
+
+        try {
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+            file.createNewFile();
+            FileOutputStream stream = new FileOutputStream(file);
+            stream.write(("Bytes_Transferred\t\tDuration\t\tThroughput\n").getBytes());
+
+            for (ThroughputSample sample : samples) {
+                String logLine = String.format("%17d\t\t%8d\t\t%10d\n",
+                        sample.bitsTransferred() * 8,
+                        sample.durationMs(),
+                        Math.round(sample.bitsPerSecond() / 1000));
+                stream.write(logLine.getBytes());
+            }
+            stream.close();
+        } catch (IOException e) {
+            Log.e("Exception", "File write failed: " + e.toString());
+        }
+    }
+
+    /**
+     * Removes all existing samples.
+     */
+    @Override
+    public void clearSamples() {
+        samples.clear();
     }
 
     @Override

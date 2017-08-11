@@ -23,6 +23,12 @@ public interface SampleProcessor {
         double bitsPerSecond();
     }
 
+    /** Writes a log of the samples so far to file. */
+    void writeSampleLog();
+
+    /** Removes all existing samples. */
+    void clearSamples();
+
     void giveChunk(MediaChunk chunk);
 
     /** Provides the duration of the current mpd. */

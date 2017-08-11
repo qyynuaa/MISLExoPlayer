@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
@@ -63,6 +64,8 @@ import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_MAX_BUFFE
 
 public class PlayerActivity extends Activity implements View.OnClickListener,
         ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
+
+    public static final String LOG_DIRECTORY_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
 
     private static final String TAG = "PlayerActivity";
 
@@ -408,8 +411,11 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             player.release();
             player = null;
             eventLogger = null;
+
             chunkLogger.writeLogsToFile();
             chunkLogger.clearChunkInformation();
+            sampleProcessor.writeSampleLog();
+            sampleProcessor.clearSamples();
         }
     }
 

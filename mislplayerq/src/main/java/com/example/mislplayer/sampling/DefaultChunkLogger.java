@@ -132,7 +132,7 @@ public class DefaultChunkLogger implements ChunkLogger {
         DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
         Date date = new Date();
         File directory = new File(LOG_FILE_PATH);
-        File file = new File(directory, "/Log_Segments_ExoPlayer_" + dateFormat.format(date) + ".txt");
+        File file = new File(directory, "/" + dateFormat.format(date) + "_Chunk_Log.txt");
 
         try {
             if (!directory.exists()) {
@@ -151,8 +151,6 @@ public class DefaultChunkLogger implements ChunkLogger {
         } catch (IOException e) {
             Log.e("Exception", "File write failed: " + e.toString());
         }
-
-
     }
 
     /** Removes all stored chunk information. */
