@@ -60,7 +60,7 @@ public class TimeBasedSampler implements TransferListener<Object>,
                             long sampleThresholdMs) {
         this.sampleThresholdMs = sampleThresholdMs;
         this.sampleStore = sampleStore;
-        this.chunkSampler = new ChunkBasedSampler(sampleStore, sampleProcessor);
+        this.chunkSampler = new ChunkBasedSampler(this, sampleProcessor);
     }
 
     /**
