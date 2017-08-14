@@ -198,7 +198,12 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
                 stallDurationMs, representationRateKbps,
                 deliveryRateKbps, actualRateKbps, lastBytesLoaded,
                 lastBufferLevelMs, chunkDurationMs);
-        log.add(logEntry.getChunkIndex() - 1, logEntry);
+        int chunkArrayIndex = logEntry.getChunkIndex() - 1;
+        if (chunkArrayIndex < log.size()) {
+            log.set(chunkArrayIndex, logEntry);
+        } else {
+            log.add(logEntry);
+        }
     }
 
     @Override
