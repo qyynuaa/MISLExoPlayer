@@ -1,19 +1,17 @@
 package com.example.mislplayer;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
 import com.example.mislplayer.sampling.ChunkBasedSampler;
-import com.example.mislplayer.sampling.ChunkLogger;
-import com.example.mislplayer.sampling.DefaultChunkLogger;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
 import com.example.mislplayer.sampling.SwitchableSampler;
 import com.example.mislplayer.sampling.TimeBasedSampler;
@@ -64,9 +62,10 @@ import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_MAX_BUFFE
 public class PlayerActivity extends Activity implements View.OnClickListener,
         ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
 
+    public static final String LOG_DIRECTORY_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
+
     private static final String TAG = "PlayerActivity";
 
-    private Context userAgent = this;
     private SimpleExoPlayerView playerView;
     private Handler mainHandler;
     private EventLogger eventLogger;
@@ -75,8 +74,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private long resumePosition;
     private DefaultTrackSelector trackSelector;
     private LoadControl loadControl;
-    private String videoInfo;
-    private int segmentNumber = 0;
     private DashMediaSource videoSource;
     public Thread t;
     public static ArrayList<FutureSegmentInfos> futureSegmentInfos;
@@ -89,14 +86,16 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private TransferListener<? super DataSource> transferListener;
     private ChunkListener chunkListener;
     private TrackSelection.Factory trackSelectionFactory;
-    private ChunkLogger chunkLogger = new DefaultChunkLogger();
+    private DefaultChunkLogger chunkLogger = new DefaultChunkLogger();
     private ExoPlayer.EventListener playerListener = null;
     private DefaultSampleProcessor sampleProcessor;
+    private ManifestListener manifestListener = new ManifestListener();
 
     private int minBufferMs = 26000;
     private int maxBufferMs = DEFAULT_MAX_BUFFER_MS;
     private long playbackBufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_MS;
     private long rebufferMs = DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
+
     private TextView debugView;
     private final StringBuilder debugBuilder = new StringBuilder();
     private final Formatter debugFormatter = new Formatter(debugBuilder);
@@ -136,7 +135,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         }
 
         //Provides instances of DataSource from which streams of data can be read.
-        DataSource.Factory dataSourceFactory = buildDataSourceFactory2(transferListener);
+        DataSource.Factory mediaDataSourceFactory = buildDataSourceFactory(transferListener);
 
         //Will be responsible of choosing right TrackSelections
         trackSelector = new DefaultTrackSelector(trackSelectionFactory);
@@ -145,12 +144,15 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
         mainHandler = new Handler();
 
+        manifestListener.addListener(chunkLogger);
+        manifestListener.addListener(sampleProcessor);
+
         //Provides instances of DashChunkSource
-        df = new MISLDashChunkSource.Factory(dataSourceFactory,
+        df = new MISLDashChunkSource.Factory(mediaDataSourceFactory,
                 chunkListener, chunkLogger);
 
         // Our video source media, we give it an URL, and all the stuff before
-        videoSource = new DashMediaSource(uri, buildDataSourceFactory2(chunkLogger), df, mainHandler, chunkLogger);
+        videoSource = new DashMediaSource(uri, buildDataSourceFactory(manifestListener), df, mainHandler, chunkLogger);
 
         //Used to play media indefinitely (loop)
         LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
@@ -340,11 +342,11 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         return -1;
     }
 
-    private DataSource.Factory buildDataSourceFactory2(TransferListener<? super DataSource> transferListener) {
-        return new DefaultDataSourceFactory(this, transferListener, buildHttpDataSourceFactory2(transferListener));
+    private DataSource.Factory buildDataSourceFactory(TransferListener<? super DataSource> transferListener) {
+        return new DefaultDataSourceFactory(this, transferListener, buildHttpDataSourceFactory(transferListener));
     }
 
-    private HttpDataSource.Factory buildHttpDataSourceFactory2(TransferListener<? super DataSource> transferListener) {
+    private HttpDataSource.Factory buildHttpDataSourceFactory(TransferListener<? super DataSource> transferListener) {
         return new DefaultHttpDataSourceFactory("MyPlayer", transferListener);
     }
 
@@ -398,18 +400,17 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         }
     }
 
-    private HttpDataSource.Factory buildHttpDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
-        return new DefaultHttpDataSourceFactory(userAgent.toString(), bandwidthMeter); // là aussi jouer avec ça
-    }
-
     private void releasePlayer() {
         if (player != null) {
             updateResumePosition();
             player.release();
             player = null;
             eventLogger = null;
+
             chunkLogger.writeLogsToFile();
             chunkLogger.clearChunkInformation();
+            sampleProcessor.writeSampleLog();
+            sampleProcessor.clearSamples();
         }
     }
 

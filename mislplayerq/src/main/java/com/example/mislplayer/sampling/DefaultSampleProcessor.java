@@ -1,8 +1,9 @@
 package com.example.mislplayer.sampling;
 
-import android.os.Environment;
+import android.os.SystemClock;
 import android.util.Log;
 
+import com.example.mislplayer.ManifestListener;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackParameters;
@@ -22,25 +23,37 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static com.example.mislplayer.PlayerActivity.LOG_DIRECTORY_PATH;
 import static java.lang.Math.min;
 
 /**
  * A default sample processor.
  */
 public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
-        ExoPlayer.EventListener {
+        ExoPlayer.EventListener, ManifestListener.ManifestRequestTimeReceiver {
 
     /** A default throughput sample implementation. */
     public static class DefaultThroughputSample implements ThroughputSample {
 
+        private long arrivalTimeMs;
         private long bitsTransferred;
         private long durationMs;
         private double throughputBitsPerSecond;
 
-        public DefaultThroughputSample(long bitsTransferred, long durationMs) {
+        public DefaultThroughputSample(long arrivalTimeMs,
+                                       long bitsTransferred, long durationMs) {
+            this.arrivalTimeMs = arrivalTimeMs;
             this.bitsTransferred = bitsTransferred;
             this.durationMs = durationMs;
             this.throughputBitsPerSecond = (double)bitsTransferred * 1000 / durationMs;
+        }
+
+        /**
+         * The arrival time for the sample, in ms.
+         */
+        @Override
+        public long arrivalTimeMs() {
+            return arrivalTimeMs;
         }
 
         /**
@@ -74,6 +87,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     private List<ThroughputSample> samples = new ArrayList<>();
     private int maxBufferMs;
     private long mpdDurationMs = DATA_NOT_AVAILABLE;
+    private long manifestRequestTime;
 
     private MediaChunk lastChunk;
 
@@ -83,13 +97,57 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
 
     /** Adds a new throughput sample to the store. */
     @Override
-    public void addSample(long bitsTransferred, long durationMs) {
-        samples.add(new DefaultThroughputSample(bitsTransferred,
-                durationMs));
+    public void addSample(long elapsedRealtimeMs, long bitsTransferred,
+                          long durationMs) {
+        long arrivalTime = elapsedRealtimeMs - manifestRequestTime;
+        samples.add(
+                new DefaultThroughputSample(arrivalTime, bitsTransferred,
+                        durationMs)
+        );
         Log.d(TAG,
                 String.format("New sample (index: %d, bits: %d, duration (ms): %d, throughput (kbps): %g)",
                         samples.size() - 1, bitsTransferred, durationMs,
                         lastSampleThroughputKbps()));
+    }
+
+    /**
+     * Writes a log of the samples so far to file.
+     */
+    @Override
+    public void writeSampleLog() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
+        Date date = new Date();
+        File directory = new File(LOG_DIRECTORY_PATH);
+        File file = new File(directory, "/" + dateFormat.format(date) + "_Sample_Log.txt");
+
+        try {
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+            file.createNewFile();
+            FileOutputStream stream = new FileOutputStream(file);
+            stream.write(("Arrival_Time\t\tBytes_Transferred\t\tDuration\t\tThroughput\n").getBytes());
+
+            for (ThroughputSample sample : samples) {
+                String logLine = String.format("%12d\t\t%17d\t\t%8d\t\t%10d\n",
+                        sample.arrivalTimeMs(),
+                        sample.bitsTransferred() * 8,
+                        sample.durationMs(),
+                        Math.round(sample.bitsPerSecond() / 1000));
+                stream.write(logLine.getBytes());
+            }
+            stream.close();
+        } catch (IOException e) {
+            Log.e("Exception", "File write failed: " + e.toString());
+        }
+    }
+
+    /**
+     * Removes all existing samples.
+     */
+    @Override
+    public void clearSamples() {
+        samples.clear();
     }
 
     @Override
@@ -394,6 +452,13 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
         }
 
         return (1 + T1 + T2 / T3);
+    }
+
+    // ManifestRequestTimeReceiver implementation
+
+    @Override
+    public void giveManifestRequestTime(long manifestRequestTime) {
+        this.manifestRequestTime = manifestRequestTime;
     }
 
     // ExoPlayer EventListener implementation

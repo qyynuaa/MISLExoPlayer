@@ -114,6 +114,8 @@ public class SwitchableSampler implements TransferListener<Object>,
     private long sampleClockMs = TIME_UNSET;
     private long sampleDurationMs = 0;
 
+    private long prematureArrivalTime;
+
     /**
      * Creates a switchable sampler with specified mode and default
      * threshold values.
@@ -204,7 +206,7 @@ public class SwitchableSampler implements TransferListener<Object>,
      */
     @Override
     public void onTransferEnd(Object source) {
-        Log.d(TAG, "Transfer ended");
+        prematureArrivalTime = SystemClock.elapsedRealtime();
     }
 
     /**
@@ -219,9 +221,10 @@ public class SwitchableSampler implements TransferListener<Object>,
     /**
      * Finish a throughput sample and send it to the sample store.
      */
-    private void finishSampling() {
+    private void finishSampling(long elapsedRealtimeMs) {
         if (sampleDurationMs > 0) {
-            sampleStore.addSample(sampleBytesTransferred * 8, sampleDurationMs);
+            sampleStore.addSample(elapsedRealtimeMs,
+                    sampleBytesTransferred * 8, sampleDurationMs);
         }
         sampleClockMs = TIME_UNSET;
     }
@@ -247,7 +250,7 @@ public class SwitchableSampler implements TransferListener<Object>,
 
         if (mode.sampleIsReady(sampleDurationMs, sampleBytesTransferred,
                 sampleThresholdMs, sampleThresholdBytes)) {
-            finishSampling();
+            finishSampling(nowMs);
             startSampling();
         }
     }
@@ -297,7 +300,7 @@ public class SwitchableSampler implements TransferListener<Object>,
     @Override
     public void onLoadingChanged(boolean isLoading) {
         if (!isLoading && currentlySampling()) {
-            finishSampling();
+            finishSampling(prematureArrivalTime);
             Log.d(TAG, "Loading changed, finished premature sample.");
         }
     }

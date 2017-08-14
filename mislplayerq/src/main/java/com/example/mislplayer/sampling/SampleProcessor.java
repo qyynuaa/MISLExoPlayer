@@ -13,6 +13,10 @@ public interface SampleProcessor {
 
     /** A sample of the available throughput. */
     interface ThroughputSample {
+
+        /** The arrival time for the sample, in ms. */
+        long arrivalTimeMs();
+
         /** The number of bits transferred during the sample time period. */
         long bitsTransferred();
 
@@ -22,6 +26,12 @@ public interface SampleProcessor {
         /** The throughput for the sample time period in bps. */
         double bitsPerSecond();
     }
+
+    /** Writes a log of the samples so far to file. */
+    void writeSampleLog();
+
+    /** Removes all existing samples. */
+    void clearSamples();
 
     void giveChunk(MediaChunk chunk);
 
