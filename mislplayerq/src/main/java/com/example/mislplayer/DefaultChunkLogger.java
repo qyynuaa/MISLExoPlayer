@@ -51,7 +51,7 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
                         long stallDurationMs, long repLevelKbps, double deliveryRateKbps,
                         double actualRateKbps, long byteSize,
                         long bufferLevelUs, long chunkDurationMs){
-            this.chunkIndex = (int) (chunkStartTimeMs / chunkDurationMs) + 1;
+            this.chunkIndex = (int) (Math.round((double) chunkStartTimeMs / chunkDurationMs)) + 1;
             this.arrivalTimeMs = arrivalTimeMs;
             this.loadDurationMs = loadDurationMs;
             this.stallDurationMs = stallDurationMs;
@@ -198,7 +198,12 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
                 stallDurationMs, representationRateKbps,
                 deliveryRateKbps, actualRateKbps, lastBytesLoaded,
                 lastBufferLevelMs, chunkDurationMs);
-        log.add(logEntry.getChunkIndex() - 1, logEntry);
+        int chunkArrayIndex = logEntry.getChunkIndex() - 1;
+        if (chunkArrayIndex < log.size()) {
+            log.set(chunkArrayIndex, logEntry);
+        } else {
+            log.add(logEntry);
+        }
     }
 
     @Override
