@@ -62,9 +62,10 @@ import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_MAX_BUFFE
 public class PlayerActivity extends Activity implements View.OnClickListener,
         ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
 
-    public static final String LOG_DIRECTORY_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
-
     private static final String TAG = "PlayerActivity";
+
+    public static final String LOG_DIRECTORY_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
+    private static final int DEBUG_VIEW_UPDATE_MS = 1000;
 
     private SimpleExoPlayerView playerView;
     private Handler mainHandler;
@@ -75,7 +76,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private DefaultTrackSelector trackSelector;
     private LoadControl loadControl;
     private DashMediaSource videoSource;
-    public Thread t;
     public static ArrayList<FutureSegmentInfos> futureSegmentInfos;
     public static ArrayList<Integer> reprLevel;
     public static int beginningIndex;
@@ -99,6 +99,13 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private TextView debugView;
     private final StringBuilder debugBuilder = new StringBuilder();
     private final Formatter debugFormatter = new Formatter(debugBuilder);
+    private final Runnable debugViewUpdater = new Runnable() {
+        @Override
+        public void run() {
+            updateDebugView();
+            mainHandler.postDelayed(debugViewUpdater, DEBUG_VIEW_UPDATE_MS);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -187,25 +194,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         debugView.setTextColor(Color.WHITE);
         debugView.setTextSize(15);
 
-        //Thread to call every 1500 ms a function
-        t = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    while (!isInterrupted()) {
-                        Thread.sleep(1500);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                updateDebugView();
-                            }
-                        });
-                    }
-                } catch (InterruptedException e) {
-                }
-            }
-        };
-        t.start();
+        mainHandler.postDelayed(debugViewUpdater, DEBUG_VIEW_UPDATE_MS);
     }
 
     //Choose our algorithm given the button selected in the previous Activity
@@ -380,7 +369,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     @Override
     public void onStop() {
         super.onStop();
-        t.interrupt();
         if (Util.SDK_INT > 23) {
             releasePlayer();
         }
@@ -388,6 +376,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
     private void releasePlayer() {
         if (player != null) {
+            mainHandler.removeCallbacks(debugViewUpdater);
+
             updateResumePosition();
             player.release();
             player = null;
