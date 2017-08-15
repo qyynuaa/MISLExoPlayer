@@ -356,7 +356,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
         double relWght = 1;
         for (int i = 0; i < window; i++) {
             freshWeights[i] = (expAvgRatio) * Math.pow(1 - expAvgRatio, i) / weightSum;
-            durationWeight[i] = lastSampleDurationMs();
+            durationWeight[i] = (double) lastSampleDurationMs() / 1000;
             //(dash->transmittedSegmentsData[group->download_segment_index -i].receiveTime - dash->transmittedSegmentsData[group->download_segment_index -i].requestTime);
             totalDuration += durationWeight[i];
         }
