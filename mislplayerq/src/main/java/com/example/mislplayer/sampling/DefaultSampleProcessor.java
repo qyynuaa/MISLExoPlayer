@@ -276,15 +276,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
      */
     @Override
     public double getMinimumThroughputSample(int maxWindow) {
-        double minimumSample = 0;
-
-        for (double thisSample: getThroughputSamples(maxWindow)) {
-            if (thisSample < minimumSample) {
-                minimumSample = thisSample;
-            }
-        }
-
-        return minimumSample;
+        return Collections.min(getThroughputSamples(maxWindow));
     }
 
     /**
