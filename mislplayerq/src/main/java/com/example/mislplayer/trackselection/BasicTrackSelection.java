@@ -85,9 +85,9 @@ public class BasicTrackSelection extends AlgorithmTrackSelection {
         if (sampleProcessor.dataNotAvailable()) {
             Log.d(TAG, "No data available.");
         } else {
-            double throughputSample = sampleProcessor.lastSampleThroughputKbps();
-            Log.d(TAG, String.format("Throughput sample (kbps): %g", throughputSample));
-            selectedIndex = findBestRateIndex(throughputSample * 1000);
+            double throughputSample = sampleProcessor.lastSampleThroughput();
+            Log.d(TAG, String.format("Throughput sample (kbps): %g", throughputSample / 1000));
+            selectedIndex = findBestRateIndex(throughputSample);
             Log.d(TAG, String.format("Changed selected index to: %d", selectedIndex));
         }
     }

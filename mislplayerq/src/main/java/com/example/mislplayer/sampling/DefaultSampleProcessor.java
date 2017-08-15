@@ -1,6 +1,5 @@
 package com.example.mislplayer.sampling;
 
-import android.os.SystemClock;
 import android.util.Log;
 
 import com.example.mislplayer.ManifestListener;
@@ -108,7 +107,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
         Log.d(TAG,
                 String.format("New sample (index: %d, bits: %d, duration (ms): %d, throughput (kbps): %g)",
                         samples.size() - 1, bitsTransferred, durationMs,
-                        lastSampleThroughputKbps()));
+                        lastSampleThroughput() / 1000));
     }
 
     /**
@@ -212,11 +211,11 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     }
 
     /**
-     * Returns the most recent throughput sample in kbps.
+     * Returns the most recent throughput sample in bps.
      */
     @Override
-    public double lastSampleThroughputKbps() {
-        return lastSample().bitsPerSecond() / 1000;
+    public double lastSampleThroughput() {
+        return lastSample().bitsPerSecond();
     }
 
     /**

@@ -56,8 +56,8 @@ public interface SampleProcessor {
     /** Returns the duration of the most recently downloaded chunk, in ms. */
     long lastChunkDurationMs();
 
-    /** Returns the most recent throughput sample in kbps. */
-    double lastSampleThroughputKbps();
+    /** Returns the most recent throughput sample in bps. */
+    double lastSampleThroughput();
 
     /** Returns the duration of the most recent throughput sample, in ms. */
     long lastSampleDurationMs();
