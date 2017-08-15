@@ -183,13 +183,13 @@ public class MISLLoadControl implements LoadControl {
      */
     @Override
     public boolean shouldContinueLoading(long bufferedDurationUs) {
-        if (timerExpired) {
+        if (loadControl.shouldContinueLoading(bufferedDurationUs) && timerExpired) {
             if (!timerRunning) {
                 handler.postDelayed(restartLoading, 2000);
                 timerRunning = true;
             }
             timerExpired = false;
-            return loadControl.shouldContinueLoading(bufferedDurationUs);
+            return true;
         } else {
             return false;
         }
