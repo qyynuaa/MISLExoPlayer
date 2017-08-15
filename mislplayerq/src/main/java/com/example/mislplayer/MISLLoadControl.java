@@ -1,5 +1,7 @@
 package com.example.mislplayer;
 
+import android.os.Handler;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.LoadControl;
@@ -41,12 +43,25 @@ public class MISLLoadControl implements LoadControl {
      */
     public static final int DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS  = 5000;
 
+    private static final String TAG = "MISLLoadControl";
+
     private LoadControl loadControl;
 
     private final long minBufferMs;
     private final long maxBufferMs;
     private final long bufferForPlaybackMs;
     private final long bufferForPlaybackAfterRebufferMs;
+
+    private Handler handler;
+    private Runnable restartLoading = new Runnable() {
+        @Override
+        public void run() {
+            timerExpired = true;
+            timerRunning = false;
+        }
+    };
+    private boolean timerExpired = true;
+    private boolean timerRunning;
 
     /**
      * Creates a new MISLLoadControl with default values.
@@ -82,6 +97,7 @@ public class MISLLoadControl implements LoadControl {
         this.maxBufferMs = maxBufferMs;
         this.bufferForPlaybackMs = bufferForPlaybackMs;
         this.bufferForPlaybackAfterRebufferMs = bufferForPlaybackAfterRebufferMs;
+        handler = new Handler();
     }
 
     public long getMinBufferMs() {
@@ -167,6 +183,15 @@ public class MISLLoadControl implements LoadControl {
      */
     @Override
     public boolean shouldContinueLoading(long bufferedDurationUs) {
-        return loadControl.shouldContinueLoading(bufferedDurationUs);
+        if (timerExpired) {
+            if (!timerRunning) {
+                handler.postDelayed(restartLoading, 2000);
+                timerRunning = true;
+            }
+            timerExpired = false;
+            return loadControl.shouldContinueLoading(bufferedDurationUs);
+        } else {
+            return false;
+        }
     }
 }
