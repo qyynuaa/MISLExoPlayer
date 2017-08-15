@@ -193,10 +193,10 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
         return lastChunk.chunkIndex;
     }
 
-    /** Returns the representation level of the most recently downloaded chunk, in kbps. */
+    /** Returns the representation level of the most recently downloaded chunk, in bps. */
     @Override
-    public int lastRepLevelKbps(){
-        return lastChunk.trackFormat.bitrate / 1000;
+    public int lastChunkRepLevel(){
+        return lastChunk.trackFormat.bitrate;
     }
 
     /** Returns the size of the most recently downloaded chunk, in bytes. */
