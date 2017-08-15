@@ -1,6 +1,7 @@
 package com.example.mislplayer.trackselection;
 
 import android.util.Log;
+
 import com.example.mislplayer.FutureSegmentInfos;
 import com.example.mislplayer.PlayerActivity;
 import com.example.mislplayer.sampling.SampleProcessor;
@@ -99,50 +100,44 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     }
 
     /* MISL BBA2 adaptation algorithm */
-    private int dash_do_rate_adaptation_bba2()
-    {
+    private int dash_do_rate_adaptation_bba2() {
         long total_size = algorithmListener.lastByteSize();
         lastChunkDurationMs = algorithmListener.lastChunkDurationMs();
         lastChunkIndex = algorithmListener.lastChunkIndex();
         maxBufferMs = algorithmListener.maxBufferMs();
 
         // save the information about segment statistics (kbps)
-        Log.d(TAG,"Segment index: " + lastChunkIndex);
+        Log.d(TAG, "Segment index: " + lastChunkIndex);
 
 
         // take the last rate and find its index
-        int lastRate = algorithmListener.lastRepLevelKbps();
-        int lastRateIndex = PlayerActivity.getRepIndex(lastRate);
+        int lastRate = algorithmListener.lastChunkRepLevel();
+        int lastRateIndex = getRepIndex(lastRate);
         int retVal;
         // set to the lowest rate
-        int qRateIndex= lowestBitrateIndex();
+        int qRateIndex = lowestBitrateIndex();
         int reservoir = bba1UpdateResevoir(lastRate, lastRateIndex);
-        double SFT = (8*total_size)/algorithmListener.lastSampleThroughputKbps();
+        double SFT = (8 * total_size) / algorithmListener.lastSampleThroughputKbps();
         if (SFT > lastChunkDurationMs)
             m_staticAlgPar = 1; // switch to BBA1 if buffer is decreasing
         if (bufferedDurationMs < reservoir)               //CHECK BUFFER LEVEL
         {
-            if (m_staticAlgPar!=0) {
+            if (m_staticAlgPar != 0) {
                 retVal = lowestBitrateIndex();
-            }
-            else
-            {
+            } else {
                 // start up phase
                 if (SFT < 0.125 * lastChunkDurationMs) {
                     // buffer level increasing fast
                     retVal = max(lastRateIndex - 1, 0);
-                }
-                else {
+                } else {
                     retVal = lastRateIndex;
                 }
             }
         } else {
-            if (m_staticAlgPar!=0)
-            {
+            if (m_staticAlgPar != 0) {
                 // execute BBA1
                 retVal = bba1VRAA(lastRateIndex, reservoir);
-            }
-            else { // beyond reservoir
+            } else { // beyond reservoir
                 int bba1RateIndex = bba1VRAA(lastRateIndex, reservoir);
                 if (SFT <= 0.5 * lastChunkDurationMs) {
                     // buffer level increasing fast
@@ -160,48 +155,45 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     }
 
 
-    private int bba1UpdateResevoir(int lastRate, int lastRateIndex)
-    {
+    private int bba1UpdateResevoir(int lastRate, int lastRateIndex) {
         long resvWin = min(2 * maxBufferMs / lastChunkDurationMs,
-                (algorithmListener.mpdDuration()/lastChunkIndex) - lastChunkIndex);
-        long avgSegSize = (lastRate * lastChunkDurationMs) / 8; //bytes
+                (algorithmListener.mpdDuration() / lastChunkIndex) - lastChunkIndex);
+        long avgSegSize = (lastRate * lastChunkDurationMs) / 8000; //bytes
 
         int largeChunks = 0;
         int smallChunks = 0;
-        for (int i = 0; i < resvWin; i++)
-        {
+        for (int i = 0; i < resvWin; i++) {
             if (FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, lastChunkIndex + i, lastRateIndex) > avgSegSize)
-                largeChunks+= FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, lastChunkIndex + i, lastRateIndex);
+                largeChunks += FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, lastChunkIndex + i, lastRateIndex);
             else
                 smallChunks += FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, lastChunkIndex + i, lastRateIndex);
 
         }
-        double resevoir =  8 * ((largeChunks-smallChunks))/(lastRate);
+        double resevoir = 8 * ((largeChunks - smallChunks)) / (lastRate);
         if (resevoir < (2 * lastChunkDurationMs))
             resevoir = 2 * lastChunkDurationMs;
         else {
             if (resevoir > (0.6 * (maxBufferMs / lastChunkDurationMs) * lastChunkDurationMs))
                 resevoir = (0.6 * (maxBufferMs / lastChunkDurationMs) * lastChunkDurationMs);
         }
-        return (int)resevoir;
+        return (int) resevoir;
     }
 
-    private int bba1VRAA(int lastRateIndex, int resevoir){
+    private int bba1VRAA(int lastRateIndex, int resevoir) {
         int rateUindex = max(lastRateIndex - 1, 0);
         int rateLindex = min(lastRateIndex + 1, tracks.length);
 
         int optRateIndex;
         if (bufferedDurationMs < resevoir) {
-            optRateIndex = tracks.length; }
-        else if (bufferedDurationMs > 0.9 *(maxBufferMs / lastChunkDurationMs) * lastChunkDurationMs)
+            optRateIndex = tracks.length;
+        } else if (bufferedDurationMs > 0.9 * (maxBufferMs / lastChunkDurationMs) * lastChunkDurationMs)
             optRateIndex = 0;
-        else
-        {
+        else {
 
             int low = lowestBitrate();
             int high = highestBitrate();
-            double slope = (high-low)/(0.9 * (maxBufferMs / lastChunkDurationMs) * lastChunkDurationMs - resevoir);
-            optRateIndex = getNearestBitrateIndex((low+ slope * (bufferedDurationMs - resevoir))/1000.0);
+            double slope = (high - low) / (0.9 * (maxBufferMs / lastChunkDurationMs) * lastChunkDurationMs - resevoir);
+            optRateIndex = getNearestBitrateIndex((low + slope * (bufferedDurationMs - resevoir)) / 1000.0);
         }
 
         if (optRateIndex == tracks.length || optRateIndex == 0)
@@ -209,13 +201,11 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         else if (optRateIndex <= rateUindex)
             return optRateIndex;
         else if (optRateIndex >= rateLindex)
-            return optRateIndex -1;
+            return optRateIndex - 1;
         else
             return lastRateIndex;
 
     }
-
-
 
 
 }

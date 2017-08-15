@@ -31,7 +31,7 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
         }
 
         /**
-         * @param bandwidthMeter Provides an estimate of the currently available bandwidth.
+         * @param bandwidthMeter    Provides an estimate of the currently available bandwidth.
          * @param bandwidthFraction The fraction of the available bandwidth
          *                          that the selection should consider
          *                          available for use.
@@ -44,9 +44,10 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
 
         /**
          * Creates a new DASHTrackSelection.
-         * @param group The {@link TrackGroup}. Must not be null.
+         *
+         * @param group  The {@link TrackGroup}. Must not be null.
          * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
-         *     null or empty. May be in any order.
+         *               null or empty. May be in any order.
          * @return A new DASHTrackSelection.
          */
         @Override
@@ -65,10 +66,10 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
     private int reason;
 
     /**
-     * @param group The {@link TrackGroup}.
-     * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
-     *     empty. May be in any order.
-     * @param bandwidthMeter Provides an estimate of the currently available bandwidth.
+     * @param group             The {@link TrackGroup}.
+     * @param tracks            The indices of the selected tracks within the {@link TrackGroup}. Must not be
+     *                          empty. May be in any order.
+     * @param bandwidthMeter    Provides an estimate of the currently available bandwidth.
      * @param bandwidthFraction The fraction of the available bandwidth
      *                          that the selection should consider
      *                          available for use.

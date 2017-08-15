@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -192,10 +193,10 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
         return lastChunk.chunkIndex;
     }
 
-    /** Returns the representation level of the most recently downloaded chunk, in kbps. */
+    /** Returns the representation level of the most recently downloaded chunk, in bps. */
     @Override
-    public int lastRepLevelKbps(){
-        return lastChunk.trackFormat.bitrate / 1000;
+    public int lastChunkRepLevel(){
+        return lastChunk.trackFormat.bitrate;
     }
 
     /** Returns the size of the most recently downloaded chunk, in bytes. */
@@ -347,11 +348,9 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     public double[] oscarKumarParEstimation(int estWindow, double expAvgRatio) {
         int window = getWindowSize(estWindow);
         List<Double> rateSamples = getThroughputSamples(window);
-        double maxRate=rateSamples.get(0);
-        for (int i = 1; i < window; i++) {
-            if (rateSamples.get(i) > maxRate)
-                maxRate = rateSamples.get(i);
-        }
+
+        double maxRate = Collections.max(rateSamples);
+
         double normalizedSamples[] = new double[window];
         for (int i = 0; i < window; i++) {
             normalizedSamples[i] = rateSamples.get(i) / maxRate / 1.01;
