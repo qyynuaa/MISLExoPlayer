@@ -75,7 +75,7 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
     /**
      * Finds the index of the track with a given bitrate.
      *
-     * @param bitrate The bitrate of the desired track.
+     * @param bitrate The bitrate of the desired track, in bps.
      * @return The index of the track with the given bitrate.
      */
     public int getRepIndex(int bitrate) {
