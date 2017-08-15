@@ -51,9 +51,9 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
         /**
          * Creates a new ElasticTrackSelection.
          *
-         * @param group The {@link TrackGroup}. Must not be null.
+         * @param group  The {@link TrackGroup}. Must not be null.
          * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
-         *     null or empty. May be in any order.
+         *               null or empty. May be in any order.
          * @return A new ElasticTrackSelection.
          */
         @Override
@@ -85,11 +85,11 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
     /**
      * Creates a new ElasticTrackSelection.
      *
-     * @param group The {@link TrackGroup}. Must not be null.
-     * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
-     *     null or empty. May be in any order.
-     * @param algorithmListener Provides necessary information to the
-     *                          algorithm.
+     * @param group                The {@link TrackGroup}. Must not be null.
+     * @param tracks               The indices of the selected tracks within the {@link TrackGroup}. Must not be
+     *                             null or empty. May be in any order.
+     * @param algorithmListener    Provides necessary information to the
+     *                             algorithm.
      * @param elasticAverageWindow
      * @param k_p
      * @param k_i
