@@ -111,7 +111,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
 
         // take the last rate and find its index
-        int lastRate = algorithmListener.lastRepLevelKbps();
+        int lastRate = algorithmListener.lastChunkRepLevel();
         int lastRateIndex = getRepIndex(lastRate);
         int retVal;
         // set to the lowest rate
@@ -164,7 +164,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     {
         long resvWin = min(2 * maxBufferMs / lastChunkDurationMs,
                 (algorithmListener.mpdDuration()/lastChunkIndex) - lastChunkIndex);
-        long avgSegSize = (lastRate * lastChunkDurationMs) / 8; //bytes
+        long avgSegSize = (lastRate * lastChunkDurationMs) / 8000; //bytes
 
         int largeChunks = 0;
         int smallChunks = 0;

@@ -47,8 +47,8 @@ public interface SampleProcessor {
     /** Returns the index of the most recently downloaded chunk. */
     int lastChunkIndex();
 
-    /** Returns the representation level of the most recently downloaded chunk, in kbps. */
-    int lastRepLevelKbps();
+    /** Returns the representation level of the most recently downloaded chunk, in bps. */
+    int lastChunkRepLevel();
 
     /** Returns the size of the most recently downloaded chunk, in bytes. */
     long lastByteSize();
