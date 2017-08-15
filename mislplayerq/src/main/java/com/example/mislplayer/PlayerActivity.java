@@ -13,7 +13,7 @@ import android.widget.TextView;
 
 import com.example.mislplayer.sampling.ChunkBasedSampler;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
-import com.example.mislplayer.sampling.SwitchableSampler;
+import com.example.mislplayer.sampling.SizeBasedSampler;
 import com.example.mislplayer.sampling.TimeBasedSampler;
 import com.example.mislplayer.trackselection.ArbiterTrackSelection;
 import com.example.mislplayer.trackselection.BBA2TrackSelection;
@@ -217,9 +217,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             transferListener = bandwidthMeter;
             trackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
         } else if (algorithmType == AdaptationAlgorithmType.BASIC_SIZE) {
-            SwitchableSampler sizeSampler = new SwitchableSampler(
-                    sampleProcessor, SwitchableSampler.SampleMode.SIZE,
-                    100_000);
+            SizeBasedSampler sizeSampler = new SizeBasedSampler(
+                    sampleProcessor, 100_000);
             transferListener = sizeSampler;
             trackSelectionFactory = new BasicTrackSelection.Factory(sampleProcessor);
             playerListener = sizeSampler;
