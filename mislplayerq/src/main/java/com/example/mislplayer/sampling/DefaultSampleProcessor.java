@@ -290,7 +290,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
      */
     @Override
     public double getSampleHarmonicAverage(int preferredWindow) {
-        return new HarmonicAverage(getThroughputSamples(preferredWindow)).value();
+        return harmonicAverage(getThroughputSamples(preferredWindow));
     }
 
     /**
@@ -307,7 +307,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     @Override
     public double getSampleCV(int preferredWindow) {
         List<Double> throughputSamples = getThroughputSamples(preferredWindow);
-        return new CoefficientOfVariation(throughputSamples).value();
+        return coefficientOfVariation(throughputSamples);
     }
 
     /**
@@ -325,8 +325,8 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     @Override
     public double getSampleExponentialAverage(int maxWindow,
                                               double exponentialAverageRatio) {
-        return new ExponentialAverage(getThroughputSamples(maxWindow),
-                exponentialAverageRatio).value();
+        return exponentialAverage(getThroughputSamples(maxWindow),
+                exponentialAverageRatio);
     }
 
     /**
@@ -347,9 +347,8 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     public double getSampleExponentialVariance(double sampleAverage,
                                                int maxWindow,
                                                double exponentialVarianceRatio) {
-        return new ExponentialVariance(sampleAverage,
-                getThroughputSamples(maxWindow),
-                exponentialVarianceRatio).value();
+        return exponentialVariance(getThroughputSamples(maxWindow),
+                sampleAverage, exponentialVarianceRatio);
     }
 
     @Override
@@ -459,6 +458,75 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
         }
 
         return (1 + T1 + T2 / T3);
+    }
+
+    // averages and variances
+
+    private static double coefficientOfVariation(List<Double> inputValues) {
+        double average = arithmeticAverage(inputValues);
+        double variance = arithmeticVariance(inputValues, average);
+
+        return Math.sqrt(variance) / average;
+    }
+
+    /** Calculates the pythagorean arithmetic average of a list of values. */
+    private static double arithmeticAverage(List<Double> values) {
+        double subTotal = 0;
+        for (double value : values) {
+            subTotal += value;
+        }
+        return subTotal / values.size();
+    }
+
+    /** Calculates the arithmetic variance of a list of values. */
+    private static double arithmeticVariance(List<Double> values,
+                                             double inputAverage) {
+        double totalDeviation = 0;
+        double result = 0;
+
+        for (double value : values) {
+            totalDeviation += Math.pow(inputAverage - value, 2);
+        }
+        if (values.size() > 1) {
+            result = totalDeviation / (values.size() - 1);
+        }
+
+        return result;
+    }
+
+    /** Calculates the harmonic average of a list of values. */
+    private static double harmonicAverage(List<Double> values) {
+        double subTotal = 0;
+        for (double value : values) {
+            subTotal += 1 / value;
+        }
+        return values.size() / subTotal;
+    }
+
+    /** Calculates the exponential average of a list of values. */
+    private static double exponentialAverage(List<Double> values,
+                                             double ratio) {
+        double weightSum = (1 - Math.pow(1 - ratio, values.size()));
+        double subTotal = 0;
+
+        for (int i = 0; i < values.size(); i++) {
+            double thisWeight = ratio * Math.pow(1 - ratio, i) / weightSum;
+            subTotal += thisWeight * values.get(i);
+        }
+        return subTotal;
+    }
+
+    /** Calculates the exponential variance of a list of values. */
+    private double exponentialVariance(List<Double> values, double average,
+                                       double ratio) {
+        double weightSum = (1 - Math.pow(1 - ratio, values.size()));
+        double totalDeviation = 0;
+
+        for (int i = 0; i < values.size(); i++) {
+            double thisWeight = (ratio) * Math.pow(1 - ratio, i) / weightSum;
+            totalDeviation += thisWeight * Math.pow(average - values.get(i), 2);
+        }
+        return values.size() * totalDeviation / (values.size() - 1);
     }
 
     // ManifestRequestTimeReceiver implementation
