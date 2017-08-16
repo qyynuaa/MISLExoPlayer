@@ -88,6 +88,20 @@ public interface SampleProcessor {
      */
     double getSampleHarmonicAverage(int preferredWindow);
 
+
+    /**
+     * Calculates the coefficient of variation of the most recent
+     * throughput samples.
+     *
+     * <p>If the required number of samples isn't available, the available
+     * samples will be used.
+     *
+     * @param preferredWindow The maximum number of samples to use in the
+     *                        calculation
+     * @return The coefficient of variation of the window of samples.
+     */
+    double getSampleCV(int preferredWindow);
+
     /**
      * Calculates an exponential average of the most recent throughput
      * samples.
@@ -130,47 +144,73 @@ public interface SampleProcessor {
      */
     class ArithmeticAverage {
 
-        private int window;
-        private double[] rates;
+        private List<Double> samples;
 
-        public ArithmeticAverage(int window, double[] rates) {
-            this.window = window;
-            this.rates = rates;
+        public ArithmeticAverage(List<Double> inputSamples) {
+            samples = inputSamples;
         }
 
         public double value() {
             double subTotal = 0;
-            for (int i = 0; i < window; i++) {
-                subTotal += rates[i];
+            for (double sample : samples) {
+                subTotal += sample;
             }
-            return subTotal / window;
+            return subTotal / samples.size();
         }
     }
 
-    class ArithmeticVariance {
+    class Variance {
 
-        private int window;
-        private double averageRate;
-        private double[] rates;
+        private ArithmeticAverage average;
+        private List<Double> samples;
 
-        public ArithmeticVariance(int window, double averageRate, double[] rates) {
-            this.window = window;
-            this.averageRate = averageRate;
-            this.rates = rates;
+        public Variance(List<Double> inputSamples) {
+            this(inputSamples, new ArithmeticAverage(inputSamples));
+        }
+
+        public Variance(List<Double> inputSamples,
+                        ArithmeticAverage inputAverage) {
+            samples = inputSamples;
+            average = inputAverage;
         }
 
         public double value() {
             double totalDeviation = 0;
             double result = 0;
+            double averageValue = average.value();
 
-            for (int i = 0; i < window; i++) {
-                totalDeviation += Math.pow(averageRate - rates[i], 2);
+            for (double sample : samples) {
+                totalDeviation += Math.pow(averageValue - sample, 2);
             }
-            if (window > 1) {
-                result = totalDeviation / (window - 1);
+            if (samples.size() > 1) {
+                result = totalDeviation / (samples.size() - 1);
             }
 
             return result;
+        }
+    }
+
+    class CoefficientOfVariation {
+
+        private List<Double> samples;
+        private ArithmeticAverage average;
+
+        public CoefficientOfVariation(final List<Double> inputSamples) {
+            this(inputSamples, new ArithmeticAverage(inputSamples));
+        }
+
+        public CoefficientOfVariation(final List<Double> inputSamples,
+                                      ArithmeticAverage inputAverage) {
+            samples = inputSamples;
+            average = inputAverage;
+        }
+
+        public double value() {
+            double averageValue = average.value();
+            double variance = new Variance(samples, average).value();
+            double standardDeviation = Math.sqrt(variance);
+
+            return standardDeviation / averageValue;
         }
     }
 

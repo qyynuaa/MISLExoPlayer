@@ -294,6 +294,23 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     }
 
     /**
+     * Calculates the coefficient of variation of the most recent
+     * throughput samples.
+     *
+     * <p>If the required number of samples isn't available, the available
+     * samples will be used.
+     *
+     * @param preferredWindow The maximum number of samples to use in the
+     *                        calculation
+     * @return The coefficient of variation of the window of samples.
+     */
+    @Override
+    public double getSampleCV(int preferredWindow) {
+        List<Double> throughputSamples = getThroughputSamples(preferredWindow);
+        return new CoefficientOfVariation(throughputSamples).value();
+    }
+
+    /**
      * Calculates an exponential average of the most recent throughput
      * samples.
      *
