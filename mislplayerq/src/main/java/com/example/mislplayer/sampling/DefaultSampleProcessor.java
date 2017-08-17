@@ -186,6 +186,21 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     @Override
     public boolean dataNotAvailable() {return samples.size() == 0;}
 
+    /**
+     * Whether the throughput is currently decreasing.
+     *
+     * @return true if the throughput is currently decreasing, false otherwise
+     */
+    @Override
+    public boolean throughputIsDecreasing() {
+        if (samples.size() < 2) {
+            return false;
+        } else {
+            List<Double> lastTwoSamples = getThroughputSamples(2);
+            return lastTwoSamples.get(1) < lastTwoSamples.get(0);
+        }
+    }
+
     /** Returns the index of the most recently downloaded chunk. */
     @Override
     public int lastChunkIndex(){

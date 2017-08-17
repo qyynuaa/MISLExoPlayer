@@ -44,6 +44,13 @@ public interface SampleProcessor {
     /** Indicates data is unavailable. */
     boolean dataNotAvailable();
 
+    /**
+     * Whether the throughput is currently decreasing.
+     *
+     * @return true if the throughput is currently decreasing, false otherwise
+     */
+    boolean throughputIsDecreasing();
+
     /** Returns the index of the most recently downloaded chunk. */
     int lastChunkIndex();
 
