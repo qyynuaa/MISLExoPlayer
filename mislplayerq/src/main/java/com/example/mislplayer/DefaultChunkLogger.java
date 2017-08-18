@@ -261,7 +261,8 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
                                 long mediaStartTimeMs, long mediaEndTimeMs,
                                 long elapsedRealtimeMs, long loadDurationMs,
                                 long bytesLoaded) {
-        if (trackType == C.TRACK_TYPE_VIDEO && mediaStartTimeMs != C.TIME_UNSET) {
+        Log.d(TAG, "Load completed");
+        if (dataType == C.DATA_TYPE_MEDIA && mediaStartTimeMs != C.TIME_UNSET) {
             this.lastTrackFormat = trackFormat;
             this.lastMediaStartTimeMs = mediaStartTimeMs;
             this.lastMediaEndTimeMs = mediaEndTimeMs;
