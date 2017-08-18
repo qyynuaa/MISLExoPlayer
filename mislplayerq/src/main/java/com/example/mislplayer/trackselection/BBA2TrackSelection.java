@@ -74,10 +74,10 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         int currentSelectedIndex = selectedIndex;
         if (algorithmListener.dataNotAvailable()) {
             selectedIndex = lowestBitrateIndex();
-        } else {
+        } else if (lastChunkIndex != algorithmListener.lastChunkIndex()) {
             selectedIndex = dash_do_rate_adaptation_bba2();
+            Log.d(TAG, String.format("Selected index = %d", selectedIndex));
         }
-        Log.d(TAG, String.format("Selected index = %d", selectedIndex));
 
         if (selectedIndex != currentSelectedIndex) {
             reason = C.SELECTION_REASON_ADAPTIVE;

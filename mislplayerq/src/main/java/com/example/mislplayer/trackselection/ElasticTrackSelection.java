@@ -78,6 +78,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
 
     private double staticAlgParameter = 0;
 
+    private int lastChunkIndex;
     private int selectedIndex;
     private int selectionReason;
 
@@ -143,11 +144,11 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
     public void updateSelectedTrack(long bufferedDurationUs) {
         if (algorithmListener.dataNotAvailable()) {
             selectedIndex = lowestBitrateIndex();
-        } else {
+        } else if (lastChunkIndex != algorithmListener.lastChunkIndex()) {
+            lastChunkIndex = algorithmListener.lastChunkIndex();
             selectedIndex = doRateAdaptation(bufferedDurationUs);
+            Log.d(TAG, String.format("Selected index = %d", selectedIndex));
         }
-
-        Log.d(TAG, String.format("Selected index = %d", selectedIndex));
         selectionReason = C.SELECTION_REASON_ADAPTIVE;
     }
 
