@@ -153,7 +153,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
         //Provides instances of DashChunkSource
         df = new MISLDashChunkSource.Factory(mediaDataSourceFactory,
-                chunkListener, chunkLogger);
+                chunkListener);
 
         // Our video source media, we give it an URL, and all the stuff before
         videoSource = new DashMediaSource(uri, buildDataSourceFactory(manifestListener), df, mainHandler, chunkLogger);
@@ -174,6 +174,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         if (playerListener != null) {
             player.addListener(playerListener);
         }
+
+        chunkLogger.setPlayer(player);
 
         //bind the player to a view
         playerView.setPlayer(player);

@@ -4,7 +4,6 @@ import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
 
-import com.example.mislplayer.ManifestListener;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -15,7 +14,6 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.AdaptiveMediaSourceEventListener;
 import com.google.android.exoplayer2.source.SampleStream;
 import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.source.chunk.MediaChunk;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.TransferListener;
@@ -46,14 +44,14 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
         private long repLevelKbps;
         private long actualRateKbps;
         private long byteSize;
-        private long bufferLevelUs;
+        private long bufferLevelMs;
         private long deliveryRateKbps;
         private long chunkDurationMs;
 
         public LogEntry(long chunkStartTimeMs, long arrivalTimeMs, long loadDurationMs,
                         long stallDurationMs, long repLevelKbps, double deliveryRateKbps,
                         double actualRateKbps, long byteSize,
-                        long bufferLevelUs, long chunkDurationMs){
+                        long bufferLevelMs, long chunkDurationMs){
             this.chunkIndex = (int) (Math.round((double) chunkStartTimeMs / chunkDurationMs)) + 1;
             this.arrivalTimeMs = arrivalTimeMs;
             this.loadDurationMs = loadDurationMs;
@@ -62,7 +60,7 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
             this.deliveryRateKbps = Math.round(deliveryRateKbps);
             this.actualRateKbps = Math.round(actualRateKbps);
             this.byteSize = byteSize;
-            this.bufferLevelUs = bufferLevelUs;
+            this.bufferLevelMs = bufferLevelMs;
             this.chunkDurationMs = chunkDurationMs;
         }
 
@@ -95,7 +93,7 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
 
         public void setByteSize(long byteSize){this.byteSize=byteSize;}
         public void setDeliveryRateKbps(long deliveryRateKbps){this.deliveryRateKbps = deliveryRateKbps;}
-        public void setBufferLevelUs(long bufferLevelUs){this.bufferLevelUs = bufferLevelUs;}
+        public void setBufferLevelMs(long bufferLevelMs){this.bufferLevelMs = bufferLevelMs;}
         public void setRepLevelKbps(int repLevelKbps){this.repLevelKbps = repLevelKbps;}
         public void setActualRateKbps(long actualRateKbps){this.actualRateKbps = actualRateKbps;}
 
@@ -104,12 +102,14 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
             String logLine = "%5d\t%8d\t%9d\t%10d\t%10d\t%9d\t%9d\t%10d\t%10d\n";
             return String.format(logLine, chunkIndex, arrivalTimeMs, loadDurationMs,
                     stallDurationMs, repLevelKbps, deliveryRateKbps,
-                    actualRateKbps, byteSize, bufferLevelUs / 1000);
+                    actualRateKbps, byteSize, bufferLevelMs);
         }
     }
 
     private static final String TAG = "DefaultChunkLogger";
     private static final String LOG_FILE_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
+
+    private ExoPlayer player;
 
     private List<LogEntry> log = new ArrayList<>();
 
@@ -120,10 +120,8 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
     private int lastState;
     private boolean currentlyStalling = false;
 
-    private boolean newBufferLevel = false;
     private boolean newChunkData = false;
 
-    private MediaChunk lastBufferChunk;
     private long lastMediaStartTimeMs;
     private long lastElapsedRealtimeMs;
     private long lastLoadDurationMs;
@@ -132,6 +130,17 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
     private Format lastTrackFormat;
 
     private long manifestRequestTime = 0;
+
+    /**
+     * Sets the chunk logger's player reference.
+     *
+     * <p>The logger uses this reference to get buffer level values.
+     *
+     * @param player The player the chunk logger is logging from.
+     */
+    public void setPlayer(ExoPlayer player) {
+        this.player = player;
+    }
 
     /** Logs to file data about all the chunks downloaded so far. */
     @Override
@@ -164,30 +173,6 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
     @Override
     public void clearChunkInformation() {
         this.log = new ArrayList<>();
-    }
-
-    /**
-     * Updates the current buffer estimate.
-     *
-     * @param previous The last chunk that was downloaded.
-     * @param bufferedDurationMs The current buffer level, in ms.
-     */
-    @Override
-    public void updateBufferLevel(MediaChunk previous, long bufferedDurationMs) {
-        if (previous != lastBufferChunk) {
-            lastBufferChunk = previous;
-            lastBufferLevelMs = bufferedDurationMs;
-            Log.d(TAG, String.format("Buffer level updated to %d", lastBufferLevelMs));
-
-            if (newChunkData && !currentlyStalling) {
-                makeNewLogEntry();
-                newChunkData = false;
-                stallDurationMs = 0;
-            } else {
-                // mark that there's a new buffer level value
-                newBufferLevel = true;
-            }
-        }
     }
 
     private void makeNewLogEntry() {
@@ -283,10 +268,10 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
             this.lastLoadDurationMs = loadDurationMs;
             this.lastElapsedRealtimeMs = elapsedRealtimeMs;
             this.lastBytesLoaded = bytesLoaded;
+            this.lastBufferLevelMs = player.getBufferedPosition() - player.getCurrentPosition();
 
-            if (newBufferLevel && !currentlyStalling) {
+            if (!currentlyStalling) {
                 makeNewLogEntry();
-                newBufferLevel = false;
                 stallDurationMs = 0;
             } else {
                 // mark that there's new chunk data
@@ -443,10 +428,9 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
             stallDurationMs += nowMs - stallStartMs;
             currentlyStalling = false;
 
-            if (newBufferLevel && newChunkData) {
+            if (newChunkData) {
                 // we were waiting on stall data
                 makeNewLogEntry();
-                newBufferLevel = false;
                 newChunkData = false;
                 stallDurationMs = 0;
             }
