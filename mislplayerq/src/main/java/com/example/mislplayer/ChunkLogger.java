@@ -12,7 +12,4 @@ public interface ChunkLogger {
 
     /** Clears the store of downloaded chunks. */
     void clearChunkInformation();
-
-    /** Informs the logger of the current buffer estimate. */
-    void updateBufferLevel(MediaChunk previous, long bufferedDurationUs);
 }
