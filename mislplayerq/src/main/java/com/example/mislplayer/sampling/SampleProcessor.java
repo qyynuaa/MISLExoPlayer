@@ -44,6 +44,13 @@ public interface SampleProcessor {
     /** Indicates data is unavailable. */
     boolean dataNotAvailable();
 
+    /**
+     * Whether the throughput is currently decreasing.
+     *
+     * @return true if the throughput is currently decreasing, false otherwise
+     */
+    boolean throughputIsDecreasing();
+
     /** Returns the index of the most recently downloaded chunk. */
     int lastChunkIndex();
 
@@ -88,6 +95,20 @@ public interface SampleProcessor {
      */
     double getSampleHarmonicAverage(int preferredWindow);
 
+
+    /**
+     * Calculates the coefficient of variation of the most recent
+     * throughput samples.
+     *
+     * <p>If the required number of samples isn't available, the available
+     * samples will be used.
+     *
+     * @param preferredWindow The maximum number of samples to use in the
+     *                        calculation
+     * @return The coefficient of variation of the window of samples.
+     */
+    double getSampleCV(int preferredWindow);
+
     /**
      * Calculates an exponential average of the most recent throughput
      * samples.
@@ -124,161 +145,4 @@ public interface SampleProcessor {
                                                double exponentialVarianceRatio);
 
     double[] oscarKumarParEstimation(int estWindow, double expAvgRatio);
-
-    /**
-     * A pythagorean arithmetic average.
-     */
-    class ArithmeticAverage {
-
-        private int window;
-        private double[] rates;
-
-        public ArithmeticAverage(int window, double[] rates) {
-            this.window = window;
-            this.rates = rates;
-        }
-
-        public double value() {
-            double subTotal = 0;
-            for (int i = 0; i < window; i++) {
-                subTotal += rates[i];
-            }
-            return subTotal / window;
-        }
-    }
-
-    class ArithmeticVariance {
-
-        private int window;
-        private double averageRate;
-        private double[] rates;
-
-        public ArithmeticVariance(int window, double averageRate, double[] rates) {
-            this.window = window;
-            this.averageRate = averageRate;
-            this.rates = rates;
-        }
-
-        public double value() {
-            double totalDeviation = 0;
-            double result = 0;
-
-            for (int i = 0; i < window; i++) {
-                totalDeviation += Math.pow(averageRate - rates[i], 2);
-            }
-            if (window > 1) {
-                result = totalDeviation / (window - 1);
-            }
-
-            return result;
-        }
-    }
-
-    /**
-     * A pythagorean harmonic average.
-     */
-    class HarmonicAverage {
-
-        private int window;
-        private List<Double> rates;
-
-        public HarmonicAverage(List<Double> samples) {
-            this(samples.size(), samples);
-        }
-
-        public HarmonicAverage(int window, List<Double> rates) {
-            this.window = window;
-            this.rates = rates;
-        }
-
-        public double value() {
-            double subTotal = 0;
-            for (int i = 0; i < window; i++) {
-                subTotal += 1 / rates.get(i);
-            }
-            return window / subTotal;
-        }
-    }
-
-    class HarmonicVariance {
-
-        private int window;
-        private double[] rates;
-
-        public HarmonicVariance(int window, double[] rates) {
-            this.window = window;
-            this.rates = rates;
-        }
-
-        public double value() {
-            double rateRcp[] = new double[window];
-            double reducedAvg[] = new double[window];
-            double rateRcpSum = 0;
-            double reducedAvged = 0;
-            double totalDeviation = 0;
-
-            for (int i = 0; i < window; i++) {
-                rateRcp[i] += 1 / rates[i];
-                rateRcpSum += rateRcp[i];
-            }
-            for (int i = 0; i < window; i++) {
-                reducedAvg[i] = (window - 1) / (rateRcpSum - rateRcp[i]);
-                reducedAvged += reducedAvg[i];
-            }
-            reducedAvged = reducedAvged / window;
-            for (int i = 0; i < window; i++) {
-                totalDeviation += Math.pow(reducedAvged - reducedAvg[i], 2);
-            }
-            return (1 - 1 / window) * totalDeviation;
-        }
-    }
-
-    /**
-     * An exponential average.
-     */
-    class ExponentialAverage {
-
-        private List<Double> rates;
-        private double ratio;
-
-        public ExponentialAverage(List<Double> rates, double ratio) {
-            this.rates = rates;
-            this.ratio = ratio;
-        }
-
-        public double value() {
-            double weightSum = (1 - Math.pow(1 - ratio, rates.size()));
-            double subTotal = 0;
-
-            for (int i = 0; i < rates.size(); i++) {
-                double thisWeight = ratio * Math.pow(1 - ratio, i) / weightSum;
-                subTotal += thisWeight * rates.get(i);
-            }
-            return subTotal;
-        }
-    }
-
-    class ExponentialVariance {
-
-        private double averageRate;
-        private List<Double> rates;
-        private double ratio;
-
-        public ExponentialVariance(double averageRate, List<Double> rates, double ratio) {
-            this.averageRate = averageRate;
-            this.rates = rates;
-            this.ratio = ratio;
-        }
-
-        public double value() {
-            double weightSum = (1 - Math.pow(1 - ratio, rates.size()));
-            double totalDeviation = 0;
-
-            for (int i = 0; i < rates.size(); i++) {
-                double thisWeight = (ratio) * Math.pow(1 - ratio, i) / weightSum;
-                totalDeviation += thisWeight * Math.pow(averageRate - rates.get(i), 2);
-            }
-            return rates.size() * totalDeviation / (rates.size() - 1);
-        }
-    }
 }

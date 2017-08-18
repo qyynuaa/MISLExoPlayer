@@ -96,6 +96,9 @@ public class MainActivity extends Activity  {
             case R.id.basic_time:
                 type = AdaptationAlgorithmType.BASIC_TIME;
                 break;
+            case R.id.arbiter_plus:
+                type = AdaptationAlgorithmType.ARBITER_PLUS;
+                break;
             default:
                 throw new IllegalArgumentException(
                         "Unrecognised adaptation algorithm");
