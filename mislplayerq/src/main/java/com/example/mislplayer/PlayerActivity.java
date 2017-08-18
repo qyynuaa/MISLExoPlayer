@@ -158,7 +158,11 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 chunkListener);
 
         // Our video source media, we give it an URL, and all the stuff before
-        videoSource = new DashMediaSource(uri, buildDataSourceFactory(manifestListener), df, mainHandler, chunkLogger);
+        videoSource = new DashMediaSource(uri,
+                buildDataSourceFactory(manifestListener), df,
+                Integer.MAX_VALUE,
+                DEFAULT_LIVE_PRESENTATION_DELAY_PREFER_MANIFEST_MS,
+                mainHandler, chunkLogger);
 
         //Used to play media indefinitely (loop)
         LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
