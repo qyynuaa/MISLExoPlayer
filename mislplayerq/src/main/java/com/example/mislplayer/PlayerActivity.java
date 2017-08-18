@@ -31,10 +31,8 @@ import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.LoopingMediaSource;
-import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
-import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -79,7 +77,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private long resumePosition;
     private DefaultTrackSelector trackSelector;
     private LoadControl loadControl;
-    private MediaSource videoSource;
+    private DashMediaSource videoSource;
     public static ArrayList<FutureSegmentInfos> futureSegmentInfos;
     public static ArrayList<Integer> reprLevel;
     public static int beginningIndex;
@@ -134,7 +132,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
     private void initializePlayer() {
         //URL of our MPD file to stream content
-        Uri uri = Uri.parse("http://ifm.research.att.com/hls/vod/playlist.m3u8");
+        Uri uri = Uri.parse("http://10.0.0.115/~jason_quinlan/x264_4sec/A_New_Hope_16min/DASH_Files/VOD/A_New_Hope_enc_16min_x264_dash.mpd");
 
         //You can only use another mpd file if you have ITS CSV in raw folder
         // Uri uri = Uri.parse("http://yt-dash-mse-test.commondatastorage.googleapis.com/media/oops-20120802-manifest.mpd");
@@ -155,8 +153,12 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         manifestListener.addListener(chunkLogger);
         manifestListener.addListener(sampleProcessor);
 
+        //Provides instances of DashChunkSource
+        df = new MISLDashChunkSource.Factory(mediaDataSourceFactory,
+                chunkListener);
+
         // Our video source media, we give it an URL, and all the stuff before
-        videoSource = new HlsMediaSource(uri, mediaDataSourceFactory, mainHandler, chunkLogger);
+        videoSource = new DashMediaSource(uri, buildDataSourceFactory(manifestListener), df, mainHandler, chunkLogger);
 
         //Used to play media indefinitely (loop)
         LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
