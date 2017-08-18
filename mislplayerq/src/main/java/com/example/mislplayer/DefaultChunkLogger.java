@@ -35,6 +35,9 @@ import java.util.List;
 public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEventListener,
         ExoPlayer.EventListener, TransferListener<Object>, ManifestListener.ManifestRequestTimeReceiver {
 
+    /**
+     * An entry in the log.
+     */
     private static class LogEntry {
         private int chunkIndex;
         private long arrivalTimeMs;
@@ -164,10 +167,10 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
     }
 
     /**
-     * Informs the chunk store of the current buffer estimate.
+     * Updates the current buffer estimate.
      *
-     * @param previous
-     * @param bufferedDurationMs
+     * @param previous The last chunk that was downloaded.
+     * @param bufferedDurationMs The current buffer level, in ms.
      */
     @Override
     public void updateBufferLevel(MediaChunk previous, long bufferedDurationMs) {
@@ -206,6 +209,13 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
         }
     }
 
+    /**
+     * Give the chunk logger the time that the manifest was requested at,
+     * so that it can log times relative to that.
+     *
+     * @param manifestRequestTime The time the manifest was requested at,
+     *                            in the timebase of SystemClock#elapsedRealtime()
+     */
     @Override
     public void giveManifestRequestTime(long manifestRequestTime) {
         this.manifestRequestTime = manifestRequestTime;
