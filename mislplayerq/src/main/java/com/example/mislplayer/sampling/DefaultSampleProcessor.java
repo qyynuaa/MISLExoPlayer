@@ -11,6 +11,8 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
 import com.google.android.exoplayer2.source.dash.manifest.DashManifest;
+import com.google.android.exoplayer2.source.hls.HlsManifest;
+import com.google.android.exoplayer2.source.smoothstreaming.manifest.SsManifest;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 
 import java.io.File;
@@ -467,8 +469,16 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     @Override
     public void onTimelineChanged(Timeline timeline, Object manifest) {
         if (manifest != null) {
-            DashManifest dashManifest = (DashManifest)manifest;
-            mpdDurationMs = dashManifest.duration;
+            if (manifest instanceof DashManifest) {
+                DashManifest dashManifest = (DashManifest) manifest;
+                mpdDurationMs = dashManifest.duration;
+            } else if (manifest instanceof HlsManifest) {
+                HlsManifest hlsManifest = (HlsManifest) manifest;
+                mpdDurationMs = hlsManifest.mediaPlaylist.durationUs / 1000;
+            } else if (manifest instanceof SsManifest) {
+                SsManifest ssManifest = (SsManifest) manifest;
+                mpdDurationMs = ssManifest.durationUs / 1000;
+            }
         }
     }
 
