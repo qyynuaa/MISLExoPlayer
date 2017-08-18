@@ -3,8 +3,6 @@ package com.example.mislplayer.trackselection;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.BaseTrackSelection;
 
-import static java.lang.Math.min;
-
 /**
  * A common superclass for track selections which implement an adaptation
  * algorithm.
@@ -23,19 +21,19 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
     }
 
     public int lowestBitrate() {
-        return group.getFormat(tracks[tracks.length - 1]).bitrate;
+        return getFormat(lowestBitrateIndex()).bitrate;
     }
 
     public int highestBitrate() {
-        return group.getFormat(tracks[0]).bitrate;
+        return getFormat(highestBitrateIndex()).bitrate;
     }
 
     public int lowestBitrateIndex() {
-        return tracks[tracks.length - 1];
+        return length - 1;
     }
 
     public int highestBitrateIndex() {
-        return tracks[0];
+        return 0;
     }
 
     /**
@@ -48,13 +46,13 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
      * rate, or the highest representation level available.
      */
     public int getNearestBitrateIndex(double targetRate){
-        for (int i = tracks.length - 1; i >= 0; i--) {
-            if (group.getFormat(tracks[i]).bitrate / 1000 >= targetRate) {
-                return tracks[i];
+        for (int i = length - 1; i >= 0; i--) {
+            if (group.getFormat(i).bitrate / 1000 >= targetRate) {
+                return i;
             }
         }
 
-        return tracks[0];
+        return 0;
     }
 
     /**
@@ -66,7 +64,7 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
     public int findBestRateIndex(double targetRate) {
         for (int i = 0; i < length; i++) {
             if (getFormat(i).bitrate < targetRate) {
-                return tracks[i];
+                return i;
             }
         }
         return length - 1;
