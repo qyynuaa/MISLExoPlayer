@@ -211,7 +211,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
 
     /** Returns the representation level of the most recently downloaded chunk, in bps. */
     @Override
-    public int lastChunkRepLevel(){
+    public int lastRepLevel(){
         return lastChunk.trackFormat.bitrate;
     }
 
@@ -288,26 +288,26 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     /**
      * Finds the minimum of the available throughput samples.
      *
-     * @param maxWindow The maximum number of most recent samples to consider.
+     * @param window The maximum number of most recent samples to consider.
      * @return The minimum sample in the window.
      */
     @Override
-    public double getMinimumThroughputSample(int maxWindow) {
-        return Collections.min(getThroughputSamples(maxWindow));
+    public double minimumThroughputSample(int window) {
+        return Collections.min(getThroughputSamples(window));
     }
 
     /**
      * Calculates a harmonic average of the available throughput samples.
      *
-     * @param preferredWindow The number of samples that should be used in
+     * @param window The number of samples that should be used in
      *                        the calculation, if available.
      * @return If there are the `preferredWindow` number of samples available,
      * the harmonic average of those samples. If not, the harmonic average of
      * the samples that are available.
      */
     @Override
-    public double getSampleHarmonicAverage(int preferredWindow) {
-        return harmonicAverage(getThroughputSamples(preferredWindow));
+    public double sampleHarmonicAverage(int window) {
+        return harmonicAverage(getThroughputSamples(window));
     }
 
     /**
@@ -317,13 +317,13 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
      * <p>If the required number of samples isn't available, the available
      * samples will be used.
      *
-     * @param preferredWindow The maximum number of samples to use in the
+     * @param window The maximum number of samples to use in the
      *                        calculation
      * @return The coefficient of variation of the window of samples.
      */
     @Override
-    public double getSampleCV(int preferredWindow) {
-        List<Double> throughputSamples = getThroughputSamples(preferredWindow);
+    public double sampleCV(int window) {
+        List<Double> throughputSamples = getThroughputSamples(window);
         return coefficientOfVariation(throughputSamples);
     }
 
@@ -331,7 +331,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
      * Calculates an exponential average of the most recent throughput
      * samples.
      *
-     * @param maxWindow The maximum number of recent samples to use in the
+     * @param window The maximum number of recent samples to use in the
      *                  calculation.
      * @param exponentialAverageRatio The ratio to use for the exponential
      *                                average.
@@ -340,9 +340,9 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
      * exponential average of the available samples.
      */
     @Override
-    public double getSampleExponentialAverage(int maxWindow,
-                                              double exponentialAverageRatio) {
-        return exponentialAverage(getThroughputSamples(maxWindow),
+    public double sampleExponentialAverage(int window,
+                                           double exponentialAverageRatio) {
+        return exponentialAverage(getThroughputSamples(window),
                 exponentialAverageRatio);
     }
 
@@ -352,7 +352,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
      *
      * @param sampleAverage The exponential average of the most recent
      *                      throughput samples.
-     * @param maxWindow The maximum number of recent samples to use in the
+     * @param window The maximum number of recent samples to use in the
      *                  calculation.
      * @param exponentialVarianceRatio The ratio to use for the exponential
      *                                variance.
@@ -361,10 +361,10 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
      * exponential variance of the available samples.
      */
     @Override
-    public double getSampleExponentialVariance(double sampleAverage,
-                                               int maxWindow,
-                                               double exponentialVarianceRatio) {
-        return exponentialVariance(getThroughputSamples(maxWindow),
+    public double sampleExponentialVariance(double sampleAverage,
+                                            int window,
+                                            double exponentialVarianceRatio) {
+        return exponentialVariance(getThroughputSamples(window),
                 sampleAverage, exponentialVarianceRatio);
     }
 

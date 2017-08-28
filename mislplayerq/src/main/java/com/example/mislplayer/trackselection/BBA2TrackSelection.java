@@ -111,7 +111,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
 
         // take the last rate and find its index
-        int lastRate = algorithmListener.lastChunkRepLevel();
+        int lastRate = algorithmListener.lastRepLevel();
         int lastRateIndex = getRepIndex(lastRate);
         int retVal;
         // set to the lowest rate

@@ -159,7 +159,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      * @return The index (in sorted order) of the track to switch to.
      */
     private int doRateAdaptation(long bufferedDurationUs) {
-        double averageRateEstimate = algorithmListener.getSampleHarmonicAverage(elasticAverageWindow);
+        double averageRateEstimate = algorithmListener.sampleHarmonicAverage(elasticAverageWindow);
 
         final double downloadTimeS = algorithmListener.lastSampleDurationMs() / 1E3;
         final double maxBufferS = algorithmListener.maxBufferMs() / 1E3;
