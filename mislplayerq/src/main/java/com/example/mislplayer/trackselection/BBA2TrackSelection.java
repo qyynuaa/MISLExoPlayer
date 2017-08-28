@@ -40,8 +40,6 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         }
     }
 
-    private final SampleProcessor algorithmListener;
-
     private int m_staticAlgPar = 0;
 
     private static final String TAG = "BBA2";
@@ -58,9 +56,8 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
      * Creates a BBA2TrackSelection.
      */
     public BBA2TrackSelection(TrackGroup group, int[] tracks,
-                              SampleProcessor algorithmListener) {
-        super(group, tracks);
-        this.algorithmListener = algorithmListener;
+                              SampleProcessor sampleProcessor) {
+        super(group, tracks, sampleProcessor);
 
         selectedIndex = lowestBitrateIndex();
         Log.d(TAG, String.format("Initial selected index = %d", selectedIndex));
@@ -72,9 +69,9 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         bufferedDurationMs = bufferedDurationUs / 1000;
 
         int currentSelectedIndex = selectedIndex;
-        if (algorithmListener.dataNotAvailable()) {
+        if (sampleProcessor.dataNotAvailable()) {
             selectedIndex = lowestBitrateIndex();
-        } else if (lastChunkIndex != algorithmListener.lastChunkIndex()) {
+        } else if (lastChunkIndex != sampleProcessor.lastChunkIndex()) {
             selectedIndex = dash_do_rate_adaptation_bba2();
             Log.d(TAG, String.format("Selected index = %d", selectedIndex));
         }
@@ -101,23 +98,23 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
     /* MISL BBA2 adaptation algorithm */
     private int dash_do_rate_adaptation_bba2() {
-        long total_size = algorithmListener.lastByteSize();
-        lastChunkDurationMs = algorithmListener.lastChunkDurationMs();
-        lastChunkIndex = algorithmListener.lastChunkIndex();
-        maxBufferMs = algorithmListener.maxBufferMs();
+        long total_size = sampleProcessor.lastByteSize();
+        lastChunkDurationMs = sampleProcessor.lastChunkDurationMs();
+        lastChunkIndex = sampleProcessor.lastChunkIndex();
+        maxBufferMs = sampleProcessor.maxBufferMs();
 
         // save the information about segment statistics (kbps)
         Log.d(TAG, "Segment index: " + lastChunkIndex);
 
 
         // take the last rate and find its index
-        int lastRate = algorithmListener.lastRepLevel();
+        int lastRate = sampleProcessor.lastRepLevel();
         int lastRateIndex = getRepIndex(lastRate);
         int retVal;
         // set to the lowest rate
         int qRateIndex = lowestBitrateIndex();
         int reservoir = bba1UpdateResevoir(lastRate, lastRateIndex);
-        double SFT = algorithmListener.lastSampleDurationMs();
+        double SFT = sampleProcessor.lastSampleDurationMs();
         if (SFT > lastChunkDurationMs)
             m_staticAlgPar = 1; // switch to BBA1 if buffer is decreasing
         if (bufferedDurationMs < reservoir)               //CHECK BUFFER LEVEL
@@ -157,7 +154,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
     private int bba1UpdateResevoir(int lastRate, int lastRateIndex) {
         long resvWin = min(2 * maxBufferMs / lastChunkDurationMs,
-                (algorithmListener.mpdDuration() / lastChunkIndex) - lastChunkIndex);
+                (sampleProcessor.mpdDuration() / lastChunkIndex) - lastChunkIndex);
         long avgSegSize = (lastRate * lastChunkDurationMs) / 8000; //bytes
 
         int largeChunks = 0;

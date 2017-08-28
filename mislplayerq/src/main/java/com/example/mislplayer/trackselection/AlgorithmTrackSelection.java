@@ -1,5 +1,8 @@
 package com.example.mislplayer.trackselection;
 
+import com.example.mislplayer.FutureSegmentInfos;
+import com.example.mislplayer.PlayerActivity;
+import com.example.mislplayer.sampling.SampleProcessor;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.BaseTrackSelection;
 
@@ -11,8 +14,12 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
 
     private final String TAG = "AlgorithmTrackSelection";
 
-    public AlgorithmTrackSelection(TrackGroup group, int... tracks) {
+    protected final SampleProcessor sampleProcessor;
+
+    public AlgorithmTrackSelection(TrackGroup group, int[] tracks,
+                                   SampleProcessor sampleProcessor) {
         super(group, tracks);
+        this.sampleProcessor = sampleProcessor;
     }
 
     public int lowestBitrate() {
