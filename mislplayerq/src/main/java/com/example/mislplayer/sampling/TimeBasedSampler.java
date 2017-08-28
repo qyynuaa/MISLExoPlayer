@@ -18,7 +18,7 @@ public class TimeBasedSampler implements TransferListener<Object>,
 
     private static final String TAG = "TimeBasedSampler";
 
-    private static final long DEFAULT_SAMPLE_THRESHOLD = 4000;
+    private static final long DEFAULT_SAMPLE_THRESHOLD = 2000;
 
     private SampleProcessor.Receiver sampleReceiver;
     private ChunkBasedSampler chunkSampler;
