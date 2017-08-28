@@ -97,6 +97,26 @@ public interface SampleProcessor {
     long lastSampleBytesTransferred();
 
     /**
+     * Calculates an appropriate window size, based on the number of
+     * downloaded chunks available.
+     *
+     * @param window The ideal window size.
+     * @return The appropriate window size.
+     */
+    int windowSize(int window);
+
+    /**
+     * Provides a number of recent throughput samples.
+     *
+     * <p>If the required number of throughput samples isn't available, the
+     * available samples will be provided.
+     *
+     * @param window The number of throughput samples to provide.
+     * @return The window of recent throughput samples.
+     */
+    List<Double> throughputSamples(int window);
+
+    /**
      * The minimum of the most recent throughput samples.
      *
      * <p>If the required number of samples isn't available, the available
@@ -157,7 +177,4 @@ public interface SampleProcessor {
      */
     double sampleExponentialVariance(double sampleAverage, int window,
                                      double exponentialVarianceRatio);
-
-    /** Specific calculation for the OscarH adaptation algorithm. */
-    double[] oscarKumarParEstimation(int estWindow, double expAvgRatio);
 }
