@@ -13,7 +13,7 @@ import com.google.android.exoplayer2.upstream.TransferListener;
  * <p>A sample should be delivered every time a chunk finishes, and only
  * then. However, this depends on {@link #giveLastChunk} being called at
  * the correct time (after a chunk has been downloaded and before
- * updateTrackSelection() is called for downloading the next chunk.
+ * updateTrackSelection() is called for downloading the next chunk).
  */
 public class ChunkBasedSampler implements TransferListener<Object>, ChunkListener {
 
