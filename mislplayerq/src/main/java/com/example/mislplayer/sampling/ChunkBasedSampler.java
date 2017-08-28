@@ -2,7 +2,6 @@ package com.example.mislplayer.sampling;
 
 import android.os.SystemClock;
 
-import com.example.mislplayer.ChunkListener;
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.TransferListener;
