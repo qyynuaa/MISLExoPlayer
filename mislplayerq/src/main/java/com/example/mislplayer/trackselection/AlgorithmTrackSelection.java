@@ -68,4 +68,14 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
         throw new IllegalArgumentException(
                 "No track exists with that bitrate");
     }
+
+    public boolean SmartConvHelper(int qIndex, int videoWindow, double estRate) {
+        double totSegSize = 0;
+        for (int i = 0; i < videoWindow; i++)
+
+            totSegSize += FutureSegmentInfos.getByteSize(PlayerActivity.futureSegmentInfos, sampleProcessor.lastChunkIndex() + i, qIndex) * 8;
+        double actualAvgRate = totSegSize / (sampleProcessor.lastChunkDurationMs() / 1E3 * videoWindow);
+
+        return actualAvgRate <= estRate;
+    }
 }
