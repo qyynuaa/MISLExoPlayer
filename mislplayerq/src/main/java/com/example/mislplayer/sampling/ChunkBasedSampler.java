@@ -9,6 +9,11 @@ import com.google.android.exoplayer2.upstream.TransferListener;
 
 /**
  * Samples the available throughput on a chunk-by-chunk basis.
+ *
+ * <p>A sample should be delivered every time a chunk finishes, and only
+ * then. However, this depends on {@link #giveLastChunk} being called at
+ * the correct time (after a chunk has been downloaded and before
+ * updateTrackSelection() is called for downloading the next chunk.
  */
 public class ChunkBasedSampler implements TransferListener<Object>, ChunkListener {
 
@@ -24,6 +29,7 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
 
     /**
      * Creates a chunk-based sampler.
+     *
      *  @param sampleStore The store to send throughput samples to.
      * @param sampleProcessor The processor to send chunks to.
      */
@@ -34,12 +40,6 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
 
     // ChunkListener implementation
 
-    /**
-     * Gives the listener the last chunk that was downloaded, to be passed to the
-     * adaptation algorithm.
-     *
-     * @param lastChunk The last chunk that was downloaded.
-     */
     @Override
     public void giveLastChunk(MediaChunk lastChunk) {
         if (lastChunk == null) {
@@ -57,33 +57,14 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
 
     // TransferListener implementation
 
-    /**
-     * Called when a transfer starts.
-     *
-     * @param source   The source performing the transfer.
-     * @param dataSpec Describes the data being transferred.
-     */
     @Override
     public void onTransferStart(Object source, DataSpec dataSpec) {
         transferClockMs = SystemClock.elapsedRealtime();
     }
 
-    /**
-     * Called incrementally during a transfer.
-     *
-     * @param source           The source performing the transfer.
-     * @param bytesTransferred The number of bytes transferred since the previous call to this
-     */
     @Override
-    public void onBytesTransferred(Object source, int bytesTransferred) {
+    public void onBytesTransferred(Object source, int bytesTransferred) {}
 
-    }
-
-    /**
-     * Called when a transfer ends.
-     *
-     * @param source The source performing the transfer.
-     */
     @Override
     public void onTransferEnd(Object source) {
         elapsedRealtimeMs = SystemClock.elapsedRealtime();
