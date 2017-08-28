@@ -10,7 +10,8 @@ import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.TransferListener;
 
 /**
- * Samples the available throughput every x ms while a chunk is downloading.
+ * Samples the available throughput every x ms or every time a chunk is
+ * downloaded, whichever comes first.
  */
 public class TimeBasedSampler implements TransferListener<Object>,
         SampleProcessor.Receiver, ChunkListener {
@@ -40,7 +41,7 @@ public class TimeBasedSampler implements TransferListener<Object>,
     private long transferEndMs;
 
     /**
-     * Constructs a time-based sampler with a default sampling threshold.
+     * Creates a time-based sampler with a default sampling threshold.
      *
      * @param sampleReceiver The receiver for throughput samples and
      *                        chunks.
@@ -50,7 +51,7 @@ public class TimeBasedSampler implements TransferListener<Object>,
     }
 
     /**
-     * Constructs a time-based sampler by specifying a sampling threshold.
+     * Creates a time-based sampler with a specified sampling threshold.
      *
      *  @param sampleReceiver The receiver for throughput samples and
      *                        chunks.
@@ -63,12 +64,8 @@ public class TimeBasedSampler implements TransferListener<Object>,
         this.chunkSampler = new ChunkBasedSampler(this);
     }
 
-    /**
-     * Called when a transfer starts.
-     *
-     * @param source   The source performing the transfer.
-     * @param dataSpec Describes the data being transferred.
-     */
+    // TransferListener implementation
+
     @Override
     public void onTransferStart(Object source, DataSpec dataSpec) {
         sampleHandler.postDelayed(sampleRunnable, sampleThresholdMs);
@@ -80,12 +77,6 @@ public class TimeBasedSampler implements TransferListener<Object>,
         chunkSampler.onTransferStart(source, dataSpec);
     }
 
-    /**
-     * Called incrementally during a transfer.
-     *
-     * @param source           The source performing the transfer.
-     * @param bytesTransferred The number of bytes transferred since the previous call to this
-     */
     @Override
     public void onBytesTransferred(Object source, int bytesTransferred) {
         this.sampleBytesTransferred += bytesTransferred;
@@ -93,11 +84,6 @@ public class TimeBasedSampler implements TransferListener<Object>,
         chunkSampler.onBytesTransferred(source, bytesTransferred);
     }
 
-    /**
-     * Called when a transfer ends.
-     *
-     * @param source The source performing the transfer.
-     */
     @Override
     public void onTransferEnd(Object source) {
         transferEndMs = SystemClock.elapsedRealtime();
@@ -105,9 +91,11 @@ public class TimeBasedSampler implements TransferListener<Object>,
         chunkSampler.onTransferEnd(source);
     }
 
+    // Internal methods
+
     /**
      * Finish a time-based throughput sample and send it to the sample
-     * store.
+     * receiver.
      */
     private void deliverTimeSample(long sampleEndTimeMs) {
         long sampleDurationMs = sampleEndTimeMs - sampleStartMs;
