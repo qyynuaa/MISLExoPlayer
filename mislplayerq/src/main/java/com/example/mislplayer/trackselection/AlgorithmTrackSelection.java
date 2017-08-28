@@ -11,11 +11,6 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
 
     private final String TAG = "AlgorithmTrackSelection";
 
-    /**
-     * @param group The {@link TrackGroup}. Must not be null.
-     * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
-     *     null or empty. May be in any order.
-     */
     public AlgorithmTrackSelection(TrackGroup group, int... tracks) {
         super(group, tracks);
     }
@@ -39,7 +34,7 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
     /**
      * Finds the index for the highest quality level below a target rate.
      *
-     * @param targetRate The target rate.
+     * @param targetRate The target rate, in bps.
      * @return The index of the highest suitable quality level.
      */
     public int findBestRateIndex(double targetRate) {
