@@ -31,7 +31,7 @@ import static java.lang.Math.min;
 /**
  * A default sample processor.
  */
-public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
+public class DefaultSampleProcessor implements SampleProcessor, SampleProcessor.Receiver,
         ExoPlayer.EventListener, ManifestListener.ManifestRequestTimeReceiver {
 
     /** A default throughput sample implementation. */
@@ -99,8 +99,8 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
 
     /** Adds a new throughput sample to the store. */
     @Override
-    public void addSample(long elapsedRealtimeMs, long bitsTransferred,
-                          long durationMs) {
+    public void sendSample(long elapsedRealtimeMs, long bitsTransferred,
+                           long durationMs) {
         long arrivalTime = elapsedRealtimeMs - manifestRequestTime;
         samples.add(
                 new DefaultThroughputSample(arrivalTime, bitsTransferred,

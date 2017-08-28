@@ -19,8 +19,7 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
 
     private static final String TAG = "ChunkBasedSampler";
 
-    private SampleStore sampleStore;
-    private SampleProcessor sampleProcessor;
+    private SampleProcessor.Receiver sampleReceiver;
     private MediaChunk lastChunk;
 
     private long transferClockMs;
@@ -30,12 +29,11 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
     /**
      * Creates a chunk-based sampler.
      *
-     *  @param sampleStore The store to send throughput samples to.
-     * @param sampleProcessor The processor to send chunks to.
+     *  @param sampleReceiver The receiver for throughput samples and
+     *                        chunks.
      */
-    public ChunkBasedSampler(SampleStore sampleStore, SampleProcessor sampleProcessor) {
-        this.sampleStore = sampleStore;
-        this.sampleProcessor = sampleProcessor;
+    public ChunkBasedSampler(SampleProcessor.Receiver sampleReceiver) {
+        this.sampleReceiver = sampleReceiver;
     }
 
     // ChunkListener implementation
@@ -50,8 +48,8 @@ public class ChunkBasedSampler implements TransferListener<Object>, ChunkListene
 
         long chunkSizeBits = lastChunk.bytesLoaded() * 8;
 
-        sampleStore.addSample(elapsedRealtimeMs, chunkSizeBits, loadDurationMs);
-        sampleProcessor.giveChunk(lastChunk);
+        sampleReceiver.sendSample(elapsedRealtimeMs, chunkSizeBits, loadDurationMs);
+        sampleReceiver.giveChunk(lastChunk);
         this.lastChunk = lastChunk;
     }
 

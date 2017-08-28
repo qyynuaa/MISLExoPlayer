@@ -24,10 +24,10 @@ public class SizeBasedSampler implements TransferListener<Object>,
     /**
      * Constructs a size-based sampler with a default sampling threshold.
      *
-     * @param sampleStore The store to send the throughput samples to.
+     * @param sampleReceiver The receiver for throughput samples.
      */
-    public SizeBasedSampler(SampleStore sampleStore) {
-        this(sampleStore, DEFAULT_SAMPLE_THRESHOLD);
+    public SizeBasedSampler(SampleProcessor.Receiver sampleReceiver) {
+        this(sampleReceiver, DEFAULT_SAMPLE_THRESHOLD);
     }
 
     /**
@@ -36,20 +36,20 @@ public class SizeBasedSampler implements TransferListener<Object>,
      * <p>A sample will be finished each time this many bytes have been
      * transferred.
      *
-     * @param sampleStore The store to send the throughput samples to.
+     * @param sampleReceiver The receiver for throughput samples.
      * @param sampleThresholdBytes The threshold for throughput sampling.
      */
-    public SizeBasedSampler(SampleStore sampleStore,
+    public SizeBasedSampler(SampleProcessor.Receiver sampleReceiver,
                             long sampleThresholdBytes) {
         this.sampleThresholdBytes = sampleThresholdBytes;
-        this.sampleStore = sampleStore;
+        this.sampleReceiver = sampleReceiver;
     }
 
     private static final long DEFAULT_SAMPLE_THRESHOLD = 100_000;
 
     private static final int TIME_UNSET = -1;
 
-    private SampleStore sampleStore;
+    private SampleProcessor.Receiver sampleReceiver;
 
     private long sampleThresholdBytes;
 
@@ -107,7 +107,7 @@ public class SizeBasedSampler implements TransferListener<Object>,
      */
     private void finishSampling() {
         if (sampleDurationMs > 0) {
-            sampleStore.addSample(SystemClock.elapsedRealtime(),
+            sampleReceiver.sendSample(SystemClock.elapsedRealtime(),
                     sampleBytesTransferred * 8, sampleDurationMs);
         }
         sampleClockMs = TIME_UNSET;

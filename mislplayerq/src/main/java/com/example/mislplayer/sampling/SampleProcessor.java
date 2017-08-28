@@ -12,6 +12,28 @@ import java.util.List;
  */
 public interface SampleProcessor {
 
+    /**
+     * An interface for the sample processor to receive samples from other
+     * components.
+     */
+    interface Receiver {
+        /**
+         * Send a new throughput sample to the receiver.
+         *
+         * @param elapsedRealtimeMs The value of SystemClock#elapsedRealtime()
+         *                          when the sample finished.
+         * @param bitsTransferred The number of bits transferred during
+         *                        the sample period.
+         * @param durationMs The duration of the time period the sample
+         *                   covers, in ms.
+         */
+        void sendSample(long elapsedRealtimeMs, long bitsTransferred,
+                       long durationMs);
+
+        /** Give the sample processor the most-recently downloaded chunk. */
+        void giveChunk(MediaChunk chunk);
+    }
+
     /** A sample of the available throughput. */
     interface ThroughputSample {
 
@@ -33,9 +55,6 @@ public interface SampleProcessor {
 
     /** Remove all existing samples from the store. */
     void clearSamples();
-
-    /** Give the sample processor the most-recently downloaded chunk. */
-    void giveChunk(MediaChunk chunk);
 
     /** The duration of the current mpd, in ms. */
     long mpdDuration();
