@@ -11,11 +11,6 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
 
     private final String TAG = "AlgorithmTrackSelection";
 
-    /**
-     * @param group The {@link TrackGroup}. Must not be null.
-     * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
-     *     null or empty. May be in any order.
-     */
     public AlgorithmTrackSelection(TrackGroup group, int... tracks) {
         super(group, tracks);
     }
@@ -37,28 +32,9 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
     }
 
     /**
-     * Finds the index of the lowest representation level whose rate is above
-     * a target rate.
-     *
-     * @param targetRate The target rate to find a representation level
-     *                   above, in kbps.
-     * @return The index of the lowest representation level above the target
-     * rate, or the highest representation level available.
-     */
-    public int getNearestBitrateIndex(double targetRate){
-        for (int i = length - 1; i >= 0; i--) {
-            if (group.getFormat(i).bitrate / 1000 >= targetRate) {
-                return i;
-            }
-        }
-
-        return 0;
-    }
-
-    /**
      * Finds the index for the highest quality level below a target rate.
      *
-     * @param targetRate The target rate.
+     * @param targetRate The target rate, in bps.
      * @return The index of the highest suitable quality level.
      */
     public int findBestRateIndex(double targetRate) {

@@ -6,7 +6,6 @@ import com.example.mislplayer.ManifestListener;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Renderer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
@@ -31,7 +30,7 @@ import static java.lang.Math.min;
 /**
  * A default sample processor.
  */
-public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
+public class DefaultSampleProcessor implements SampleProcessor, SampleProcessor.Receiver,
         ExoPlayer.EventListener, ManifestListener.ManifestRequestTimeReceiver {
 
     /** A default throughput sample implementation. */
@@ -50,33 +49,21 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
             this.throughputBitsPerSecond = (double)bitsTransferred * 1000 / durationMs;
         }
 
-        /**
-         * The arrival time for the sample, in ms.
-         */
         @Override
         public long arrivalTimeMs() {
             return arrivalTimeMs;
         }
 
-        /**
-         * The number of bits transferred during the sample time period.
-         */
         @Override
         public long bitsTransferred() {
             return bitsTransferred;
         }
 
-        /**
-         * The length of the sample time period in ms.
-         */
         @Override
         public long durationMs() {
             return durationMs;
         }
 
-        /**
-         * The throughput for the sample time period in bps.
-         */
         @Override
         public double bitsPerSecond() {
             return throughputBitsPerSecond;
@@ -97,10 +84,9 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
         this.maxBufferMs = maxBufferMs;
     }
 
-    /** Adds a new throughput sample to the store. */
     @Override
-    public void addSample(long elapsedRealtimeMs, long bitsTransferred,
-                          long durationMs) {
+    public void sendSample(long elapsedRealtimeMs, long bitsTransferred,
+                           long durationMs) {
         long arrivalTime = elapsedRealtimeMs - manifestRequestTime;
         samples.add(
                 new DefaultThroughputSample(arrivalTime, bitsTransferred,
@@ -112,9 +98,6 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
                         lastSampleThroughput() / 1000));
     }
 
-    /**
-     * Writes a log of the samples so far to file.
-     */
     @Override
     public void writeSampleLog() {
         DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
@@ -144,9 +127,6 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
         }
     }
 
-    /**
-     * Removes all existing samples.
-     */
     @Override
     public void clearSamples() {
         samples.clear();
@@ -162,91 +142,59 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
         return samples.get(samples.size() - 1);
     }
 
-    /**
-     * Provides the duration of the current mpd, in ms.
-     *
-     * @return the mpd duration in ms if it's available,
-     * {@link #DATA_NOT_AVAILABLE} otherwise
-     */
     @Override
     public long mpdDuration() {
         return mpdDurationMs;
     }
 
-    /** Gives the current maximum buffer length the player is aiming for. */
     @Override
     public long maxBufferMs() {
         return maxBufferMs;
     }
 
-    /**
-     * Indicates that data on previous chunks is not available.
-     *
-     * @return true if data on previous chunks is not available, false
-     * otherwise.
-     */
     @Override
     public boolean dataNotAvailable() {return samples.size() == 0;}
 
-    /**
-     * Whether the throughput is currently decreasing.
-     *
-     * @return true if the throughput is currently decreasing, false otherwise
-     */
     @Override
     public boolean throughputIsDecreasing() {
         if (samples.size() < 2) {
             return false;
         } else {
-            List<Double> lastTwoSamples = getThroughputSamples(2);
+            List<Double> lastTwoSamples = throughputSamples(2);
             return lastTwoSamples.get(1) < lastTwoSamples.get(0);
         }
     }
 
-    /** Returns the index of the most recently downloaded chunk. */
     @Override
     public int lastChunkIndex(){
         return lastChunk.chunkIndex;
     }
 
-    /** Returns the representation level of the most recently downloaded chunk, in bps. */
     @Override
-    public int lastChunkRepLevel(){
+    public int lastRepLevel(){
         return lastChunk.trackFormat.bitrate;
     }
 
-    /** Returns the size of the most recently downloaded chunk, in bytes. */
     @Override
     public long lastByteSize(){
         return lastChunk.bytesLoaded();
     }
 
-    /** Returns the duration of the most recently downloaded chunk, in ms. */
     @Override
     public long lastChunkDurationMs(){
         return lastChunk.getDurationUs() / 1000;
     }
 
-    /**
-     * Returns the most recent throughput sample in bps.
-     */
     @Override
     public double lastSampleThroughput() {
         return lastSample().bitsPerSecond();
     }
 
-    /**
-     * Returns the duration of the most recent throughput sample, in ms.
-     */
     @Override
     public long lastSampleDurationMs() {
         return lastSample().durationMs();
     }
 
-    /**
-     * Returns the number of bytes transferred in the last throughput
-     * sample.
-     */
     @Override
     public long lastSampleBytesTransferred() {
         return lastSample().bitsTransferred() / 8;
@@ -259,20 +207,21 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
      * @param window The ideal window size.
      * @return The appropriate window size.
      */
-    private int getWindowSize(int window) {
+    private int windowSize(int window) {
         return min(window, samples.size());
     }
 
     /**
      * Provides a number of recent throughput samples.
      *
+     * <p>If the required number of throughput samples isn't available, the
+     * available samples will be provided.
+     *
      * @param window The number of throughput samples to provide.
-     * @return If the number of throughput samples specified by `window` are
-     * available, then that number of samples. If not, then as many as are
-     * available.
+     * @return The window of recent throughput samples.
      */
-    private List<Double> getThroughputSamples(int window) {
-        int workingWindow = getWindowSize(window);
+    private List<Double> throughputSamples(int window) {
+        int workingWindow = windowSize(window);
         int lastIndex = samples.size();
         int firstIndex = lastIndex - workingWindow;
         List<ThroughputSample> sampleSublist = samples.subList(firstIndex, lastIndex);
@@ -285,93 +234,41 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
         return rateSamples;
     }
 
-    /**
-     * Finds the minimum of the available throughput samples.
-     *
-     * @param maxWindow The maximum number of most recent samples to consider.
-     * @return The minimum sample in the window.
-     */
     @Override
-    public double getMinimumThroughputSample(int maxWindow) {
-        return Collections.min(getThroughputSamples(maxWindow));
+    public double minimumThroughputSample(int window) {
+        return Collections.min(throughputSamples(window));
     }
 
-    /**
-     * Calculates a harmonic average of the available throughput samples.
-     *
-     * @param preferredWindow The number of samples that should be used in
-     *                        the calculation, if available.
-     * @return If there are the `preferredWindow` number of samples available,
-     * the harmonic average of those samples. If not, the harmonic average of
-     * the samples that are available.
-     */
     @Override
-    public double getSampleHarmonicAverage(int preferredWindow) {
-        return harmonicAverage(getThroughputSamples(preferredWindow));
+    public double sampleHarmonicAverage(int window) {
+        return harmonicAverage(throughputSamples(window));
     }
 
-    /**
-     * Calculates the coefficient of variation of the most recent
-     * throughput samples.
-     *
-     * <p>If the required number of samples isn't available, the available
-     * samples will be used.
-     *
-     * @param preferredWindow The maximum number of samples to use in the
-     *                        calculation
-     * @return The coefficient of variation of the window of samples.
-     */
     @Override
-    public double getSampleCV(int preferredWindow) {
-        List<Double> throughputSamples = getThroughputSamples(preferredWindow);
+    public double sampleCV(int window) {
+        List<Double> throughputSamples = throughputSamples(window);
         return coefficientOfVariation(throughputSamples);
     }
 
-    /**
-     * Calculates an exponential average of the most recent throughput
-     * samples.
-     *
-     * @param maxWindow The maximum number of recent samples to use in the
-     *                  calculation.
-     * @param exponentialAverageRatio The ratio to use for the exponential
-     *                                average.
-     * @return The exponential average of the {@code maxWindow} most
-     * recent samples, if that many are available. Otherwise, the
-     * exponential average of the available samples.
-     */
     @Override
-    public double getSampleExponentialAverage(int maxWindow,
-                                              double exponentialAverageRatio) {
-        return exponentialAverage(getThroughputSamples(maxWindow),
+    public double sampleExponentialAverage(int window,
+                                           double exponentialAverageRatio) {
+        return exponentialAverage(throughputSamples(window),
                 exponentialAverageRatio);
     }
 
-    /**
-     * Calculates an exponential variance of the most recent throughput
-     * samples.
-     *
-     * @param sampleAverage The exponential average of the most recent
-     *                      throughput samples.
-     * @param maxWindow The maximum number of recent samples to use in the
-     *                  calculation.
-     * @param exponentialVarianceRatio The ratio to use for the exponential
-     *                                variance.
-     * @return The exponential variance of the {@code maxWindow} most
-     * recent samples, if that many are available. Otherwise, the
-     * exponential variance of the available samples.
-     */
     @Override
-    public double getSampleExponentialVariance(double sampleAverage,
-                                               int maxWindow,
-                                               double exponentialVarianceRatio) {
-        return exponentialVariance(getThroughputSamples(maxWindow),
+    public double sampleExponentialVariance(double sampleAverage,
+                                            int window,
+                                            double exponentialVarianceRatio) {
+        return exponentialVariance(throughputSamples(window),
                 sampleAverage, exponentialVarianceRatio);
     }
 
     @Override
     public double[] oscarKumarParEstimation(int estWindow, double expAvgRatio) {
-        int window = getWindowSize(estWindow);
-        List<Double> rateSamples = getThroughputSamples(window);
+        int window = windowSize(estWindow);
+        List<Double> rateSamples = throughputSamples(window);
 
         double maxRate = Collections.max(rateSamples);
 
@@ -479,7 +376,8 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
 
     // averages and variances
 
-    private static double coefficientOfVariation(List<Double> inputValues) {
+    /** Calculates the coefficient of variation of a list of values. */
+    public static double coefficientOfVariation(List<Double> inputValues) {
         double average = arithmeticAverage(inputValues);
         double variance = arithmeticVariance(inputValues, average);
 
@@ -487,7 +385,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     }
 
     /** Calculates the pythagorean arithmetic average of a list of values. */
-    private static double arithmeticAverage(List<Double> values) {
+    public static double arithmeticAverage(List<Double> values) {
         double subTotal = 0;
         for (double value : values) {
             subTotal += value;
@@ -496,7 +394,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     }
 
     /** Calculates the arithmetic variance of a list of values. */
-    private static double arithmeticVariance(List<Double> values,
+    public static double arithmeticVariance(List<Double> values,
                                              double inputAverage) {
         double totalDeviation = 0;
         double result = 0;
@@ -512,7 +410,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     }
 
     /** Calculates the harmonic average of a list of values. */
-    private static double harmonicAverage(List<Double> values) {
+    public static double harmonicAverage(List<Double> values) {
         double subTotal = 0;
         for (double value : values) {
             subTotal += 1 / value;
@@ -521,7 +419,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     }
 
     /** Calculates the exponential average of a list of values. */
-    private static double exponentialAverage(List<Double> values,
+    public static double exponentialAverage(List<Double> values,
                                              double ratio) {
         double weightSum = (1 - Math.pow(1 - ratio, values.size()));
         double subTotal = 0;
@@ -534,7 +432,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
     }
 
     /** Calculates the exponential variance of a list of values. */
-    private double exponentialVariance(List<Double> values, double average,
+    public static double exponentialVariance(List<Double> values, double average,
                                        double ratio) {
         double weightSum = (1 - Math.pow(1 - ratio, values.size()));
         double totalDeviation = 0;
@@ -555,17 +453,6 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
 
     // ExoPlayer EventListener implementation
 
-    /**
-     * Called when the timeline and/or manifest has been refreshed.
-     * <p>
-     * Note that if the timeline has changed then a position discontinuity may also have occurred.
-     * For example, the current period index may have changed as a result of periods being added or
-     * removed from the timeline. This will <em>not</em> be reported via a separate call to
-     * {@link #onPositionDiscontinuity()}.
-     *
-     * @param timeline The latest timeline. Never null, but may be empty.
-     * @param manifest The latest manifest. May be null.
-     */
     @Override
     public void onTimelineChanged(Timeline timeline, Object manifest) {
         if (manifest != null) {
@@ -582,77 +469,21 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleStore,
         }
     }
 
-    /**
-     * Called when the available or selected tracks change.
-     *
-     * @param trackGroups     The available tracks. Never null, but may be of length zero.
-     * @param trackSelections The track selections for each {@link Renderer}. Never null and always
-     *                        of length {@link ExoPlayer#getRendererCount()}, but may contain null elements.
-     */
     @Override
-    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {}
 
-    }
-
-    /**
-     * Called when the player starts or stops loading the source.
-     *
-     * @param isLoading Whether the source is currently being loaded.
-     */
     @Override
-    public void onLoadingChanged(boolean isLoading) {
+    public void onLoadingChanged(boolean isLoading) {}
 
-    }
-
-    /**
-     * Called when the value returned from either {@link ExoPlayer#getPlayWhenReady()} or
-     * {@link ExoPlayer#getPlaybackState()} changes.
-     *
-     * @param playWhenReady Whether playback will proceed when ready.
-     * @param playbackState One of the {@code STATE} constants defined in the {@link ExoPlayer}
-     */
     @Override
-    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {}
 
-    }
-
-    /**
-     * Called when an error occurs. The playback state will transition to {@link ExoPlayer#STATE_IDLE}
-     * immediately after this method is called. The player instance can still be used, and
-     * {@link ExoPlayer#release()} must still be called on the player should it no longer be required.
-     *
-     * @param error The error.
-     */
     @Override
-    public void onPlayerError(ExoPlaybackException error) {
+    public void onPlayerError(ExoPlaybackException error) {}
 
-    }
-
-    /**
-     * Called when a position discontinuity occurs without a change to the timeline. A position
-     * discontinuity occurs when the current window or period index changes (as a result of playback
-     * transitioning from one period in the timeline to the next), or when the playback position
-     * jumps within the period currently being played (as a result of a seek being performed, or
-     * when the source introduces a discontinuity internally).
-     * <p>
-     * When a position discontinuity occurs as a result of a change to the timeline this method is
-     * <em>not</em> called. {@link #onTimelineChanged(Timeline, Object)} is called in this case.
-     */
     @Override
-    public void onPositionDiscontinuity() {
+    public void onPositionDiscontinuity() {}
 
-    }
-
-    /**
-     * Called when the current playback parameters change. The playback parameters may change due to
-     * a call to {@link ExoPlayer#setPlaybackParameters(PlaybackParameters)}, or the player itself
-     * may change them (for example, if audio playback switches to passthrough mode, where speed
-     * adjustment is no longer possible).
-     *
-     * @param playbackParameters The playback parameters.
-     */
     @Override
-    public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-
-    }
+    public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {}
 }
