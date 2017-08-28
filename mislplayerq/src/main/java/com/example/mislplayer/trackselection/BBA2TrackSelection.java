@@ -193,7 +193,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
             int low = lowestBitrate();
             int high = highestBitrate();
             double slope = (high - low) / (0.9 * (maxBufferMs / lastChunkDurationMs) * lastChunkDurationMs - resevoir);
-            optRateIndex = getNearestBitrateIndex((low + slope * (bufferedDurationMs - resevoir)) / 1000.0);
+            optRateIndex = findBestRateIndex(low + slope * (bufferedDurationMs - resevoir));
         }
 
         if (optRateIndex == tracks.length || optRateIndex == 0)

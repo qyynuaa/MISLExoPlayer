@@ -37,25 +37,6 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
     }
 
     /**
-     * Finds the index of the lowest representation level whose rate is above
-     * a target rate.
-     *
-     * @param targetRate The target rate to find a representation level
-     *                   above, in kbps.
-     * @return The index of the lowest representation level above the target
-     * rate, or the highest representation level available.
-     */
-    public int getNearestBitrateIndex(double targetRate){
-        for (int i = length - 1; i >= 0; i--) {
-            if (group.getFormat(i).bitrate / 1000 >= targetRate) {
-                return i;
-            }
-        }
-
-        return 0;
-    }
-
-    /**
      * Finds the index for the highest quality level below a target rate.
      *
      * @param targetRate The target rate.
