@@ -86,10 +86,10 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     }
 
     /**
-     * Calculates the index of the representation that should be chosen
-     * using the MISL BBA2 adaptation algorithm.
+     * Uses the MISL BBA2 adaptation algorithm to find which track
+     * should be selected.
      *
-     * @return The index of the track that should be chosen.
+     * @return The index of the track which should be selected.
      */
     private int calculateSelectedIndex() {
         lastChunkDurationMs = sampleProcessor.lastChunkDurationMs();

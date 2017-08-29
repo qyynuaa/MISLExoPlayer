@@ -104,9 +104,10 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
 
 
     /**
-     * Calculates the index of the track that should be selected next.
+     * Uses a conventional algorithm to find which track should be
+     * selected.
      *
-     * @return The index of the track that should be selected.
+     * @return The index of the track which should be selected.
      */
     private int calculateSelectedIndex() {
         long bitrateEstimate = bandwidthMeter.getBitrateEstimate();

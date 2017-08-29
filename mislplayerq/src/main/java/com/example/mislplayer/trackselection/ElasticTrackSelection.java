@@ -133,10 +133,12 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
     }
 
     /**
-     * Calculates the index of the track that should be selected.
+     * Uses the MISL Elastic adaptation algorithm to find which track
+     * should be selected.
      *
-     * @param bufferedDurationUs The duration of media currently buffered in microseconds.
-     * @return The index of the track that should be selected.
+     * @param bufferedDurationUs The duration of media currently buffered
+     *        in microseconds.
+     * @return The index of the track which should be selected.
      */
     private int calculateSelectedIndex(long bufferedDurationUs) {
         double averageRateEstimate = sampleProcessor.sampleHarmonicAverage(elasticAverageWindow);
