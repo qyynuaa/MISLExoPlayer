@@ -10,8 +10,7 @@ import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import static com.google.android.exoplayer2.upstream.BandwidthMeter.NO_ESTIMATE;
 
 /**
- * A track selection which implements a basic adaptation algorithm using
- * an estimate of the throughput.
+ * Selects adaptive media tracks using the conventional algorithm.
  */
 public class DASHTrackSelection extends AlgorithmTrackSelection {
 

@@ -8,7 +8,7 @@ import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 
 /**
- * Uses the MISL Elastic adaptation algorithm to select tracks.
+ * Selects adaptive media tracks using the Elastic algorithm.
  */
 
 public class ElasticTrackSelection extends AlgorithmTrackSelection {
