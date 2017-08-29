@@ -8,9 +8,8 @@ import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 
 /**
- * Uses the MISL Elastic adaptation algorithm to select tracks.
+ * Selects adaptive media tracks using the Elastic algorithm.
  */
-
 public class ElasticTrackSelection extends AlgorithmTrackSelection {
 
     /**
@@ -25,37 +24,34 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
 
         /**
          * Creates an ElasticTrackSelection factory using default values.
+         *
+         * @param sampleProcessor Provides information about throughput
+         *        samples to the algorithm.
          */
-        public Factory(SampleProcessor algorithmListener) {
-            this(algorithmListener, DEFAULT_ELASTIC_AVERAGE_WINDOW,
+        public Factory(SampleProcessor sampleProcessor) {
+            this(sampleProcessor, DEFAULT_ELASTIC_AVERAGE_WINDOW,
                     DEFAULT_K_P, DEFAULT_K_I);
         }
 
         /**
          * Creates an ElasticTrackSelection factory by specifying the algorithm parameters.
          *
-         * @param algorithmListener
-         * @param elasticAverageWindow The number of previous rate samples to consider.
-         * @param k_p
-         * @param k_i
+         * @param sampleProcessor Provides information about throughput
+         *        samples to the algorithm.
+         * @param elasticAverageWindow The number of past throughput
+         *        samples to consider.
+         * @param k_p An algorithm constant.
+         * @param k_i An algorithm constant.
          */
-        public Factory(SampleProcessor algorithmListener,
+        public Factory(SampleProcessor sampleProcessor,
                        final int elasticAverageWindow, final double k_p,
                        final double k_i) {
-            this.algorithmListener = algorithmListener;
+            this.algorithmListener = sampleProcessor;
             this.elasticAverageWindow = elasticAverageWindow;
             this.k_p = k_p;
             this.k_i = k_i;
         }
 
-        /**
-         * Creates a new ElasticTrackSelection.
-         *
-         * @param group  The {@link TrackGroup}. Must not be null.
-         * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
-         *               null or empty. May be in any order.
-         * @return A new ElasticTrackSelection.
-         */
         @Override
         public ElasticTrackSelection createTrackSelection(TrackGroup group, int... tracks) {
             return new ElasticTrackSelection(group, tracks, algorithmListener,
@@ -84,14 +80,15 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
     /**
      * Creates a new ElasticTrackSelection.
      *
-     * @param group                The {@link TrackGroup}. Must not be null.
-     * @param tracks               The indices of the selected tracks within the {@link TrackGroup}. Must not be
-     *                             null or empty. May be in any order.
-     * @param sampleProcessor    Provides necessary information to the
-     *                             algorithm.
-     * @param elasticAverageWindow
-     * @param k_p
-     * @param k_i
+     * @param group The {@link TrackGroup}. Must not be null.
+     * @param tracks The indices of the selected tracks within the
+     *        {@link TrackGroup}. Must not be null or empty. May be in any order.
+     * @param sampleProcessor Provides information about throughput
+     *        samples to the algorithm.
+     * @param elasticAverageWindow The number of past throughput
+     *        samples to consider.
+     * @param k_p An algorithm constant.
+     * @param k_i An algorithm constant.
      */
     public ElasticTrackSelection(TrackGroup group, int[] tracks,
                                  SampleProcessor
@@ -108,54 +105,42 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
         selectionReason = C.SELECTION_REASON_INITIAL;
     }
 
-    /**
-     * Returns the index of the selected track.
-     */
     @Override
     public int getSelectedIndex() {
         return selectedIndex;
     }
 
-    /**
-     * Returns the reason for the current track selection.
-     */
     @Override
     public int getSelectionReason() {
         return selectionReason;
     }
 
-    /**
-     * Returns optional data associated with the current track selection.
-     */
     @Override
     public Object getSelectionData() {
         return null;
     }
 
-    /**
-     * Updates the selected track.
-     *
-     * @param bufferedDurationUs The duration of media currently buffered in microseconds.
-     */
     @Override
     public void updateSelectedTrack(long bufferedDurationUs) {
         if (sampleProcessor.dataNotAvailable()) {
             selectedIndex = lowestBitrateIndex();
         } else if (lastChunkIndex != sampleProcessor.lastChunkIndex()) {
             lastChunkIndex = sampleProcessor.lastChunkIndex();
-            selectedIndex = doRateAdaptation(bufferedDurationUs);
+            selectedIndex = calculateSelectedIndex(bufferedDurationUs);
             Log.d(TAG, String.format("Selected index = %d", selectedIndex));
         }
         selectionReason = C.SELECTION_REASON_ADAPTIVE;
     }
 
     /**
-     * Applies the adaptation algorithm.
+     * Uses the MISL Elastic adaptation algorithm to find which track
+     * should be selected.
      *
-     * @param bufferedDurationUs The duration of media currently buffered in microseconds.
-     * @return The index (in sorted order) of the track to switch to.
+     * @param bufferedDurationUs The duration of media currently buffered
+     *        in microseconds.
+     * @return The index of the track which should be selected.
      */
-    private int doRateAdaptation(long bufferedDurationUs) {
+    private int calculateSelectedIndex(long bufferedDurationUs) {
         double averageRateEstimate = sampleProcessor.sampleHarmonicAverage(elasticAverageWindow);
 
         final double downloadTimeS = sampleProcessor.lastSampleDurationMs() / 1E3;

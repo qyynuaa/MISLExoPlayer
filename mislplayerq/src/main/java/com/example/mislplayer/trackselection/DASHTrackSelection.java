@@ -10,13 +10,12 @@ import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import static com.google.android.exoplayer2.upstream.BandwidthMeter.NO_ESTIMATE;
 
 /**
- * A track selection which implements a basic adaptation algorithm using
- * an estimate of the throughput.
+ * Selects adaptive media tracks using the conventional algorithm.
  */
 public class DASHTrackSelection extends AlgorithmTrackSelection {
 
     /**
-     * Factory for DASHTrackSelection instances.
+     * Creates DASHTrackSelection instances.
      */
     public static final class Factory implements TrackSelection.Factory {
 
@@ -31,10 +30,9 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
         }
 
         /**
-         * @param bandwidthMeter    Provides an estimate of the currently available bandwidth.
+         * @param bandwidthMeter Provides an estimate of the currently available bandwidth.
          * @param bandwidthFraction The fraction of the available bandwidth
-         *                          that the selection should consider
-         *                          available for use.
+         *        that the selection should consider available for use.
          */
         public Factory(BandwidthMeter bandwidthMeter,
                        double bandwidthFraction) {
@@ -42,14 +40,6 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
             this.bandwidthFraction = bandwidthFraction;
         }
 
-        /**
-         * Creates a new DASHTrackSelection.
-         *
-         * @param group  The {@link TrackGroup}. Must not be null.
-         * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
-         *               null or empty. May be in any order.
-         * @return A new DASHTrackSelection.
-         */
         @Override
         public DASHTrackSelection createTrackSelection(TrackGroup group, int... tracks) {
             return new DASHTrackSelection(group, tracks, bandwidthMeter, bandwidthFraction);
@@ -66,13 +56,14 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
     private int reason;
 
     /**
-     * @param group             The {@link TrackGroup}.
-     * @param tracks            The indices of the selected tracks within the {@link TrackGroup}. Must not be
-     *                          empty. May be in any order.
-     * @param bandwidthMeter    Provides an estimate of the currently available bandwidth.
+     * Creates a new DASHTrackSelection.
+     *
+     * @param group The {@link TrackGroup}.
+     * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
+     *        empty. May be in any order.
+     * @param bandwidthMeter Provides an estimate of the currently available bandwidth.
      * @param bandwidthFraction The fraction of the available bandwidth
-     *                          that the selection should consider
-     *                          available for use.
+     *        that the selection should consider available for use.
      */
     public DASHTrackSelection(TrackGroup group, int[] tracks, BandwidthMeter bandwidthMeter, double bandwidthFraction) {
         super(group, tracks, null);
@@ -88,7 +79,7 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
     @Override
     public void updateSelectedTrack(long bufferedDurationUs) {
         int currentSelectedIndex = selectedIndex;
-        selectedIndex = adaptiveAlgorithm();
+        selectedIndex = calculateSelectedIndex();
         Log.d(TAG, String.format("Selected index = %d", selectedIndex));
 
         if (selectedIndex != currentSelectedIndex) {
@@ -112,7 +103,13 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
     }
 
 
-    private int adaptiveAlgorithm() {
+    /**
+     * Uses a conventional algorithm to find which track should be
+     * selected.
+     *
+     * @return The index of the track which should be selected.
+     */
+    private int calculateSelectedIndex() {
         long bitrateEstimate = bandwidthMeter.getBitrateEstimate();
 
         if (bitrateEstimate == NO_ESTIMATE) {

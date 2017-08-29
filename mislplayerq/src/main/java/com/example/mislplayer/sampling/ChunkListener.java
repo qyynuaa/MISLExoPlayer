@@ -1,14 +1,13 @@
-package com.example.mislplayer;
+package com.example.mislplayer.sampling;
 
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
 
 /**
- * Receives {@link MediaChunk}s and passes the info to an AdaptationAlgorithm.
+ * Receives {@link MediaChunk}s.
  */
 public interface ChunkListener {
     /**
-     * Gives the listener the last chunk that was downloaded, to be passed to the
-     * adaptation algorithm.
+     * Give the listener the last chunk that was downloaded.
      *
      * @param lastChunk The last chunk that was downloaded.
      */
