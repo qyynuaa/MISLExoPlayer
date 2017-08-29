@@ -78,7 +78,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private DefaultTrackSelector trackSelector;
     private LoadControl loadControl;
     private DashMediaSource videoSource;
-    public static ArrayList<FutureSegmentInfos> futureSegmentInfos;
+    public static FutureChunkInfo futureChunkInfo;
     public static ArrayList<Integer> reprLevel;
     public static int beginningIndex;
     private MISLDashChunkSource.Factory df;
@@ -138,7 +138,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         // Uri uri = Uri.parse("http://yt-dash-mse-test.commondatastorage.googleapis.com/media/oops-20120802-manifest.mpd");
 
         //futur segment sizes obtained thanks to CSV file
-        futureSegmentInfos = getSegmentSizes();
+        futureChunkInfo = getSegmentSizes();
 
         //Provides instances of DataSource from which streams of data can be read.
         DataSource.Factory mediaDataSourceFactory = buildDataSourceFactory(transferListener);
@@ -260,7 +260,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     }
 
     // Here we use our CSV file to obtain all future segment sizes of our media content. Will be used in our algorithms
-    public ArrayList<FutureSegmentInfos> getSegmentSizes() {
+    public FutureChunkInfo getSegmentSizes() {
         try {
             beginningIndex = -1;
             int endIndex = -1;
@@ -282,7 +282,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             }
             reprLevel = repLevel;
             endIndex = nextLine.length - 1; // index of the last representation level in the line.
-            ArrayList<FutureSegmentInfos> segmentSizes = new ArrayList<FutureSegmentInfos>();// This Array will contain all
+            FutureChunkInfo chunkInfo = new FutureChunkInfo(reprLevel.size());
             int index = 1;
             int inc = 0;
             while ((nextLine = reader.readNext()) != null) {
@@ -290,8 +290,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                     if (Integer.valueOf(nextLine[0].trim()) >= 1) { // This value nextLine[0] (first column of the read line) corresponds to our segment Number,
                         // as 0 is the number of the INIT segment we are not interested in storing it, but all segments after will be stored -> that's why >=1
                         for (int i = 0; i < reprLevel.size(); i++) { //number i will correspond each time to representation level index not its value.
-                            FutureSegmentInfos futureSeg = new FutureSegmentInfos(index, i, Integer.valueOf(nextLine[i + 2].trim())); // create a future segment info
-                            segmentSizes.add(futureSeg); // add it to the array
+                            chunkInfo.addChunkInfo(index, i, Integer.valueOf(nextLine[i + 2].trim())); // create a future segment info
                             inc++;
                         }
                         index++;
@@ -300,7 +299,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 } catch (NumberFormatException n) {
                 }
             }
-            return segmentSizes;
+            return chunkInfo;
         } catch (IOException e) {
             Log.d(TAG, "erreur de lecture fichier");
         }
