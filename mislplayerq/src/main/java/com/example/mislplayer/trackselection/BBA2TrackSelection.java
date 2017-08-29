@@ -12,7 +12,7 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 /**
- * Uses the BBA2 adaptation algorithm to select tracks.
+ * Selects adaptive media tracks using the BBA2 algorithm.
  */
 public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
@@ -26,11 +26,11 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         /**
          * Creates a BBA2TrackSelection factory.
          *
-         * @param algorithmListener Provides necessary information to the
-         *                          algorithm.
+         * @param sampleProcessor Provides information about throughput
+         *        samples to the algorithm.
          */
-        public Factory(SampleProcessor algorithmListener) {
-            this.algorithmListener = algorithmListener;
+        public Factory(SampleProcessor sampleProcessor) {
+            this.algorithmListener = sampleProcessor;
         }
 
         @Override
@@ -53,6 +53,11 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
     /**
      * Creates a BBA2TrackSelection.
+     *
+     * @param group The {@link TrackGroup}.
+     * @param tracks The indices of the selected tracks within the {@link TrackGroup}.
+     * @param sampleProcessor Provides information about throughput
+     *        samples to the algorithm.
      */
     public BBA2TrackSelection(TrackGroup group, int[] tracks,
                               SampleProcessor sampleProcessor) {
@@ -71,7 +76,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         if (sampleProcessor.dataNotAvailable()) {
             selectedIndex = lowestBitrateIndex();
         } else if (lastChunkIndex != sampleProcessor.lastChunkIndex()) {
-            selectedIndex = dash_do_rate_adaptation_bba2();
+            selectedIndex = calculateSelectedIndex();
             Log.d(TAG, String.format("Selected index = %d", selectedIndex));
         }
 
@@ -80,24 +85,13 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         }
     }
 
-    @Override
-    public int getSelectedIndex() {
-        return selectedIndex;
-    }
-
-    @Override
-    public int getSelectionReason() {
-        return reason;
-    }
-
-    @Override
-    public Object getSelectionData() {
-        return null;
-    }
-
-    /* MISL BBA2 adaptation algorithm */
-    private int dash_do_rate_adaptation_bba2() {
-        long total_size = sampleProcessor.lastByteSize();
+    /**
+     * Calculates the index of the representation that should be chosen
+     * using the MISL BBA2 adaptation algorithm.
+     *
+     * @return The index of the track that should be chosen.
+     */
+    private int calculateSelectedIndex() {
         lastChunkDurationMs = sampleProcessor.lastChunkDurationMs();
         lastChunkIndex = sampleProcessor.lastChunkIndex();
         maxBufferMs = sampleProcessor.maxBufferMs();
@@ -150,7 +144,6 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         return retVal;
     }
 
-
     private int bba1UpdateResevoir(int lastRate, int lastRateIndex) {
         long resvWin = min(2 * maxBufferMs / lastChunkDurationMs,
                 (sampleProcessor.mpdDuration() / lastChunkIndex) - lastChunkIndex);
@@ -200,8 +193,20 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
             return optRateIndex - 1;
         else
             return lastRateIndex;
-
     }
 
+    @Override
+    public int getSelectedIndex() {
+        return selectedIndex;
+    }
 
+    @Override
+    public int getSelectionReason() {
+        return reason;
+    }
+
+    @Override
+    public Object getSelectionData() {
+        return null;
+    }
 }
