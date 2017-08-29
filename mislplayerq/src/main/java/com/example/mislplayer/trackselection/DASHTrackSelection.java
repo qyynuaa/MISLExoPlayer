@@ -75,7 +75,7 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
      *                          available for use.
      */
     public DASHTrackSelection(TrackGroup group, int[] tracks, BandwidthMeter bandwidthMeter, double bandwidthFraction) {
-        super(group, tracks);
+        super(group, tracks, null);
 
         this.bandwidthMeter = bandwidthMeter;
         this.bandwidthFraction = bandwidthFraction;

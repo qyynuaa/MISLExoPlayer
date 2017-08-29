@@ -37,8 +37,6 @@ public class BasicTrackSelection extends AlgorithmTrackSelection {
 
     private static final String TAG = "BasicTrackSelection";
 
-    private SampleProcessor sampleProcessor;
-
     private int selectedIndex = lowestBitrateIndex();
     private int selectionReason = C.SELECTION_REASON_INITIAL;
 
@@ -47,8 +45,7 @@ public class BasicTrackSelection extends AlgorithmTrackSelection {
      * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
      */
     public BasicTrackSelection(TrackGroup group, int[] tracks, SampleProcessor sampleProcessor) {
-        super(group, tracks);
-        this.sampleProcessor = sampleProcessor;
+        super(group, tracks, sampleProcessor);
     }
 
     /**

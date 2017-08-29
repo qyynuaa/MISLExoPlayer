@@ -70,8 +70,6 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
 
     private static final String TAG = "Elastic";
 
-    private SampleProcessor algorithmListener;
-
     private final int elasticAverageWindow;
     private final double k_p;
     private final double k_i;
@@ -89,7 +87,7 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      * @param group                The {@link TrackGroup}. Must not be null.
      * @param tracks               The indices of the selected tracks within the {@link TrackGroup}. Must not be
      *                             null or empty. May be in any order.
-     * @param algorithmListener    Provides necessary information to the
+     * @param sampleProcessor    Provides necessary information to the
      *                             algorithm.
      * @param elasticAverageWindow
      * @param k_p
@@ -97,11 +95,10 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      */
     public ElasticTrackSelection(TrackGroup group, int[] tracks,
                                  SampleProcessor
-                                         algorithmListener,
+                                         sampleProcessor,
                                  int elasticAverageWindow, double k_p,
                                  double k_i) {
-        super(group, tracks);
-        this.algorithmListener = algorithmListener;
+        super(group, tracks, sampleProcessor);
         this.elasticAverageWindow = elasticAverageWindow;
         this.k_p = k_p;
         this.k_i = k_i;
@@ -142,10 +139,10 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      */
     @Override
     public void updateSelectedTrack(long bufferedDurationUs) {
-        if (algorithmListener.dataNotAvailable()) {
+        if (sampleProcessor.dataNotAvailable()) {
             selectedIndex = lowestBitrateIndex();
-        } else if (lastChunkIndex != algorithmListener.lastChunkIndex()) {
-            lastChunkIndex = algorithmListener.lastChunkIndex();
+        } else if (lastChunkIndex != sampleProcessor.lastChunkIndex()) {
+            lastChunkIndex = sampleProcessor.lastChunkIndex();
             selectedIndex = doRateAdaptation(bufferedDurationUs);
             Log.d(TAG, String.format("Selected index = %d", selectedIndex));
         }
@@ -159,10 +156,10 @@ public class ElasticTrackSelection extends AlgorithmTrackSelection {
      * @return The index (in sorted order) of the track to switch to.
      */
     private int doRateAdaptation(long bufferedDurationUs) {
-        double averageRateEstimate = algorithmListener.sampleHarmonicAverage(elasticAverageWindow);
+        double averageRateEstimate = sampleProcessor.sampleHarmonicAverage(elasticAverageWindow);
 
-        final double downloadTimeS = algorithmListener.lastSampleDurationMs() / 1E3;
-        final double maxBufferS = algorithmListener.maxBufferMs() / 1E3;
+        final double downloadTimeS = sampleProcessor.lastSampleDurationMs() / 1E3;
+        final double maxBufferS = sampleProcessor.maxBufferMs() / 1E3;
         final double bufferedDurationS = bufferedDurationUs / 1E6;
 
         staticAlgParameter += downloadTimeS * (bufferedDurationS - maxBufferS);
