@@ -2,7 +2,6 @@ package com.example.mislplayer.trackselection;
 
 import android.util.Log;
 
-import com.example.mislplayer.FutureChunkInfo;
 import com.example.mislplayer.PlayerActivity;
 import com.example.mislplayer.sampling.SampleProcessor;
 import com.google.android.exoplayer2.C;
@@ -160,10 +159,10 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         int largeChunks = 0;
         int smallChunks = 0;
         for (int i = 0; i < resvWin; i++) {
-            if (FutureChunkInfo.getByteSize(PlayerActivity.futureSegmentInfos, lastChunkIndex + i, lastRateIndex) > avgSegSize)
-                largeChunks += FutureChunkInfo.getByteSize(PlayerActivity.futureSegmentInfos, lastChunkIndex + i, lastRateIndex);
+            if (PlayerActivity.futureChunkInfo.getByteSize(lastChunkIndex + i, lastRateIndex) > avgSegSize)
+                largeChunks += PlayerActivity.futureChunkInfo.getByteSize(lastChunkIndex + i, lastRateIndex);
             else
-                smallChunks += FutureChunkInfo.getByteSize(PlayerActivity.futureSegmentInfos, lastChunkIndex + i, lastRateIndex);
+                smallChunks += PlayerActivity.futureChunkInfo.getByteSize(lastChunkIndex + i, lastRateIndex);
 
         }
         double resevoir = 8 * ((largeChunks - smallChunks)) / (lastRate);

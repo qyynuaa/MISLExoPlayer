@@ -1,6 +1,5 @@
 package com.example.mislplayer.trackselection;
 
-import com.example.mislplayer.FutureChunkInfo;
 import com.example.mislplayer.PlayerActivity;
 import com.example.mislplayer.sampling.SampleProcessor;
 import com.google.android.exoplayer2.source.TrackGroup;
@@ -73,7 +72,7 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
         double totSegSize = 0;
         for (int i = 0; i < videoWindow; i++)
 
-            totSegSize += FutureChunkInfo.getByteSize(PlayerActivity.futureSegmentInfos, sampleProcessor.lastChunkIndex() + i, qIndex) * 8;
+            totSegSize += PlayerActivity.futureChunkInfo.getByteSize(sampleProcessor.lastChunkIndex() + i, qIndex) * 8;
         double actualAvgRate = totSegSize / (sampleProcessor.lastChunkDurationMs() / 1E3 * videoWindow);
 
         return actualAvgRate <= estRate;

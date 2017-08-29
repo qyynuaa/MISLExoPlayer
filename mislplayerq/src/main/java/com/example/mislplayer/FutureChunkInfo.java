@@ -2,6 +2,7 @@ package com.example.mislplayer;
 
 import android.annotation.SuppressLint;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -9,19 +10,22 @@ import java.util.HashMap;
  */
 public class FutureChunkInfo {
 
-    private HashMap<Integer, HashMap<Integer, Integer>> byteSizes;
+    private ArrayList<HashMap<Integer, Integer>> byteSizes;
 
     @SuppressLint("UseSparseArrays")
     public FutureChunkInfo(int numberOfRepresentations) {
-        byteSizes = new HashMap<>(numberOfRepresentations);
+        byteSizes = new ArrayList<>(numberOfRepresentations);
+        for (int i = 0; i < numberOfRepresentations; i++) {
+            byteSizes.add(new HashMap<Integer, Integer>());
+        }
     }
 
     /**
      * Add information on a new chunk.
      *
      * @param chunkIndex The index of the chunk within the data stream.
-     * @param representationLevel The representation level of the chunk in
-     *        bits per second.
+     * @param representationLevel The index of the representation level of
+     *        the chunk.
      * @param byteSize The size of the chunk in bytes.
      */
     public void addChunkInfo(int chunkIndex, int representationLevel, int byteSize) {
@@ -33,8 +37,8 @@ public class FutureChunkInfo {
      * level.
      *
      * @param chunkIndex The index of the chunk within the data stream.
-     * @param representationLevel The representation level of the chunk in
-     *        bits per second.
+     * @param representationLevel The index of the representation level of
+     *        the chunk.
      * @return The size of the chunk in bytes.
      */
     public int getByteSize(int chunkIndex, int representationLevel){
