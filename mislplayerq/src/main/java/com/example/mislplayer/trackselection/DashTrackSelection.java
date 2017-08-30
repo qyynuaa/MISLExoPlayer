@@ -12,10 +12,10 @@ import static com.google.android.exoplayer2.upstream.BandwidthMeter.NO_ESTIMATE;
 /**
  * Selects adaptive media tracks using the conventional algorithm.
  */
-public class DASHTrackSelection extends AlgorithmTrackSelection {
+public class DashTrackSelection extends AlgorithmTrackSelection {
 
     /**
-     * Creates DASHTrackSelection instances.
+     * Creates DashTrackSelection instances.
      */
     public static final class Factory implements TrackSelection.Factory {
 
@@ -41,12 +41,12 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
         }
 
         @Override
-        public DASHTrackSelection createTrackSelection(TrackGroup group, int... tracks) {
-            return new DASHTrackSelection(group, tracks, bandwidthMeter, bandwidthFraction);
+        public DashTrackSelection createTrackSelection(TrackGroup group, int... tracks) {
+            return new DashTrackSelection(group, tracks, bandwidthMeter, bandwidthFraction);
         }
     }
 
-    private static final String TAG = "DASHTrackSelection";
+    private static final String TAG = "DashTrackSelection";
     private static final double DEFAULT_BANDWIDTH_FRACTION = 0.85;
 
     private final BandwidthMeter bandwidthMeter;
@@ -56,7 +56,7 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
     private int reason;
 
     /**
-     * Creates a new DASHTrackSelection.
+     * Creates a new DashTrackSelection.
      *
      * @param group The {@link TrackGroup}.
      * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
@@ -65,7 +65,7 @@ public class DASHTrackSelection extends AlgorithmTrackSelection {
      * @param bandwidthFraction The fraction of the available bandwidth
      *        that the selection should consider available for use.
      */
-    public DASHTrackSelection(TrackGroup group, int[] tracks, BandwidthMeter bandwidthMeter, double bandwidthFraction) {
+    public DashTrackSelection(TrackGroup group, int[] tracks, BandwidthMeter bandwidthMeter, double bandwidthFraction) {
         super(group, tracks, null);
 
         this.bandwidthMeter = bandwidthMeter;

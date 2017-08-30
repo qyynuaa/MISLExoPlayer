@@ -31,12 +31,8 @@ public class ManifestListener implements TransferListener<Object> {
         }
     }
 
-    /**
-     * Called when a transfer starts.
-     *
-     * @param source   The source performing the transfer.
-     * @param dataSpec Describes the data being transferred.
-     */
+    // TransferListener implementation
+
     @Override
     public void onTransferStart(Object source, DataSpec dataSpec) {
         if (manifestRequestTime == 0) {
@@ -46,28 +42,18 @@ public class ManifestListener implements TransferListener<Object> {
         }
     }
 
-    /**
-     * Called incrementally during a transfer.
-     *
-     * @param source           The source performing the transfer.
-     * @param bytesTransferred The number of bytes transferred since the previous call to this
-     */
     @Override
-    public void onBytesTransferred(Object source, int bytesTransferred) {
+    public void onBytesTransferred(Object source, int bytesTransferred) {}
 
-    }
+    @Override
+    public void onTransferEnd(Object source) {}
 
     /**
-     * Called when a transfer ends.
-     *
-     * @param source The source performing the transfer.
+     * To be implemented by listeners who wish to receive the manifest
+     * request time.
      */
-    @Override
-    public void onTransferEnd(Object source) {
-
-    }
-
     public interface ManifestRequestTimeReceiver {
+        /** Gives the manifest request time to the listener. */
         void giveManifestRequestTime(long manifestRequestTime);
     }
 }

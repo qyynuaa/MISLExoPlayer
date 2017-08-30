@@ -18,7 +18,7 @@ import com.example.mislplayer.sampling.SizeBasedSampler;
 import com.example.mislplayer.sampling.TimeBasedSampler;
 import com.example.mislplayer.trackselection.ArbiterPlusTrackSelection;
 import com.example.mislplayer.trackselection.ArbiterTrackSelection;
-import com.example.mislplayer.trackselection.BBA2TrackSelection;
+import com.example.mislplayer.trackselection.Bba2TrackSelection;
 import com.example.mislplayer.trackselection.BasicTrackSelection;
 import com.example.mislplayer.trackselection.ElasticTrackSelection;
 import com.example.mislplayer.trackselection.OscarHTrackSelection;
@@ -72,7 +72,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
     private SimpleExoPlayerView playerView;
     private Handler mainHandler;
-    private EventLogger eventLogger;
     private SimpleExoPlayer player;
     private int resumeWindow;
     private long resumePosition;
@@ -82,7 +81,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     public static FutureChunkInfo futureChunkInfo;
     public static ArrayList<Integer> reprLevel;
     public static int beginningIndex;
-    private MISLDashChunkSource.Factory df;
+    private MislDashChunkSource.Factory df;
 
     private AdaptationAlgorithmType algorithmType;
 
@@ -147,15 +146,13 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         //Will be responsible of choosing right TrackSelections
         trackSelector = new DefaultTrackSelector(trackSelectionFactory);
 
-        eventLogger = new EventLogger(trackSelector);
-
         mainHandler = new Handler();
 
         manifestListener.addListener(chunkLogger);
         manifestListener.addListener(sampleProcessor);
 
         //Provides instances of DashChunkSource
-        df = new MISLDashChunkSource.Factory(mediaDataSourceFactory,
+        df = new MislDashChunkSource.Factory(mediaDataSourceFactory,
                 chunkListener);
 
         // Our video source media, we give it an URL, and all the stuff before
@@ -168,7 +165,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         //Used to play media indefinitely (loop)
         LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
 
-        loadControl = new MISLLoadControl(minBufferMs, maxBufferMs,
+        loadControl = new MislLoadControl(minBufferMs, maxBufferMs,
                 playbackBufferMs, rebufferMs);
 
         player = ExoPlayerFactory.newSimpleInstance(
@@ -248,7 +245,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                     break;
                 case BBA2:
                     Log.d(TAG, "BBA2 has been chosen.");
-                    trackSelectionFactory = new BBA2TrackSelection.Factory(sampleProcessor);
+                    trackSelectionFactory = new Bba2TrackSelection.Factory(sampleProcessor);
                     break;
                 case ELASTIC:
                     Log.d(TAG, "ELASTIC has been chosen.");
@@ -395,7 +392,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             updateResumePosition();
             player.release();
             player = null;
-            eventLogger = null;
 
             chunkLogger.writeLogsToFile();
             chunkLogger.clearChunkInformation();
