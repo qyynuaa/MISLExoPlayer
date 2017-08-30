@@ -146,7 +146,7 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
 
     private int bba1UpdateResevoir(int lastRate, int lastRateIndex) {
         long resvWin = min(2 * maxBufferMs / lastChunkDurationMs,
-                (sampleProcessor.mpdDuration() / lastChunkIndex) - lastChunkIndex);
+                (sampleProcessor.mpdDuration() / lastChunkDurationMs) - lastChunkIndex);
         long avgSegSize = (lastRate * lastChunkDurationMs) / 8000; //bytes
 
         int largeChunks = 0;
