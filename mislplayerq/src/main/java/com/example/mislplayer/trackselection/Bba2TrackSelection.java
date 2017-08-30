@@ -14,17 +14,17 @@ import static java.lang.Math.min;
 /**
  * Selects adaptive media tracks using the BBA2 algorithm.
  */
-public class BBA2TrackSelection extends AlgorithmTrackSelection {
+public class Bba2TrackSelection extends AlgorithmTrackSelection {
 
     /**
-     * Creates BBA2TrackSelection instances.
+     * Creates Bba2TrackSelection instances.
      */
     public static final class Factory implements TrackSelection.Factory {
 
         private SampleProcessor algorithmListener;
 
         /**
-         * Creates a BBA2TrackSelection factory.
+         * Creates a Bba2TrackSelection factory.
          *
          * @param sampleProcessor Provides information about throughput
          *        samples to the algorithm.
@@ -34,8 +34,8 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         }
 
         @Override
-        public BBA2TrackSelection createTrackSelection(TrackGroup group, int... tracks) {
-            return new BBA2TrackSelection(group, tracks, algorithmListener);
+        public Bba2TrackSelection createTrackSelection(TrackGroup group, int... tracks) {
+            return new Bba2TrackSelection(group, tracks, algorithmListener);
         }
     }
 
@@ -52,14 +52,14 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
     private int reason;
 
     /**
-     * Creates a BBA2TrackSelection.
+     * Creates a Bba2TrackSelection.
      *
      * @param group The {@link TrackGroup}.
      * @param tracks The indices of the selected tracks within the {@link TrackGroup}.
      * @param sampleProcessor Provides information about throughput
      *        samples to the algorithm.
      */
-    public BBA2TrackSelection(TrackGroup group, int[] tracks,
+    public Bba2TrackSelection(TrackGroup group, int[] tracks,
                               SampleProcessor sampleProcessor) {
         super(group, tracks, sampleProcessor);
 

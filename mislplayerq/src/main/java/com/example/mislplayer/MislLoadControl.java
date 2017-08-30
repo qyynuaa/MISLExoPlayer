@@ -4,7 +4,6 @@ import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.Renderer;
-import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.Allocator;
@@ -15,7 +14,7 @@ import com.google.android.exoplayer2.upstream.DefaultAllocator;
  * parameters, and otherwise behaves identically to
  * {@code DefaultLoadControl}.
  */
-public class MISLLoadControl implements LoadControl {
+public class MislLoadControl implements LoadControl {
 
     /**
      * The default minimum duration of media that the player will attempt to ensure is buffered at all
@@ -49,9 +48,9 @@ public class MISLLoadControl implements LoadControl {
     private final long bufferForPlaybackAfterRebufferMs;
 
     /**
-     * Creates a new MISLLoadControl with default values.
+     * Creates a new MislLoadControl with default values.
      */
-    public MISLLoadControl() {
+    public MislLoadControl() {
         this(DEFAULT_MIN_BUFFER_MS,
                 DEFAULT_MAX_BUFFER_MS,
                 DEFAULT_BUFFER_FOR_PLAYBACK_MS,
@@ -60,7 +59,7 @@ public class MISLLoadControl implements LoadControl {
     }
 
     /**
-     * Creates a new MISLLoadControl.
+     * Creates a new MislLoadControl.
      *
      * @param minBufferMs The minimum duration of media that the player will attempt to ensure is
      *     buffered at all times, in milliseconds.
@@ -72,7 +71,7 @@ public class MISLLoadControl implements LoadControl {
      *     playback to resume after a rebuffer, in milliseconds. A rebuffer is defined to be caused by
      *     buffer depletion rather than a user action.
      */
-    public MISLLoadControl(int minBufferMs, int maxBufferMs,
+    public MislLoadControl(int minBufferMs, int maxBufferMs,
                            long bufferForPlaybackMs, long bufferForPlaybackAfterRebufferMs) {
         this.loadControl = new DefaultLoadControl(
                 new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE), minBufferMs,

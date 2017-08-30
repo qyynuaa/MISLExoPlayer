@@ -21,7 +21,7 @@ import java.util.List;
  * and otherwise behaves identically to DefaultDashChunkSource.
  */
 
-public class MISLDashChunkSource implements DashChunkSource {
+public class MislDashChunkSource implements DashChunkSource {
 
     public static class Factory implements DashChunkSource.Factory {
 
@@ -32,7 +32,7 @@ public class MISLDashChunkSource implements DashChunkSource {
         private final ChunkListener chunkListener;
 
         /**
-         * Creates a MISLDashChunkSource factory with default values.
+         * Creates a MislDashChunkSource factory with default values.
          *
          * @param dataSourceFactory
          * @param chunkListener Can be given chunks for chunk-based
@@ -52,25 +52,25 @@ public class MISLDashChunkSource implements DashChunkSource {
         }
 
         @Override
-        public MISLDashChunkSource createDashChunkSource(LoaderErrorThrower manifestLoaderErrorThrower,
+        public MislDashChunkSource createDashChunkSource(LoaderErrorThrower manifestLoaderErrorThrower,
                                                      DashManifest manifest, int periodIndex, int adaptationSetIndex,
                                                      TrackSelection trackSelection, long elapsedRealtimeOffsetMs,
                                                      boolean enableEventMessageTrack, boolean enableCea608Track) {
             DataSource dataSource = dataSourceFactory.createDataSource();
 
-            return new MISLDashChunkSource(manifestLoaderErrorThrower, manifest, periodIndex,
+            return new MislDashChunkSource(manifestLoaderErrorThrower, manifest, periodIndex,
                     adaptationSetIndex, trackSelection, dataSource, elapsedRealtimeOffsetMs,
                     maxSegmentsPerLoad, enableEventMessageTrack,
                     enableCea608Track, chunkListener);
         }
     }
 
-    private static final String TAG = "MISLDashChunkSource";
+    private static final String TAG = "MislDashChunkSource";
 
     private DashChunkSource dashChunkSource;
     private ChunkListener chunkListener;
 
-    public MISLDashChunkSource(LoaderErrorThrower manifestLoaderErrorThrower, DashManifest manifest,
+    public MislDashChunkSource(LoaderErrorThrower manifestLoaderErrorThrower, DashManifest manifest,
                                int periodIndex, int adaptationSetIndex, TrackSelection trackSelection,
                                DataSource dataSource, long elapsedRealtimeOffsetMs, int maxSegmentsPerLoad,
                                boolean enableEventMessageTrack, boolean enableCea608Track, ChunkListener chunkListener) {
