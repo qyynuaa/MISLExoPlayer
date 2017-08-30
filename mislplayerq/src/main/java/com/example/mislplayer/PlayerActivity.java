@@ -72,7 +72,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
     private SimpleExoPlayerView playerView;
     private Handler mainHandler;
-    private EventLogger eventLogger;
     private SimpleExoPlayer player;
     private int resumeWindow;
     private long resumePosition;
@@ -146,8 +145,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
         //Will be responsible of choosing right TrackSelections
         trackSelector = new DefaultTrackSelector(trackSelectionFactory);
-
-        eventLogger = new EventLogger(trackSelector);
 
         mainHandler = new Handler();
 
@@ -395,7 +392,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             updateResumePosition();
             player.release();
             player = null;
-            eventLogger = null;
 
             chunkLogger.writeLogsToFile();
             chunkLogger.clearChunkInformation();
