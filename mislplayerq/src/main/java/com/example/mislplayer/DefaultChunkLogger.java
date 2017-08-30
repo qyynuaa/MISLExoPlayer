@@ -31,7 +31,7 @@ import java.util.List;
  * A default ChunkLogger implementation.
  */
 public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEventListener,
-        ExoPlayer.EventListener, TransferListener<Object>, ManifestListener.ManifestRequestTimeReceiver {
+        ExoPlayer.EventListener, ManifestListener.ManifestRequestTimeReceiver {
 
     /**
      * An entry in the log.
@@ -142,7 +142,6 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
         this.player = player;
     }
 
-    /** Logs to file data about all the chunks downloaded so far. */
     @Override
     public void writeLogsToFile() {
         DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
@@ -169,12 +168,14 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
         }
     }
 
-    /** Removes all stored chunk information. */
     @Override
     public void clearChunkInformation() {
         this.log = new ArrayList<>();
     }
 
+    /**
+     * Adds a new entry to the log.
+     */
     private void makeNewLogEntry() {
         long representationRateKbps = lastTrackFormat.bitrate / 1000;
         long deliveryRateKbps = Math.round((double) lastBytesLoaded * 8 / lastLoadDurationMs);
@@ -194,65 +195,21 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
         }
     }
 
-    /**
-     * Give the chunk logger the time that the manifest was requested at,
-     * so that it can log times relative to that.
-     *
-     * @param manifestRequestTime The time the manifest was requested at,
-     *                            in the timebase of SystemClock#elapsedRealtime()
-     */
+    // ManifestRequestTimeReceiver implementation
+
     @Override
     public void giveManifestRequestTime(long manifestRequestTime) {
         this.manifestRequestTime = manifestRequestTime;
     }
 
-    /**
-     * Called when a load begins.
-     *
-     * @param dataSpec             Defines the data being loaded.
-     * @param dataType             One of the {@link C} {@code DATA_TYPE_*} constants defining the type of data
-     *                             being loaded.
-     * @param trackType            One of the {@link C} {@code TRACK_TYPE_*} constants if the data corresponds
-     *                             to media of a specific type. {@link C#TRACK_TYPE_UNKNOWN} otherwise.
-     * @param trackFormat          The format of the track to which the data belongs. Null if the data does
-     *                             not belong to a track.
-     * @param trackSelectionReason One of the {@link C} {@code SELECTION_REASON_*} constants if the
-     *                             data belongs to a track. {@link C#SELECTION_REASON_UNKNOWN} otherwise.
-     * @param trackSelectionData   Optional data associated with the selection of the track to which the
-     *                             data belongs. Null if the data does not belong to a track.
-     * @param mediaStartTimeMs     The start time of the media being loaded, or {@link C#TIME_UNSET} if
-     *                             the load is not for media data.
-     * @param mediaEndTimeMs       The end time of the media being loaded, or {@link C#TIME_UNSET} if the
-     *                             load is not for media data.
-     * @param elapsedRealtimeMs    The value of {@link SystemClock#elapsedRealtime} when the load began.
-     */
+    // AdaptiveMediaSourceEventListener implementation
+
     @Override
-    public void onLoadStarted(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs) {
+    public void onLoadStarted(DataSpec dataSpec, int dataType,
+            int trackType, Format trackFormat, int trackSelectionReason,
+            Object trackSelectionData, long mediaStartTimeMs,
+            long mediaEndTimeMs, long elapsedRealtimeMs) {}
 
-    }
-
-    /**
-     * Called when a load ends.
-     *
-     * @param dataSpec             Defines the data being loaded.
-     * @param dataType             One of the {@link C} {@code DATA_TYPE_*} constants defining the type of data
-     *                             being loaded.
-     * @param trackType            One of the {@link C} {@code TRACK_TYPE_*} constants if the data corresponds
-     *                             to media of a specific type. {@link C#TRACK_TYPE_UNKNOWN} otherwise.
-     * @param trackFormat          The format of the track to which the data belongs. Null if the data does
-     *                             not belong to a track.
-     * @param trackSelectionReason One of the {@link C} {@code SELECTION_REASON_*} constants if the
-     *                             data belongs to a track. {@link C#SELECTION_REASON_UNKNOWN} otherwise.
-     * @param trackSelectionData   Optional data associated with the selection of the track to which the
-     *                             data belongs. Null if the data does not belong to a track.
-     * @param mediaStartTimeMs     The start time of the media being loaded, or {@link C#TIME_UNSET} if
-     *                             the load is not for media data.
-     * @param mediaEndTimeMs       The end time of the media being loaded, or {@link C#TIME_UNSET} if the
-     *                             load is not for media data.
-     * @param elapsedRealtimeMs    The value of {@link SystemClock#elapsedRealtime} when the load ended.
-     * @param loadDurationMs       The duration of the load.
-     * @param bytesLoaded          The number of bytes that were loaded.
-     */
     @Override
     public void onLoadCompleted(DataSpec dataSpec, int dataType,
                                 int trackType, Format trackFormat,
@@ -281,150 +238,50 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
         }
     }
 
-    /**
-     * Called when a load is canceled.
-     *
-     * @param dataSpec             Defines the data being loaded.
-     * @param dataType             One of the {@link C} {@code DATA_TYPE_*} constants defining the type of data
-     *                             being loaded.
-     * @param trackType            One of the {@link C} {@code TRACK_TYPE_*} constants if the data corresponds
-     *                             to media of a specific type. {@link C#TRACK_TYPE_UNKNOWN} otherwise.
-     * @param trackFormat          The format of the track to which the data belongs. Null if the data does
-     *                             not belong to a track.
-     * @param trackSelectionReason One of the {@link C} {@code SELECTION_REASON_*} constants if the
-     *                             data belongs to a track. {@link C#SELECTION_REASON_UNKNOWN} otherwise.
-     * @param trackSelectionData   Optional data associated with the selection of the track to which the
-     *                             data belongs. Null if the data does not belong to a track.
-     * @param mediaStartTimeMs     The start time of the media being loaded, or {@link C#TIME_UNSET} if
-     *                             the load is not for media data.
-     * @param mediaEndTimeMs       The end time of the media being loaded, or {@link C#TIME_UNSET} if the
-     *                             load is not for media data.
-     * @param elapsedRealtimeMs    The value of {@link SystemClock#elapsedRealtime} when the load was
-     *                             canceled.
-     * @param loadDurationMs       The duration of the load up to the point at which it was canceled.
-     * @param bytesLoaded          The number of bytes that were loaded prior to cancelation.
-     */
     @Override
-    public void onLoadCanceled(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded) {
+    public void onLoadCanceled(DataSpec dataSpec, int dataType,
+            int trackType, Format trackFormat, int trackSelectionReason,
+            Object trackSelectionData, long mediaStartTimeMs,
+            long mediaEndTimeMs, long elapsedRealtimeMs,
+            long loadDurationMs, long bytesLoaded) {}
 
-    }
-
-    /**
-     * Called when a load error occurs.
-     * <p>
-     * The error may or may not have resulted in the load being canceled, as indicated by the
-     * {@code wasCanceled} parameter. If the load was canceled, {@link #onLoadCanceled} will
-     * <em>not</em> be called in addition to this method.
-     *
-     * @param dataSpec             Defines the data being loaded.
-     * @param dataType             One of the {@link C} {@code DATA_TYPE_*} constants defining the type of data
-     *                             being loaded.
-     * @param trackType            One of the {@link C} {@code TRACK_TYPE_*} constants if the data corresponds
-     *                             to media of a specific type. {@link C#TRACK_TYPE_UNKNOWN} otherwise.
-     * @param trackFormat          The format of the track to which the data belongs. Null if the data does
-     *                             not belong to a track.
-     * @param trackSelectionReason One of the {@link C} {@code SELECTION_REASON_*} constants if the
-     *                             data belongs to a track. {@link C#SELECTION_REASON_UNKNOWN} otherwise.
-     * @param trackSelectionData   Optional data associated with the selection of the track to which the
-     *                             data belongs. Null if the data does not belong to a track.
-     * @param mediaStartTimeMs     The start time of the media being loaded, or {@link C#TIME_UNSET} if
-     *                             the load is not for media data.
-     * @param mediaEndTimeMs       The end time of the media being loaded, or {@link C#TIME_UNSET} if the
-     *                             load is not for media data.
-     * @param elapsedRealtimeMs    The value of {@link SystemClock#elapsedRealtime} when the error
-     *                             occurred.
-     * @param loadDurationMs       The duration of the load up to the point at which the error occurred.
-     * @param bytesLoaded          The number of bytes that were loaded prior to the error.
-     * @param error                The load error.
-     * @param wasCanceled          Whether the load was canceled as a result of the error.
-     */
     @Override
-    public void onLoadError(DataSpec dataSpec, int dataType, int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded, IOException error, boolean wasCanceled) {
+    public void onLoadError(DataSpec dataSpec, int dataType, int trackType,
+            Format trackFormat, int trackSelectionReason,
+            Object trackSelectionData, long mediaStartTimeMs,
+            long mediaEndTimeMs, long elapsedRealtimeMs,
+            long loadDurationMs, long bytesLoaded, IOException error,
+            boolean wasCanceled) {}
 
-    }
-
-    /**
-     * Called when data is removed from the back of a media buffer, typically so that it can be
-     * re-buffered in a different format.
-     *
-     * @param trackType        The type of the media. One of the {@link C} {@code TRACK_TYPE_*} constants.
-     * @param mediaStartTimeMs The start time of the media being discarded.
-     * @param mediaEndTimeMs   The end time of the media being discarded.
-     */
     @Override
-    public void onUpstreamDiscarded(int trackType, long mediaStartTimeMs, long mediaEndTimeMs) {
+    public void onUpstreamDiscarded(int trackType, long mediaStartTimeMs,
+            long mediaEndTimeMs) {}
 
-    }
-
-    /**
-     * Called when a downstream format change occurs (i.e. when the format of the media being read
-     * from one or more {@link SampleStream}s provided by the source changes).
-     *
-     * @param trackType            The type of the media. One of the {@link C} {@code TRACK_TYPE_*} constants.
-     * @param trackFormat          The format of the track to which the data belongs. Null if the data does
-     *                             not belong to a track.
-     * @param trackSelectionReason One of the {@link C} {@code SELECTION_REASON_*} constants if the
-     *                             data belongs to a track. {@link C#SELECTION_REASON_UNKNOWN} otherwise.
-     * @param trackSelectionData   Optional data associated with the selection of the track to which the
-     *                             data belongs. Null if the data does not belong to a track.
-     * @param mediaTimeMs          The media time at which the change occurred.
-     */
     @Override
-    public void onDownstreamFormatChanged(int trackType, Format trackFormat, int trackSelectionReason, Object trackSelectionData, long mediaTimeMs) {
+    public void onDownstreamFormatChanged(int trackType,
+            Format trackFormat, int trackSelectionReason,
+            Object trackSelectionData, long mediaTimeMs) {}
 
-    }
+    // ExoPlayer.EventListener implementation
 
-    /**
-     * Called when the timeline and/or manifest has been refreshed.
-     * <p>
-     * Note that if the timeline has changed then a position discontinuity may also have occurred.
-     * For example, the current period index may have changed as a result of periods being added or
-     * removed from the timeline. This will <em>not</em> be reported via a separate call to
-     * {@link #onPositionDiscontinuity()}.
-     *
-     * @param timeline The latest timeline. Never null, but may be empty.
-     * @param manifest The latest manifest. May be null.
-     */
     @Override
-    public void onTimelineChanged(Timeline timeline, Object manifest) {
+    public void onTimelineChanged(Timeline timeline, Object manifest) {}
 
-    }
-
-    /**
-     * Called when the available or selected tracks change.
-     *
-     * @param trackGroups     The available tracks. Never null, but may be of length zero.
-     * @param trackSelections The track selections for each {@link Renderer}. Never null and always
-     *                        of length {@link ExoPlayer#getRendererCount()}, but may contain null elements.
-     */
     @Override
-    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+    public void onTracksChanged(TrackGroupArray trackGroups,
+            TrackSelectionArray trackSelections) {}
 
-    }
-
-    /**
-     * Called when the player starts or stops loading the source.
-     *
-     * @param isLoading Whether the source is currently being loaded.
-     */
     @Override
-    public void onLoadingChanged(boolean isLoading) {
+    public void onLoadingChanged(boolean isLoading) {}
 
-    }
-
-    /**
-     * Called when the value returned from either {@link ExoPlayer#getPlayWhenReady()} or
-     * {@link ExoPlayer#getPlaybackState()} changes.
-     *
-     * @param playWhenReady Whether playback will proceed when ready.
-     * @param playbackState One of the {@code STATE} constants defined in the {@link ExoPlayer}
-     */
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-        if (lastState == ExoPlayer.STATE_READY && playbackState == ExoPlayer.STATE_BUFFERING) {
+        if (lastState == ExoPlayer.STATE_READY
+                && playbackState == ExoPlayer.STATE_BUFFERING) {
             stallStartMs = SystemClock.elapsedRealtime();
             currentlyStalling = true;
-        } else if (currentlyStalling && playbackState == ExoPlayer.STATE_READY) {
+        } else if (currentlyStalling
+                && playbackState == ExoPlayer.STATE_READY) {
             long nowMs = SystemClock.elapsedRealtime();
             stallDurationMs += nowMs - stallStartMs;
             currentlyStalling = false;
@@ -439,76 +296,12 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
         lastState = playbackState;
     }
 
-    /**
-     * Called when an error occurs. The playback state will transition to {@link ExoPlayer#STATE_IDLE}
-     * immediately after this method is called. The player instance can still be used, and
-     * {@link ExoPlayer#release()} must still be called on the player should it no longer be required.
-     *
-     * @param error The error.
-     */
     @Override
-    public void onPlayerError(ExoPlaybackException error) {
+    public void onPlayerError(ExoPlaybackException error) {}
 
-    }
-
-    /**
-     * Called when a position discontinuity occurs without a change to the timeline. A position
-     * discontinuity occurs when the current window or period index changes (as a result of playback
-     * transitioning from one period in the timeline to the next), or when the playback position
-     * jumps within the period currently being played (as a result of a seek being performed, or
-     * when the source introduces a discontinuity internally).
-     * <p>
-     * When a position discontinuity occurs as a result of a change to the timeline this method is
-     * <em>not</em> called. {@link #onTimelineChanged(Timeline, Object)} is called in this case.
-     */
     @Override
-    public void onPositionDiscontinuity() {
+    public void onPositionDiscontinuity() {}
 
-    }
-
-    /**
-     * Called when the current playback parameters change. The playback parameters may change due to
-     * a call to {@link ExoPlayer#setPlaybackParameters(PlaybackParameters)}, or the player itself
-     * may change them (for example, if audio playback switches to passthrough mode, where speed
-     * adjustment is no longer possible).
-     *
-     * @param playbackParameters The playback parameters.
-     */
     @Override
-    public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-
-    }
-
-    /**
-     * Called when a transfer starts.
-     *
-     * @param source   The source performing the transfer.
-     * @param dataSpec Describes the data being transferred.
-     */
-    @Override
-    public void onTransferStart(Object source, DataSpec dataSpec) {
-        if (manifestRequestTime == 0) {
-            manifestRequestTime = SystemClock.elapsedRealtime();
-            Log.d(TAG, String.format("Updated manifest request time to %d.", manifestRequestTime));
-        }
-    }
-
-    /**
-     * Called incrementally during a transfer.
-     *
-     * @param source           The source performing the transfer.
-     * @param bytesTransferred The number of bytes transferred since the previous call to this
-     */
-    @Override
-    public void onBytesTransferred(Object source, int bytesTransferred) {
-    }
-
-    /**
-     * Called when a transfer ends.
-     *
-     * @param source The source performing the transfer.
-     */
-    @Override
-    public void onTransferEnd(Object source) {
-    }
+    public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {}
 }
