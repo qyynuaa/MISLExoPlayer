@@ -21,7 +21,7 @@ public class FutureChunkInfo {
     }
 
     /**
-     * Add information on a new chunk.
+     * Adds information on a new chunk.
      *
      * @param chunkIndex The index of the chunk within the data stream.
      * @param representationLevel The index of the representation level of
@@ -33,7 +33,7 @@ public class FutureChunkInfo {
     }
 
     /**
-     * Get the size of a chunk in bytes, at a specified representation
+     * Gets the size of a chunk in bytes, at a specified representation
      * level.
      *
      * @param chunkIndex The index of the chunk within the data stream.
