@@ -11,10 +11,10 @@ import com.google.android.exoplayer2.upstream.Allocator;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
 
 /**
- * An alternative to {@link DefaultLoadControl},
- * which exposes its buffer parameters.
+ * An alternative to {@link DefaultLoadControl}, which exposes its buffer
+ * parameters, and otherwise behaves identically to
+ * {@code DefaultLoadControl}.
  */
-
 public class MISLLoadControl implements LoadControl {
 
     /**
@@ -100,71 +100,36 @@ public class MISLLoadControl implements LoadControl {
         return bufferForPlaybackAfterRebufferMs;
     }
 
-    /**
-     * Called by the player when prepared with a new source.
-     */
     @Override
     public void onPrepared() {
         loadControl.onPrepared();
     }
 
-    /**
-     * Called by the player when a track selection occurs.
-     *
-     * @param renderers       The renderers.
-     * @param trackGroups     The {@link TrackGroup}s from which the selection was made.
-     * @param trackSelections The track selections that were made.
-     */
     @Override
     public void onTracksSelected(Renderer[] renderers, TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
         loadControl.onTracksSelected(renderers, trackGroups, trackSelections);
     }
 
-    /**
-     * Called by the player when stopped.
-     */
     @Override
     public void onStopped() {
         loadControl.onStopped();
     }
 
-    /**
-     * Called by the player when released.
-     */
     @Override
     public void onReleased() {
         loadControl.onReleased();
     }
 
-    /**
-     * Returns the {@link Allocator} that should be used to obtain media buffer allocations.
-     */
     @Override
     public Allocator getAllocator() {
         return loadControl.getAllocator();
     }
 
-    /**
-     * Called by the player to determine whether sufficient media is buffered for playback to be
-     * started or resumed.
-     *
-     * @param bufferedDurationUs The duration of media that's currently buffered.
-     * @param rebuffering        Whether the player is rebuffering. A rebuffer is defined to be caused by
-     *                           buffer depletion rather than a user action. Hence this parameter is false during initial
-     *                           buffering and when buffering as a result of a seek operation.
-     * @return Whether playback should be allowed to start or resume.
-     */
     @Override
     public boolean shouldStartPlayback(long bufferedDurationUs, boolean rebuffering) {
         return loadControl.shouldStartPlayback(bufferedDurationUs, rebuffering);
     }
 
-    /**
-     * Called by the player to determine whether it should continue to load the source.
-     *
-     * @param bufferedDurationUs The duration of media that's currently buffered.
-     * @return Whether the loading should continue.
-     */
     @Override
     public boolean shouldContinueLoading(long bufferedDurationUs) {
         return loadControl.shouldContinueLoading(bufferedDurationUs);
