@@ -162,8 +162,8 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         if (resevoir < (2 * lastChunkDurationMs))
             resevoir = 2 * lastChunkDurationMs;
         else {
-            if (resevoir > (0.6 * (maxBufferMs / lastChunkDurationMs) * lastChunkDurationMs))
-                resevoir = (0.6 * (maxBufferMs / lastChunkDurationMs) * lastChunkDurationMs);
+            if (resevoir > 0.6 * maxBufferMs)
+                resevoir = 0.6 * maxBufferMs;
         }
         return (int) resevoir;
     }
@@ -175,13 +175,13 @@ public class BBA2TrackSelection extends AlgorithmTrackSelection {
         int optRateIndex;
         if (bufferedDurationMs < resevoir) {
             optRateIndex = tracks.length;
-        } else if (bufferedDurationMs > 0.9 * (maxBufferMs / lastChunkDurationMs) * lastChunkDurationMs)
+        } else if (bufferedDurationMs > 0.9 * maxBufferMs)
             optRateIndex = 0;
         else {
 
             int low = lowestBitrate();
             int high = highestBitrate();
-            double slope = (high - low) / (0.9 * (maxBufferMs / lastChunkDurationMs) * lastChunkDurationMs - resevoir);
+            double slope = (high - low) / (0.9 * maxBufferMs - resevoir);
             optRateIndex = findBestRateIndex(low + slope * (bufferedDurationMs - resevoir));
         }
 
