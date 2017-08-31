@@ -95,7 +95,7 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
      * @param logFile The file the log should be saved to.
      */
     public DefaultChunkLogger(File logFile) {
-        logBuilder = new DefaultLogBuilder(logFile);
+        this(new DefaultLogBuilder(logFile));
     }
 
     /**
