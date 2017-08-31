@@ -2,9 +2,9 @@ package com.example.mislplayer.sampling;
 
 import android.util.Log;
 
-import com.example.mislplayer.DefaultLogBuilder;
-import com.example.mislplayer.LogBuilder;
-import com.example.mislplayer.ManifestListener;
+import com.example.mislplayer.logging.DefaultLogBuilder;
+import com.example.mislplayer.logging.LogBuilder;
+import com.example.mislplayer.logging.ManifestListener;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackParameters;
@@ -17,17 +17,10 @@ import com.google.android.exoplayer2.source.smoothstreaming.manifest.SsManifest;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
-import static com.example.mislplayer.PlayerActivity.DEFAULT_LOG_DIRECTORY;
 import static java.lang.Math.min;
 
 /**

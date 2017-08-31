@@ -1,4 +1,4 @@
-package com.example.mislplayer;
+package com.example.mislplayer.logging;
 
 import android.util.Log;
 

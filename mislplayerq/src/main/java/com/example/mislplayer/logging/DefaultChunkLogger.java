@@ -1,6 +1,5 @@
-package com.example.mislplayer;
+package com.example.mislplayer.logging;
 
-import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -17,12 +16,8 @@ import com.google.android.exoplayer2.upstream.DataSpec;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * A default ChunkLogger implementation.
