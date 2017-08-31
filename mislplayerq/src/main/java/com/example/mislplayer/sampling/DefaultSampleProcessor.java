@@ -2,6 +2,8 @@ package com.example.mislplayer.sampling;
 
 import android.util.Log;
 
+import com.example.mislplayer.DefaultLogBuilder;
+import com.example.mislplayer.LogBuilder;
 import com.example.mislplayer.ManifestListener;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import static com.example.mislplayer.PlayerActivity.DEFAULT_LOG_DIRECTORY;
 import static java.lang.Math.min;
@@ -73,6 +76,8 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleProcessor.
     private static final String TAG = "DefaultSampleProcessor";
     private static final int DATA_NOT_AVAILABLE = -1;
 
+    private LogBuilder logBuilder;
+
     private List<ThroughputSample> samples = new ArrayList<>();
     private int maxBufferMs;
     private long mpdDurationMs = DATA_NOT_AVAILABLE;
@@ -82,6 +87,11 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleProcessor.
 
     public DefaultSampleProcessor(int maxBufferMs) {
         this.maxBufferMs = maxBufferMs;
+
+        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss", Locale.US);
+        Date date = new Date();
+        File sampleLogFile = new File(DEFAULT_LOG_DIRECTORY, "/" + dateFormat.format(date) + "_Sample_Log.txt");
+        logBuilder = new DefaultLogBuilder(sampleLogFile);
     }
 
     @Override
@@ -100,31 +110,16 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleProcessor.
 
     @Override
     public void writeSampleLog() {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
-        Date date = new Date();
-        File directory = DEFAULT_LOG_DIRECTORY;
-        File file = new File(directory, "/" + dateFormat.format(date) + "_Sample_Log.txt");
-
-        try {
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
-            file.createNewFile();
-            FileOutputStream stream = new FileOutputStream(file);
-            stream.write(("Arrival_Time\t\tBytes_Transferred\t\tDuration\t\tThroughput\n").getBytes());
-
-            for (ThroughputSample sample : samples) {
-                String logLine = String.format("%12d\t\t%17d\t\t%8d\t\t%10d\n",
-                        sample.arrivalTimeMs(),
-                        sample.bitsTransferred() * 8,
-                        sample.durationMs(),
-                        Math.round(sample.bitsPerSecond() / 1000));
-                stream.write(logLine.getBytes());
-            }
-            stream.close();
-        } catch (IOException e) {
-            Log.e("Exception", "File write failed: " + e.toString());
+        for (ThroughputSample sample : samples) {
+            logBuilder.startEntry();
+            logBuilder.arrivalTime(sample.arrivalTimeMs());
+            logBuilder.byteSize(sample.bitsTransferred() / 8);
+            logBuilder.loadDuration(sample.durationMs());
+            logBuilder.throughput(Math.round(sample.bitsPerSecond() / 1000));
+            logBuilder.finishEntry();
         }
+
+        logBuilder.finishLog();
     }
 
     @Override

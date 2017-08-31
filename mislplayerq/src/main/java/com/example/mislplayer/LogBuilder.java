@@ -81,4 +81,6 @@ public abstract class LogBuilder {
      * @param bufferLevelMs The buffer level, in ms.
      */
     public void bufferLevel(long bufferLevelMs) {};
+
+    public void throughput(long throughputKbps) {};
 }
