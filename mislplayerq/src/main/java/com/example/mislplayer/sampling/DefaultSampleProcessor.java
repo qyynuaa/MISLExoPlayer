@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import static com.example.mislplayer.PlayerActivity.LOG_DIRECTORY_PATH;
+import static com.example.mislplayer.PlayerActivity.DEFAULT_LOG_DIRECTORY;
 import static java.lang.Math.min;
 
 /**
@@ -102,7 +102,7 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleProcessor.
     public void writeSampleLog() {
         DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
         Date date = new Date();
-        File directory = new File(LOG_DIRECTORY_PATH);
+        File directory = DEFAULT_LOG_DIRECTORY;
         File file = new File(directory, "/" + dateFormat.format(date) + "_Sample_Log.txt");
 
         try {

@@ -48,11 +48,16 @@ import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.upstream.TransferListener;
 import com.google.android.exoplayer2.util.Util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Formatter;
+import java.util.Locale;
 
 import com.opencsv.CSVReader;
 
@@ -66,8 +71,9 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
 
     private static final String TAG = "PlayerActivity";
+    public static final File DEFAULT_LOG_DIRECTORY
+            = new File(Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer");
 
-    public static final String LOG_DIRECTORY_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
     private static final int DEBUG_VIEW_UPDATE_MS = 1000;
 
     private SimpleExoPlayerView playerView;
@@ -88,7 +94,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private TransferListener<? super DataSource> transferListener;
     private ChunkListener chunkListener;
     private TrackSelection.Factory trackSelectionFactory;
-    private DefaultChunkLogger chunkLogger = new DefaultChunkLogger();
+    private DefaultChunkLogger chunkLogger;
     private ExoPlayer.EventListener playerListener = null;
     private DefaultSampleProcessor sampleProcessor;
     private ManifestListener manifestListener = new ManifestListener();
@@ -147,6 +153,11 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         trackSelector = new DefaultTrackSelector(trackSelectionFactory);
 
         mainHandler = new Handler();
+
+        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss", Locale.US);
+        Date date = new Date();
+        File chunkLogFile = new File(DEFAULT_LOG_DIRECTORY, "/" + dateFormat.format(date) + "_Chunk_Log.txt");
+        chunkLogger = new DefaultChunkLogger(chunkLogFile);
 
         manifestListener.addListener(chunkLogger);
         manifestListener.addListener(sampleProcessor);

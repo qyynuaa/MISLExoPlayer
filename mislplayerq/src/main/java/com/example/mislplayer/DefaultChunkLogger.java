@@ -9,23 +9,20 @@ import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Renderer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.AdaptiveMediaSourceEventListener;
-import com.google.android.exoplayer2.source.SampleStream;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSpec;
-import com.google.android.exoplayer2.upstream.TransferListener;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A default ChunkLogger implementation.
@@ -66,9 +63,10 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
     }
 
     private static final String TAG = "DefaultChunkLogger";
-    private static final String LOG_FILE_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
 
     private ExoPlayer player;
+
+    private LogBuilder logBuilder;
 
     private List<LogEntry> log = new ArrayList<>();
 
@@ -90,6 +88,14 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
 
     private long manifestRequestTime = 0;
 
+    public DefaultChunkLogger(File logFile) {
+        logBuilder = new DefaultLogBuilder(logFile);
+    }
+
+    public DefaultChunkLogger(LogBuilder builder) {
+        logBuilder = builder;
+    }
+
     /**
      * Sets the chunk logger's player reference.
      *
@@ -103,12 +109,6 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
 
     @Override
     public void writeLogsToFile() {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
-        Date date = new Date();
-        File directory = new File(LOG_FILE_PATH);
-        File file = new File(directory, "/" + dateFormat.format(date) + "_Chunk_Log.txt");
-
-        LogBuilder logBuilder = new DefaultLogBuilder(directory, file);
 
         for (LogEntry entry : log) {
             logBuilder.startEntry();
