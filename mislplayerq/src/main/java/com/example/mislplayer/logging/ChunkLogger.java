@@ -1,4 +1,4 @@
-package com.example.mislplayer;
+package com.example.mislplayer.logging;
 
 import com.google.android.exoplayer2.source.chunk.MediaChunk;
 

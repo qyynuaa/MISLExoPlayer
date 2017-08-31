@@ -2,7 +2,9 @@ package com.example.mislplayer.sampling;
 
 import android.util.Log;
 
-import com.example.mislplayer.ManifestListener;
+import com.example.mislplayer.logging.DefaultLogBuilder;
+import com.example.mislplayer.logging.LogBuilder;
+import com.example.mislplayer.logging.ManifestListener;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackParameters;
@@ -15,16 +17,10 @@ import com.google.android.exoplayer2.source.smoothstreaming.manifest.SsManifest;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
-import static com.example.mislplayer.PlayerActivity.LOG_DIRECTORY_PATH;
 import static java.lang.Math.min;
 
 /**
@@ -73,6 +69,8 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleProcessor.
     private static final String TAG = "DefaultSampleProcessor";
     private static final int DATA_NOT_AVAILABLE = -1;
 
+    private LogBuilder logBuilder;
+
     private List<ThroughputSample> samples = new ArrayList<>();
     private int maxBufferMs;
     private long mpdDurationMs = DATA_NOT_AVAILABLE;
@@ -80,8 +78,29 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleProcessor.
 
     private MediaChunk lastChunk;
 
-    public DefaultSampleProcessor(int maxBufferMs) {
+    /**
+     * Creates a default {@link SampleProcessor} that uses a
+     * {@link DefaultLogBuilder} to build its log.
+     *
+     * @param maxBufferMs The maximum duration of media the player will
+     *        attempt to buffer.
+     * @param logFile The file the log should be written to.
+     */
+    public DefaultSampleProcessor(int maxBufferMs, File logFile) {
+        this(maxBufferMs, new DefaultLogBuilder(logFile));
+    }
+
+    /**
+     * Creates a default {@link SampleProcessor} using a specific
+     * {@link LogBuilder}.
+     *
+     * @param maxBufferMs The maximum duration of media the player will
+     *        attempt to buffer.
+     * @param builder The builder that should be used to build the log.
+     */
+    public DefaultSampleProcessor(int maxBufferMs, LogBuilder builder) {
         this.maxBufferMs = maxBufferMs;
+        logBuilder = builder;
     }
 
     @Override
@@ -100,31 +119,16 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleProcessor.
 
     @Override
     public void writeSampleLog() {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
-        Date date = new Date();
-        File directory = new File(LOG_DIRECTORY_PATH);
-        File file = new File(directory, "/" + dateFormat.format(date) + "_Sample_Log.txt");
-
-        try {
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
-            file.createNewFile();
-            FileOutputStream stream = new FileOutputStream(file);
-            stream.write(("Arrival_Time\t\tBytes_Transferred\t\tDuration\t\tThroughput\n").getBytes());
-
-            for (ThroughputSample sample : samples) {
-                String logLine = String.format("%12d\t\t%17d\t\t%8d\t\t%10d\n",
-                        sample.arrivalTimeMs(),
-                        sample.bitsTransferred() * 8,
-                        sample.durationMs(),
-                        Math.round(sample.bitsPerSecond() / 1000));
-                stream.write(logLine.getBytes());
-            }
-            stream.close();
-        } catch (IOException e) {
-            Log.e("Exception", "File write failed: " + e.toString());
+        for (ThroughputSample sample : samples) {
+            logBuilder.startEntry();
+            logBuilder.arrivalTime(sample.arrivalTimeMs());
+            logBuilder.byteSize(sample.bitsTransferred() / 8);
+            logBuilder.loadDuration(sample.durationMs());
+            logBuilder.throughput(Math.round(sample.bitsPerSecond() / 1000));
+            logBuilder.finishEntry();
         }
+
+        logBuilder.finishLog();
     }
 
     @Override

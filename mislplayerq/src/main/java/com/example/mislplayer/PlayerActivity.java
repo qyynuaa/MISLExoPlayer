@@ -11,6 +11,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import com.example.mislplayer.logging.DefaultChunkLogger;
+import com.example.mislplayer.logging.ManifestListener;
 import com.example.mislplayer.sampling.ChunkBasedSampler;
 import com.example.mislplayer.sampling.ChunkListener;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
@@ -48,11 +50,16 @@ import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.upstream.TransferListener;
 import com.google.android.exoplayer2.util.Util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Formatter;
+import java.util.Locale;
 
 import com.opencsv.CSVReader;
 
@@ -66,8 +73,9 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
 
     private static final String TAG = "PlayerActivity";
+    public static final File DEFAULT_LOG_DIRECTORY
+            = new File(Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer");
 
-    public static final String LOG_DIRECTORY_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
     private static final int DEBUG_VIEW_UPDATE_MS = 1000;
 
     private SimpleExoPlayerView playerView;
@@ -88,7 +96,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private TransferListener<? super DataSource> transferListener;
     private ChunkListener chunkListener;
     private TrackSelection.Factory trackSelectionFactory;
-    private DefaultChunkLogger chunkLogger = new DefaultChunkLogger();
+    private DefaultChunkLogger chunkLogger;
     private ExoPlayer.EventListener playerListener = null;
     private DefaultSampleProcessor sampleProcessor;
     private ManifestListener manifestListener = new ManifestListener();
@@ -109,6 +117,9 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         }
     };
 
+    private File chunkLogFile;
+    private File sampleLogFile;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -125,12 +136,16 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         playerView.requestFocus();
 
         debugView = (TextView) findViewById(R.id.debug_text_view);
-
-        configureRun();
     }
 
 
     private void initializePlayer() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss", Locale.US);
+        Date date = new Date();
+        chunkLogFile = new File(DEFAULT_LOG_DIRECTORY, "/" + dateFormat.format(date) + "_Chunk_Log.txt");
+        sampleLogFile = new File(DEFAULT_LOG_DIRECTORY, "/" + dateFormat.format(date) + "_Sample_Log.txt");
+        configureRun();
+
         //URL of our MPD file to stream content
         Uri uri = Uri.parse("http://10.0.0.115/~jason_quinlan/x264_4sec/A_New_Hope_16min/DASH_Files/VOD/A_New_Hope_enc_16min_x264_dash.mpd");
 
@@ -147,6 +162,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         trackSelector = new DefaultTrackSelector(trackSelectionFactory);
 
         mainHandler = new Handler();
+
+        chunkLogger = new DefaultChunkLogger(chunkLogFile);
 
         manifestListener.addListener(chunkLogger);
         manifestListener.addListener(sampleProcessor);
@@ -205,7 +222,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
     //Choose our algorithm given the button selected in the previous Activity
     private void configureRun() {
-        sampleProcessor = new DefaultSampleProcessor(maxBufferMs);
+        sampleProcessor = new DefaultSampleProcessor(maxBufferMs, sampleLogFile);
 
         if (algorithmType == AdaptationAlgorithmType.BASIC_ADAPTIVE) {
             DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();

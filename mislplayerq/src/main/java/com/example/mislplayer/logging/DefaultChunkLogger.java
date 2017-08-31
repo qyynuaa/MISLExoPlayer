@@ -1,6 +1,5 @@
-package com.example.mislplayer;
+package com.example.mislplayer.logging;
 
-import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -9,22 +8,15 @@ import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Renderer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.AdaptiveMediaSourceEventListener;
-import com.google.android.exoplayer2.source.SampleStream;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSpec;
-import com.google.android.exoplayer2.upstream.TransferListener;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -37,16 +29,16 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
      * An entry in the log.
      */
     private static class LogEntry {
-        private int chunkIndex;
-        private long arrivalTimeMs;
-        private long loadDurationMs;
-        private long stallDurationMs;
-        private long repLevelKbps;
-        private long actualRateKbps;
-        private long byteSize;
-        private long bufferLevelMs;
-        private long deliveryRateKbps;
-        private long chunkDurationMs;
+        private final int chunkIndex;
+        private final long arrivalTimeMs;
+        private final long loadDurationMs;
+        private final long stallDurationMs;
+        private final long repLevelKbps;
+        private final long actualRateKbps;
+        private final long byteSize;
+        private final long bufferLevelMs;
+        private final long deliveryRateKbps;
+        private final long chunkDurationMs;
 
         public LogEntry(long chunkStartTimeMs, long arrivalTimeMs, long loadDurationMs,
                         long stallDurationMs, long repLevelKbps, double deliveryRateKbps,
@@ -63,53 +55,13 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
             this.bufferLevelMs = bufferLevelMs;
             this.chunkDurationMs = chunkDurationMs;
         }
-
-        public int getChunkIndex(){
-            return chunkIndex;
-        }
-        public long getArrivalTimeMs(){
-            return arrivalTimeMs;
-        }
-        public long getLoadDurationMs(){
-            return loadDurationMs;
-        }
-        public long getStallDurationMs(){
-            return stallDurationMs;
-        }
-        public long getRepLevelKbps(){
-            return repLevelKbps;
-        }
-        public double getDeliveryRateKbps() {return deliveryRateKbps;}
-        public double getActualRateKbps(){
-            return actualRateKbps;
-        }
-        public long getByteSize(){
-            return byteSize;
-        }
-
-        public long getChunkDurationMs(){
-            return chunkDurationMs;
-        }
-
-        public void setByteSize(long byteSize){this.byteSize=byteSize;}
-        public void setDeliveryRateKbps(long deliveryRateKbps){this.deliveryRateKbps = deliveryRateKbps;}
-        public void setBufferLevelMs(long bufferLevelMs){this.bufferLevelMs = bufferLevelMs;}
-        public void setRepLevelKbps(int repLevelKbps){this.repLevelKbps = repLevelKbps;}
-        public void setActualRateKbps(long actualRateKbps){this.actualRateKbps = actualRateKbps;}
-
-        @Override
-        public String toString(){
-            String logLine = "%5d\t%8d\t%9d\t%10d\t%10d\t%9d\t%9d\t%10d\t%10d\n";
-            return String.format(logLine, chunkIndex, arrivalTimeMs, loadDurationMs,
-                    stallDurationMs, repLevelKbps, deliveryRateKbps,
-                    actualRateKbps, byteSize, bufferLevelMs);
-        }
     }
 
     private static final String TAG = "DefaultChunkLogger";
-    private static final String LOG_FILE_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
 
     private ExoPlayer player;
+
+    private LogBuilder logBuilder;
 
     private List<LogEntry> log = new ArrayList<>();
 
@@ -132,6 +84,26 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
     private long manifestRequestTime = 0;
 
     /**
+     * Creates a default {@link ChunkLogger} that uses a
+     * {@link DefaultLogBuilder} to build its log.
+     *
+     * @param logFile The file the log should be saved to.
+     */
+    public DefaultChunkLogger(File logFile) {
+        this(new DefaultLogBuilder(logFile));
+    }
+
+    /**
+     * Creates a default {@link ChunkLogger} that uses a specific
+     * {@link LogBuilder} to build its log.
+     *
+     * @param builder The log builder the logger should use.
+     */
+    public DefaultChunkLogger(LogBuilder builder) {
+        logBuilder = builder;
+    }
+
+    /**
      * Sets the chunk logger's player reference.
      *
      * <p>The logger uses this reference to get buffer level values.
@@ -144,28 +116,22 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
 
     @Override
     public void writeLogsToFile() {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss");
-        Date date = new Date();
-        File directory = new File(LOG_FILE_PATH);
-        File file = new File(directory, "/" + dateFormat.format(date) + "_Chunk_Log.txt");
 
-        try {
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
-            file.createNewFile();
-            FileOutputStream stream = new FileOutputStream(file);
-            stream.write(("Seg_#\t\tArr_time\t\tDel_Time\t\tStall_Dur" +
-                    "\t\tRep_Level\t\tDel_Rate\t\tAct_Rate\t\tByte_Size" +
-                    "\t\tBuff_Level\n").getBytes());
-            int index;
-            for (LogEntry log : this.log) {
-                stream.write(log.toString().getBytes());
-            }
-            stream.close();
-        } catch (IOException e) {
-            Log.e("Exception", "File write failed: " + e.toString());
+        for (LogEntry entry : log) {
+            logBuilder.startEntry();
+            logBuilder.chunkIndex(entry.chunkIndex);
+            logBuilder.actualRate(entry.actualRateKbps);
+            logBuilder.arrivalTime(entry.arrivalTimeMs);
+            logBuilder.bufferLevel(entry.bufferLevelMs);
+            logBuilder.byteSize(entry.byteSize);
+            logBuilder.deliveryRate(entry.deliveryRateKbps);
+            logBuilder.loadDuration(entry.loadDurationMs);
+            logBuilder.representationRate(entry.repLevelKbps);
+            logBuilder.stallDuration(entry.stallDurationMs);
+            logBuilder.finishEntry();
         }
+
+        logBuilder.finishLog();
     }
 
     @Override
@@ -187,7 +153,7 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
                 stallDurationMs, representationRateKbps,
                 deliveryRateKbps, actualRateKbps, lastBytesLoaded,
                 lastBufferLevelMs, chunkDurationMs);
-        int chunkArrayIndex = logEntry.getChunkIndex() - 1;
+        int chunkArrayIndex = logEntry.chunkIndex - 1;
         if (chunkArrayIndex < log.size()) {
             log.set(chunkArrayIndex, logEntry);
         } else {
