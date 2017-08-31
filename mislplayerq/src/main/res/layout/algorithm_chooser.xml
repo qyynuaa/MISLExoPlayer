@@ -73,6 +73,14 @@
                 android:textColor="@android:color/white" />
 
             <RadioButton
+                android:id="@+id/arbiter_plus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.38"
+                android:text="Arbiter+"
+                android:textColor="@android:color/white" />
+
+            <RadioButton
                 android:id="@+id/bba2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

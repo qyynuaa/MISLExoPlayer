@@ -11,12 +11,16 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import com.example.mislplayer.logging.DefaultChunkLogger;
+import com.example.mislplayer.logging.ManifestListener;
 import com.example.mislplayer.sampling.ChunkBasedSampler;
+import com.example.mislplayer.sampling.ChunkListener;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
 import com.example.mislplayer.sampling.SizeBasedSampler;
 import com.example.mislplayer.sampling.TimeBasedSampler;
+import com.example.mislplayer.trackselection.ArbiterPlusTrackSelection;
 import com.example.mislplayer.trackselection.ArbiterTrackSelection;
-import com.example.mislplayer.trackselection.BBA2TrackSelection;
+import com.example.mislplayer.trackselection.Bba2TrackSelection;
 import com.example.mislplayer.trackselection.BasicTrackSelection;
 import com.example.mislplayer.trackselection.ElasticTrackSelection;
 import com.example.mislplayer.trackselection.OscarHTrackSelection;
@@ -46,47 +50,53 @@ import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.upstream.TransferListener;
 import com.google.android.exoplayer2.util.Util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Formatter;
+import java.util.Locale;
 
 import com.opencsv.CSVReader;
 
 import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
 import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS;
 import static com.google.android.exoplayer2.DefaultLoadControl.DEFAULT_MAX_BUFFER_MS;
+import static com.google.android.exoplayer2.source.dash.DashMediaSource.DEFAULT_LIVE_PRESENTATION_DELAY_PREFER_MANIFEST_MS;
 
 
 public class PlayerActivity extends Activity implements View.OnClickListener,
         ExoPlayer.EventListener, PlaybackControlView.VisibilityListener {
 
-    public static final String LOG_DIRECTORY_PATH = Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer";
-
     private static final String TAG = "PlayerActivity";
+    public static final File DEFAULT_LOG_DIRECTORY
+            = new File(Environment.getExternalStorageDirectory().getPath() + "/Logs_Exoplayer");
+
+    private static final int DEBUG_VIEW_UPDATE_MS = 1000;
 
     private SimpleExoPlayerView playerView;
     private Handler mainHandler;
-    private EventLogger eventLogger;
     private SimpleExoPlayer player;
     private int resumeWindow;
     private long resumePosition;
     private DefaultTrackSelector trackSelector;
     private LoadControl loadControl;
     private DashMediaSource videoSource;
-    public Thread t;
-    public static ArrayList<FutureSegmentInfos> futureSegmentInfos;
+    public static FutureChunkInfo futureChunkInfo;
     public static ArrayList<Integer> reprLevel;
     public static int beginningIndex;
-    private MISLDashChunkSource.Factory df;
+    private MislDashChunkSource.Factory df;
 
     private AdaptationAlgorithmType algorithmType;
 
     private TransferListener<? super DataSource> transferListener;
     private ChunkListener chunkListener;
     private TrackSelection.Factory trackSelectionFactory;
-    private DefaultChunkLogger chunkLogger = new DefaultChunkLogger();
+    private DefaultChunkLogger chunkLogger;
     private ExoPlayer.EventListener playerListener = null;
     private DefaultSampleProcessor sampleProcessor;
     private ManifestListener manifestListener = new ManifestListener();
@@ -99,6 +109,16 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     private TextView debugView;
     private final StringBuilder debugBuilder = new StringBuilder();
     private final Formatter debugFormatter = new Formatter(debugBuilder);
+    private final Runnable debugViewUpdater = new Runnable() {
+        @Override
+        public void run() {
+            updateDebugView();
+            mainHandler.postDelayed(debugViewUpdater, DEBUG_VIEW_UPDATE_MS);
+        }
+    };
+
+    private File chunkLogFile;
+    private File sampleLogFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,12 +136,16 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         playerView.requestFocus();
 
         debugView = (TextView) findViewById(R.id.debug_text_view);
-
-        configureRun();
     }
 
 
     private void initializePlayer() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss", Locale.US);
+        Date date = new Date();
+        chunkLogFile = new File(DEFAULT_LOG_DIRECTORY, "/" + dateFormat.format(date) + "_Chunk_Log.txt");
+        sampleLogFile = new File(DEFAULT_LOG_DIRECTORY, "/" + dateFormat.format(date) + "_Sample_Log.txt");
+        configureRun();
+
         //URL of our MPD file to stream content
         Uri uri = Uri.parse("http://10.0.0.115/~jason_quinlan/x264_4sec/A_New_Hope_16min/DASH_Files/VOD/A_New_Hope_enc_16min_x264_dash.mpd");
 
@@ -129,7 +153,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         // Uri uri = Uri.parse("http://yt-dash-mse-test.commondatastorage.googleapis.com/media/oops-20120802-manifest.mpd");
 
         //futur segment sizes obtained thanks to CSV file
-        futureSegmentInfos = getSegmentSizes();
+        futureChunkInfo = getSegmentSizes();
 
         //Provides instances of DataSource from which streams of data can be read.
         DataSource.Factory mediaDataSourceFactory = buildDataSourceFactory(transferListener);
@@ -137,24 +161,28 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         //Will be responsible of choosing right TrackSelections
         trackSelector = new DefaultTrackSelector(trackSelectionFactory);
 
-        eventLogger = new EventLogger(trackSelector);
-
         mainHandler = new Handler();
+
+        chunkLogger = new DefaultChunkLogger(chunkLogFile);
 
         manifestListener.addListener(chunkLogger);
         manifestListener.addListener(sampleProcessor);
 
         //Provides instances of DashChunkSource
-        df = new MISLDashChunkSource.Factory(mediaDataSourceFactory,
-                chunkListener, chunkLogger);
+        df = new MislDashChunkSource.Factory(mediaDataSourceFactory,
+                chunkListener);
 
         // Our video source media, we give it an URL, and all the stuff before
-        videoSource = new DashMediaSource(uri, buildDataSourceFactory(manifestListener), df, mainHandler, chunkLogger);
+        videoSource = new DashMediaSource(uri,
+                buildDataSourceFactory(manifestListener), df,
+                Integer.MAX_VALUE,
+                DEFAULT_LIVE_PRESENTATION_DELAY_PREFER_MANIFEST_MS,
+                mainHandler, chunkLogger);
 
         //Used to play media indefinitely (loop)
         LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
 
-        loadControl = new MISLLoadControl(minBufferMs, maxBufferMs,
+        loadControl = new MislLoadControl(minBufferMs, maxBufferMs,
                 playbackBufferMs, rebufferMs);
 
         player = ExoPlayerFactory.newSimpleInstance(
@@ -167,6 +195,8 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         if (playerListener != null) {
             player.addListener(playerListener);
         }
+
+        chunkLogger.setPlayer(player);
 
         //bind the player to a view
         playerView.setPlayer(player);
@@ -187,30 +217,12 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         debugView.setTextColor(Color.WHITE);
         debugView.setTextSize(15);
 
-        //Thread to call every 1500 ms a function
-        t = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    while (!isInterrupted()) {
-                        Thread.sleep(1500);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                updateDebugView();
-                            }
-                        });
-                    }
-                } catch (InterruptedException e) {
-                }
-            }
-        };
-        t.start();
+        mainHandler.postDelayed(debugViewUpdater, DEBUG_VIEW_UPDATE_MS);
     }
 
     //Choose our algorithm given the button selected in the previous Activity
     private void configureRun() {
-        sampleProcessor = new DefaultSampleProcessor(maxBufferMs);
+        sampleProcessor = new DefaultSampleProcessor(maxBufferMs, sampleLogFile);
 
         if (algorithmType == AdaptationAlgorithmType.BASIC_ADAPTIVE) {
             DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
@@ -223,13 +235,19 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             trackSelectionFactory = new BasicTrackSelection.Factory(sampleProcessor);
             playerListener = sizeSampler;
         } else if (algorithmType == AdaptationAlgorithmType.BASIC_TIME) {
-            TimeBasedSampler timeSampler = new TimeBasedSampler(
-                    sampleProcessor, sampleProcessor);
+            TimeBasedSampler timeSampler =
+                    new TimeBasedSampler(sampleProcessor);
             transferListener = timeSampler;
             chunkListener = timeSampler;
             trackSelectionFactory = new BasicTrackSelection.Factory(sampleProcessor);
+        } else if (algorithmType == AdaptationAlgorithmType.ARBITER_PLUS) {
+            TimeBasedSampler timeSampler =
+                    new TimeBasedSampler(sampleProcessor);
+            transferListener = timeSampler;
+            chunkListener = timeSampler;
+            trackSelectionFactory = new ArbiterPlusTrackSelection.Factory(sampleProcessor);
         } else {
-            ChunkBasedSampler chunkSampler = new ChunkBasedSampler(sampleProcessor, sampleProcessor);
+            ChunkBasedSampler chunkSampler = new ChunkBasedSampler(sampleProcessor);
             transferListener = chunkSampler;
             chunkListener = chunkSampler;
 
@@ -244,7 +262,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                     break;
                 case BBA2:
                     Log.d(TAG, "BBA2 has been chosen.");
-                    trackSelectionFactory = new BBA2TrackSelection.Factory(sampleProcessor);
+                    trackSelectionFactory = new Bba2TrackSelection.Factory(sampleProcessor);
                     break;
                 case ELASTIC:
                     Log.d(TAG, "ELASTIC has been chosen.");
@@ -257,7 +275,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     }
 
     // Here we use our CSV file to obtain all future segment sizes of our media content. Will be used in our algorithms
-    public ArrayList<FutureSegmentInfos> getSegmentSizes() {
+    public FutureChunkInfo getSegmentSizes() {
         try {
             beginningIndex = -1;
             int endIndex = -1;
@@ -279,7 +297,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             }
             reprLevel = repLevel;
             endIndex = nextLine.length - 1; // index of the last representation level in the line.
-            ArrayList<FutureSegmentInfos> segmentSizes = new ArrayList<FutureSegmentInfos>();// This Array will contain all
+            FutureChunkInfo chunkInfo = new FutureChunkInfo(reprLevel.size());
             int index = 1;
             int inc = 0;
             while ((nextLine = reader.readNext()) != null) {
@@ -287,8 +305,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                     if (Integer.valueOf(nextLine[0].trim()) >= 1) { // This value nextLine[0] (first column of the read line) corresponds to our segment Number,
                         // as 0 is the number of the INIT segment we are not interested in storing it, but all segments after will be stored -> that's why >=1
                         for (int i = 0; i < reprLevel.size(); i++) { //number i will correspond each time to representation level index not its value.
-                            FutureSegmentInfos futureSeg = new FutureSegmentInfos(index, i, Integer.valueOf(nextLine[i + 2].trim())); // create a future segment info
-                            segmentSizes.add(futureSeg); // add it to the array
+                            chunkInfo.addChunkInfo(index, i, Integer.valueOf(nextLine[i + 2].trim())); // create a future segment info
                             inc++;
                         }
                         index++;
@@ -297,7 +314,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
                 } catch (NumberFormatException n) {
                 }
             }
-            return segmentSizes;
+            return chunkInfo;
         } catch (IOException e) {
             Log.d(TAG, "erreur de lecture fichier");
         }
@@ -380,7 +397,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
     @Override
     public void onStop() {
         super.onStop();
-        t.interrupt();
         if (Util.SDK_INT > 23) {
             releasePlayer();
         }
@@ -388,10 +404,11 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
     private void releasePlayer() {
         if (player != null) {
+            mainHandler.removeCallbacks(debugViewUpdater);
+
             updateResumePosition();
             player.release();
             player = null;
-            eventLogger = null;
 
             chunkLogger.writeLogsToFile();
             chunkLogger.clearChunkInformation();

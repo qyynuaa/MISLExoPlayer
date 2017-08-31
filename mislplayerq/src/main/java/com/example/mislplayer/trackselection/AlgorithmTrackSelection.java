@@ -1,9 +1,9 @@
 package com.example.mislplayer.trackselection;
 
+import com.example.mislplayer.PlayerActivity;
+import com.example.mislplayer.sampling.SampleProcessor;
 import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.trackselection.BaseTrackSelection;
-
-import static java.lang.Math.min;
 
 /**
  * A common superclass for track selections which implement an adaptation
@@ -13,60 +13,40 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
 
     private final String TAG = "AlgorithmTrackSelection";
 
-    /**
-     * @param group The {@link TrackGroup}. Must not be null.
-     * @param tracks The indices of the selected tracks within the {@link TrackGroup}. Must not be
-     *     null or empty. May be in any order.
-     */
-    public AlgorithmTrackSelection(TrackGroup group, int... tracks) {
+    protected final SampleProcessor sampleProcessor;
+
+    public AlgorithmTrackSelection(TrackGroup group, int[] tracks,
+                                   SampleProcessor sampleProcessor) {
         super(group, tracks);
+        this.sampleProcessor = sampleProcessor;
     }
 
     public int lowestBitrate() {
-        return group.getFormat(tracks[tracks.length - 1]).bitrate;
+        return getFormat(lowestBitrateIndex()).bitrate;
     }
 
     public int highestBitrate() {
-        return group.getFormat(tracks[0]).bitrate;
+        return getFormat(highestBitrateIndex()).bitrate;
     }
 
     public int lowestBitrateIndex() {
-        return tracks[tracks.length - 1];
+        return length - 1;
     }
 
     public int highestBitrateIndex() {
-        return tracks[0];
-    }
-
-    /**
-     * Finds the index of the lowest representation level whose rate is above
-     * a target rate.
-     *
-     * @param targetRate The target rate to find a representation level
-     *                   above, in kbps.
-     * @return The index of the lowest representation level above the target
-     * rate, or the highest representation level available.
-     */
-    public int getNearestBitrateIndex(double targetRate){
-        for (int i = tracks.length - 1; i >= 0; i--) {
-            if (group.getFormat(tracks[i]).bitrate / 1000 >= targetRate) {
-                return tracks[i];
-            }
-        }
-
-        return tracks[0];
+        return 0;
     }
 
     /**
      * Finds the index for the highest quality level below a target rate.
      *
-     * @param targetRate The target rate.
+     * @param targetRate The target rate, in bps.
      * @return The index of the highest suitable quality level.
      */
     public int findBestRateIndex(double targetRate) {
         for (int i = 0; i < length; i++) {
             if (getFormat(i).bitrate < targetRate) {
-                return tracks[i];
+                return i;
             }
         }
         return length - 1;
@@ -86,5 +66,15 @@ public abstract class AlgorithmTrackSelection extends BaseTrackSelection {
         }
         throw new IllegalArgumentException(
                 "No track exists with that bitrate");
+    }
+
+    public boolean SmartConvHelper(int qIndex, int videoWindow, double estRate) {
+        double totSegSize = 0;
+        for (int i = 0; i < videoWindow; i++)
+
+            totSegSize += PlayerActivity.futureChunkInfo.getByteSize(sampleProcessor.lastChunkIndex() + i, qIndex) * 8;
+        double actualAvgRate = totSegSize / (sampleProcessor.lastChunkDurationMs() / 1E3 * videoWindow);
+
+        return actualAvgRate <= estRate;
     }
 }
