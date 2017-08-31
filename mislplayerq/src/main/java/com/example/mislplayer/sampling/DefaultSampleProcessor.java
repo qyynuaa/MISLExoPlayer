@@ -85,13 +85,29 @@ public class DefaultSampleProcessor implements SampleProcessor, SampleProcessor.
 
     private MediaChunk lastChunk;
 
-    public DefaultSampleProcessor(int maxBufferMs) {
-        this.maxBufferMs = maxBufferMs;
+    /**
+     * Creates a default {@link SampleProcessor} that uses a
+     * {@link DefaultLogBuilder} to build its log.
+     *
+     * @param maxBufferMs The maximum duration of media the player will
+     *        attempt to buffer.
+     * @param logFile The file the log should be written to.
+     */
+    public DefaultSampleProcessor(int maxBufferMs, File logFile) {
+        this(maxBufferMs, new DefaultLogBuilder(logFile));
+    }
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss", Locale.US);
-        Date date = new Date();
-        File sampleLogFile = new File(DEFAULT_LOG_DIRECTORY, "/" + dateFormat.format(date) + "_Sample_Log.txt");
-        logBuilder = new DefaultLogBuilder(sampleLogFile);
+    /**
+     * Creates a default {@link SampleProcessor} using a specific
+     * {@link LogBuilder}.
+     *
+     * @param maxBufferMs The maximum duration of media the player will
+     *        attempt to buffer.
+     * @param builder The builder that should be used to build the log.
+     */
+    public DefaultSampleProcessor(int maxBufferMs, LogBuilder builder) {
+        this.maxBufferMs = maxBufferMs;
+        logBuilder = builder;
     }
 
     @Override

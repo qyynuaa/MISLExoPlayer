@@ -115,6 +115,9 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         }
     };
 
+    private File chunkLogFile;
+    private File sampleLogFile;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -131,12 +134,16 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
         playerView.requestFocus();
 
         debugView = (TextView) findViewById(R.id.debug_text_view);
-
-        configureRun();
     }
 
 
     private void initializePlayer() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss", Locale.US);
+        Date date = new Date();
+        chunkLogFile = new File(DEFAULT_LOG_DIRECTORY, "/" + dateFormat.format(date) + "_Chunk_Log.txt");
+        sampleLogFile = new File(DEFAULT_LOG_DIRECTORY, "/" + dateFormat.format(date) + "_Sample_Log.txt");
+        configureRun();
+
         //URL of our MPD file to stream content
         Uri uri = Uri.parse("http://10.0.0.115/~jason_quinlan/x264_4sec/A_New_Hope_16min/DASH_Files/VOD/A_New_Hope_enc_16min_x264_dash.mpd");
 
@@ -154,9 +161,6 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
         mainHandler = new Handler();
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH:mm:ss", Locale.US);
-        Date date = new Date();
-        File chunkLogFile = new File(DEFAULT_LOG_DIRECTORY, "/" + dateFormat.format(date) + "_Chunk_Log.txt");
         chunkLogger = new DefaultChunkLogger(chunkLogFile);
 
         manifestListener.addListener(chunkLogger);
@@ -216,7 +220,7 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
 
     //Choose our algorithm given the button selected in the previous Activity
     private void configureRun() {
-        sampleProcessor = new DefaultSampleProcessor(maxBufferMs);
+        sampleProcessor = new DefaultSampleProcessor(maxBufferMs, sampleLogFile);
 
         if (algorithmType == AdaptationAlgorithmType.BASIC_ADAPTIVE) {
             DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();

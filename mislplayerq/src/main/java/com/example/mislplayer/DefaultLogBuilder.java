@@ -22,7 +22,8 @@ public class DefaultLogBuilder extends LogBuilder {
         DELIVERY_RATE("Delivery_Rate"),
         ACTUAL_RATE("Actual_Rate"),
         BYTE_SIZE("Byte_Size"),
-        BUFFER_LEVEL("Buffer_Level");
+        BUFFER_LEVEL("Buffer_Level"),
+        THROUGHPUT("Throughput");
 
         private final String title;
         private int width;
@@ -102,6 +103,11 @@ public class DefaultLogBuilder extends LogBuilder {
     @Override
     public void bufferLevel(long bufferLevelMs) {
         enterValue(Column.BUFFER_LEVEL, Long.toString(bufferLevelMs));
+    }
+
+    @Override
+    public void throughput(long throughputKbps) {
+        enterValue(Column.THROUGHPUT, Long.toString(throughputKbps));
     }
 
     @Override
