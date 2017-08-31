@@ -13,11 +13,11 @@ import com.google.android.exoplayer2.upstream.Allocator;
 import com.google.android.exoplayer2.upstream.DefaultAllocator;
 
 /**
- * An alternative to {@link DefaultLoadControl},
- * which exposes its buffer parameters.
+ * Essentially a {@link MislLoadControl} which delays each chunk request by
+ * 2 seconds. Here as a demonstration of custom request scheduling.
  */
 
-public class MISLLoadControl implements LoadControl {
+public class DelayedLoadControl implements LoadControl {
 
     /**
      * The default minimum duration of media that the player will attempt to ensure is buffered at all
@@ -66,7 +66,7 @@ public class MISLLoadControl implements LoadControl {
     /**
      * Creates a new MISLLoadControl with default values.
      */
-    public MISLLoadControl() {
+    public DelayedLoadControl() {
         this(DEFAULT_MIN_BUFFER_MS,
                 DEFAULT_MAX_BUFFER_MS,
                 DEFAULT_BUFFER_FOR_PLAYBACK_MS,
@@ -87,7 +87,7 @@ public class MISLLoadControl implements LoadControl {
      *     playback to resume after a rebuffer, in milliseconds. A rebuffer is defined to be caused by
      *     buffer depletion rather than a user action.
      */
-    public MISLLoadControl(int minBufferMs, int maxBufferMs,
+    public DelayedLoadControl(int minBufferMs, int maxBufferMs,
                            long bufferForPlaybackMs, long bufferForPlaybackAfterRebufferMs) {
         this.loadControl = new DefaultLoadControl(
                 new DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE), minBufferMs,
