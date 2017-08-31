@@ -44,15 +44,13 @@ public class DefaultLogBuilder extends LogBuilder {
     private static final String VALUE_SEPARATOR = "\t\t";
     private static final String ENTRY_SEPARATOR = "\n";
 
-    private final File directory;
     private final File file;
 
     private StringBuilder body = new StringBuilder();
     private HashSet<Column> usedColumns = new HashSet<>();
     private HashMap<Column, String> entry;
 
-    public DefaultLogBuilder(File directory, File file) {
-        this.directory = directory;
+    public DefaultLogBuilder(File file) {
         this.file = file;
     }
 
@@ -130,6 +128,7 @@ public class DefaultLogBuilder extends LogBuilder {
 
     private void writeLogToFile(StringBuilder header) {
         try {
+            File directory = file.getParentFile();
             if (!directory.exists()) {
                 directory.mkdirs();
             }
