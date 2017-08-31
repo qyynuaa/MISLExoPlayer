@@ -88,10 +88,22 @@ public class DefaultChunkLogger implements ChunkLogger, AdaptiveMediaSourceEvent
 
     private long manifestRequestTime = 0;
 
+    /**
+     * Creates a default {@link ChunkLogger} that uses a
+     * {@link DefaultLogBuilder} to build its log.
+     *
+     * @param logFile The file the log should be saved to.
+     */
     public DefaultChunkLogger(File logFile) {
         logBuilder = new DefaultLogBuilder(logFile);
     }
 
+    /**
+     * Creates a default {@link ChunkLogger} that uses a specific
+     * {@link LogBuilder} to build its log.
+     *
+     * @param builder The log builder the logger should use.
+     */
     public DefaultChunkLogger(LogBuilder builder) {
         logBuilder = builder;
     }

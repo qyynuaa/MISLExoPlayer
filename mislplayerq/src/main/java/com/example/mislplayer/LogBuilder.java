@@ -82,5 +82,10 @@ public abstract class LogBuilder {
      */
     public void bufferLevel(long bufferLevelMs) {};
 
+    /**
+     * Provide a throughput value for the current entry.
+     *
+     * @param throughputKbps The throughput, in kbps.
+     */
     public void throughput(long throughputKbps) {};
 }

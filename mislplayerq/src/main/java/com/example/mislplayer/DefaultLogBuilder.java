@@ -33,6 +33,11 @@ public class DefaultLogBuilder extends LogBuilder {
             width = columnTitle.length();
         }
 
+        /**
+         * Widens the column to the given length, if it isn't wide enough.
+         *
+         * @param length The minimum width the column should be.
+         */
         private void widenTo(int length) {
             if (width < length) {
                 width = length;
@@ -51,6 +56,11 @@ public class DefaultLogBuilder extends LogBuilder {
     private HashSet<Column> usedColumns = new HashSet<>();
     private HashMap<Column, String> entry;
 
+    /**
+     * Creates a default {@link LogBuilder} which writes to the given file.
+     *
+     * @param file The file the log should be written to.
+     */
     public DefaultLogBuilder(File file) {
         this.file = file;
     }
@@ -132,6 +142,11 @@ public class DefaultLogBuilder extends LogBuilder {
         writeLogToFile(header);
     }
 
+    /**
+     * Writes the log to the output file.
+     *
+     * @param header The header row for the file.
+     */
     private void writeLogToFile(StringBuilder header) {
         try {
             File directory = file.getParentFile();
@@ -148,6 +163,11 @@ public class DefaultLogBuilder extends LogBuilder {
         }
     }
 
+    /**
+     * Makes the header row for the file.
+     *
+     * @return A StringBuilder containing the header row for the file.
+     */
     private StringBuilder makeHeader() {
         StringBuilder header = new StringBuilder();
         boolean firstColumn = true;
@@ -165,6 +185,12 @@ public class DefaultLogBuilder extends LogBuilder {
         return header;
     }
 
+    /**
+     * Puts a value in a column of this entry.
+     *
+     * @param column The column to put the value in.
+     * @param value The value to add.
+     */
     private void enterValue(Column column, String value) {
         entry.put(column, value);
         column.widenTo(value.length());
