@@ -18,12 +18,9 @@ import com.example.mislplayer.sampling.ChunkListener;
 import com.example.mislplayer.sampling.DefaultSampleProcessor;
 import com.example.mislplayer.sampling.SizeBasedSampler;
 import com.example.mislplayer.sampling.TimeBasedSampler;
-import com.example.mislplayer.trackselection.ArbiterPlusTrackSelection;
-import com.example.mislplayer.trackselection.ArbiterTrackSelection;
 import com.example.mislplayer.trackselection.Bba2TrackSelection;
 import com.example.mislplayer.trackselection.BasicTrackSelection;
 import com.example.mislplayer.trackselection.ElasticTrackSelection;
-import com.example.mislplayer.trackselection.OscarHTrackSelection;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -240,26 +237,12 @@ public class PlayerActivity extends Activity implements View.OnClickListener,
             transferListener = timeSampler;
             chunkListener = timeSampler;
             trackSelectionFactory = new BasicTrackSelection.Factory(sampleProcessor);
-        } else if (algorithmType == AdaptationAlgorithmType.ARBITER_PLUS) {
-            TimeBasedSampler timeSampler =
-                    new TimeBasedSampler(sampleProcessor);
-            transferListener = timeSampler;
-            chunkListener = timeSampler;
-            trackSelectionFactory = new ArbiterPlusTrackSelection.Factory(sampleProcessor);
         } else {
             ChunkBasedSampler chunkSampler = new ChunkBasedSampler(sampleProcessor);
             transferListener = chunkSampler;
             chunkListener = chunkSampler;
 
             switch (algorithmType) {
-                case OSCAR_H:
-                    Log.d(TAG, "OSCAR-H has been chosen.");
-                    trackSelectionFactory = new OscarHTrackSelection.Factory(sampleProcessor);
-                    break;
-                case ARBITER:
-                    Log.d(TAG, "ARBITER has been chosen.");
-                    trackSelectionFactory = new ArbiterTrackSelection.Factory(sampleProcessor);
-                    break;
                 case BBA2:
                     Log.d(TAG, "BBA2 has been chosen.");
                     trackSelectionFactory = new Bba2TrackSelection.Factory(sampleProcessor);
