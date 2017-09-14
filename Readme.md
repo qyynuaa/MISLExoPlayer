@@ -6,9 +6,9 @@ Note that I have had to remove some things from the project history, as we were 
 
 # The Work
 
-I took over from another intern, and was responsible for implementing and testing video adaptation algorithms (for use with DASH streams) using [ExoPlayer](https://google.github.io/ExoPlayer/ "The ExoPlayer project homepage.").
+I took over from another intern, and was responsible for implementing and testing video adaptation algorithms (for use with DASH streams) using [ExoPlayer](https://google.github.io/ExoPlayer/ "The ExoPlayer project homepage").
 
-## Algorithms
+## Algorithms
 
 Three adaptation algorithms had been implemented by the intern I took over from – two in-house algorithms and one well-known one, for comparison.
 
